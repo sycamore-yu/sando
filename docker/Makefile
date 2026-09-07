@@ -1,67 +1,89 @@
-.PHONY: build build-no-cache run-demo run-interactive run-mac-interactive shell
+.PHONY: build build-ampl build-no-cache run-demo run-interactive run-mac-interactive shell preflight \
+        run-static-easy run-static-medium run-static-hard run-dynamic-easy \
+        run-dynamic-medium run-dynamic-hard run-unknown-easy \
+        run-unknown-medium run-unknown-hard
 
-# Platform detection: Mac needs amd64 emulation and Xpra-based visualization
-# instead of X11 socket sharing.
 UNAME_S := $(shell uname -s)
+ROOT_DIR := $(abspath $(CURDIR)/..)
 ifeq ($(UNAME_S),Darwin)
-  PLATFORM_FLAG = --platform linux/amd64
+PLATFORM_FLAG = --platform linux/amd64
 else
-  PLATFORM_FLAG =
+PLATFORM_FLAG =
 endif
 
-# GPU support toggle: make run-demo GPU=false to disable
+IMAGE ?= sando-ampl
 GPU ?= true
 ifeq ($(GPU),true)
-GPU_FLAGS = --gpus all --env="NVIDIA_DRIVER_CAPABILITIES=all"
+GPU_FLAGS = --gpus all --env=NVIDIA_DRIVER_CAPABILITIES=all
 else
 GPU_FLAGS =
 endif
 
-DOCKER_FLAGS = xhost + && docker run -it \
-	$(GPU_FLAGS) \
-	--privileged \
-	-e DISPLAY=$(DISPLAY) \
-	--network=host \
-	--env="QT_X11_NO_MITSHM=1" \
-	--rm
-
-# ---- Build ----
-# BUILD_JOBS controls build parallelism. Default 2 works on machines with ~8 GB RAM.
-# Increase it (e.g. BUILD_JOBS=4) if you have more RAM — each parallel compiler
-# process can consume up to 4 GB on template-heavy files like gazebo_ros_camera.
-# Decrease to 1 if you hit "cannot allocate memory" or "killed cc1plus" errors.
+AMPL_UUID_FILE ?= $(HOME)/.config/ampl/uuid
+RESULTS_DIR ?= $(CURDIR)/results
 BUILD_JOBS ?= 2
-
-# SANDO_TAG selects which GitHub tag/branch the Dockerfile clones. Defaults to
-# the Dockerfile's own default (`main`). Override with `make build SANDO_TAG=v1.0.0`
-# once a release tag is cut. Passing an empty value preserves the Dockerfile default.
-SANDO_TAG ?= v0.0.3
-ifneq ($(SANDO_TAG),)
-TAG_ARG = --build-arg SANDO_TAG=$(SANDO_TAG)
-else
-TAG_ARG =
-endif
+SCENARIO ?= static_easy
+ROS_DOMAIN_ID ?= 42
+GAZEBO_MASTER_URI ?= http://127.0.0.1:11346
+NUM_OBSTACLES ?= 50
+DYNAMIC_RATIO ?= 0.65
+SOURCE_COMMIT ?= $(shell git -C "$(ROOT_DIR)" rev-parse HEAD 2>/dev/null || echo unknown)
+SANDO_AMPL_MODE ?= persistent
+SANDO_AMPL_VERIFY_UPDATES ?= 0
+SANDO_AMPL_TRACE ?= 0
+CONTAINER_NAME ?=
 
 build:
-	docker build $(PLATFORM_FLAG) -t sando \
-		--build-arg BUILD_JOBS=$(BUILD_JOBS) $(TAG_ARG) .
+	docker build $(PLATFORM_FLAG) -f "$(ROOT_DIR)/docker/Dockerfile.ampl" -t $(IMAGE) \
+		--build-arg BUILD_JOBS=$(BUILD_JOBS) --build-arg SANDO_SOURCE_COMMIT=$(SOURCE_COMMIT) "$(ROOT_DIR)"
+
+build-ampl: build
 
 build-no-cache:
-	docker build $(PLATFORM_FLAG) --no-cache -t sando \
-		--build-arg BUILD_JOBS=$(BUILD_JOBS) $(TAG_ARG) .
+	docker build $(PLATFORM_FLAG) --no-cache -f "$(ROOT_DIR)/docker/Dockerfile.ampl" -t $(IMAGE) \
+		--build-arg BUILD_JOBS=$(BUILD_JOBS) --build-arg SANDO_SOURCE_COMMIT=$(SOURCE_COMMIT) "$(ROOT_DIR)"
 
-# ---- Demo mode: pre-configured scenarios with automatic goal ----
-# Usage: make run-demo SCENARIO=static_easy
-# Scenarios: static_easy, static_medium, static_hard,
-#            dynamic_easy, dynamic_medium, dynamic_hard,
-#            unknown_dynamic_easy, unknown_dynamic_medium, unknown_dynamic_hard
-
-SCENARIO ?= static_easy
+define RUN_IMAGE
+	@test -r "$(AMPL_UUID_FILE)" || { echo "Set AMPL_UUID_FILE to a readable UUID file" >&2; exit 64; }
+	@mkdir -p "$(RESULTS_DIR)"
+	@container_name_flags=""; if [ -n "$(CONTAINER_NAME)" ]; then container_name_flags="--name $(CONTAINER_NAME)"; fi; \
+	if [ -n "$$DISPLAY" ]; then \
+		xhost +si:localuser:root || exit $$?; trap 'xhost -si:localuser:root' EXIT; \
+		docker run -it --rm $(GPU_FLAGS) --privileged --network=host \
+			--env=QT_X11_NO_MITSHM=1 --env=DISPLAY=$$DISPLAY \
+			--env=GAZEBO_MASTER_URI=$(GAZEBO_MASTER_URI) --env=ROS_DOMAIN_ID=$(ROS_DOMAIN_ID) --env=SANDO_AMPL_MODE=$(SANDO_AMPL_MODE) --env=SANDO_AMPL_VERIFY_UPDATES=$(SANDO_AMPL_VERIFY_UPDATES) --env=SANDO_AMPL_TRACE=$(SANDO_AMPL_TRACE) \
+			--volume=/tmp/.X11-unix:/tmp/.X11-unix:ro \
+			--mount=type=bind,src=$(AMPL_UUID_FILE),dst=/run/secrets/ampl_uuid,readonly \
+			$$container_name_flags --volume=$(RESULTS_DIR):/results $(1) $(IMAGE) $(2); \
+	else \
+		docker run -it --rm $(GPU_FLAGS) --privileged --network=host --env=HEADLESS=1 \
+			--env=GAZEBO_MASTER_URI=$(GAZEBO_MASTER_URI) --env=ROS_DOMAIN_ID=$(ROS_DOMAIN_ID) --env=SANDO_AMPL_MODE=$(SANDO_AMPL_MODE) --env=SANDO_AMPL_VERIFY_UPDATES=$(SANDO_AMPL_VERIFY_UPDATES) --env=SANDO_AMPL_TRACE=$(SANDO_AMPL_TRACE) \
+			--mount=type=bind,src=$(AMPL_UUID_FILE),dst=/run/secrets/ampl_uuid,readonly \
+			$$container_name_flags --volume=$(RESULTS_DIR):/results $(1) $(IMAGE) $(2); \
+	fi
+endef
 
 run-demo:
-	$(DOCKER_FLAGS) -e MODE=demo -e SCENARIO=$(SCENARIO) sando
+	$(call RUN_IMAGE,-e MODE=demo -e SCENARIO=$(SCENARIO),)
 
-# Convenience aliases
+run-interactive:
+	$(call RUN_IMAGE,-e MODE=interactive -e NUM_OBSTACLES=$(NUM_OBSTACLES) -e DYNAMIC_RATIO=$(DYNAMIC_RATIO),)
+
+run-mac-interactive:
+	docker run $(PLATFORM_FLAG) -it --rm --privileged \
+		--env=USE_XPRA=true --env=MODE=interactive \
+		--env=NUM_OBSTACLES=$(NUM_OBSTACLES) --env=DYNAMIC_RATIO=$(DYNAMIC_RATIO) \
+		--env=GAZEBO_MASTER_URI=$(GAZEBO_MASTER_URI) --env=ROS_DOMAIN_ID=$(ROS_DOMAIN_ID) --env=SANDO_AMPL_MODE=$(SANDO_AMPL_MODE) --env=SANDO_AMPL_VERIFY_UPDATES=$(SANDO_AMPL_VERIFY_UPDATES) --env=SANDO_AMPL_TRACE=$(SANDO_AMPL_TRACE) \
+		--publish=8080:8080 --mount=type=bind,src=$(AMPL_UUID_FILE),dst=/run/secrets/ampl_uuid,readonly \
+		$(if $(CONTAINER_NAME),--name $(CONTAINER_NAME)) --volume=$(RESULTS_DIR):/results $(IMAGE)
+
+shell:
+	$(call RUN_IMAGE,,/bin/bash)
+
+preflight: build
+	docker run --rm --mount=type=bind,src=$(AMPL_UUID_FILE),dst=/run/secrets/ampl_uuid,readonly $(IMAGE) \
+		bash -lc 'cmake -S /root/sando_ws/src/sando/tests/ampls -B /tmp/ampls-preflight -DAMPLS_ROOT=/opt/ampls-api -DGUROBI_ROOT=/opt/ampls-api/libs/gurobi -DAMPL_EXECUTABLE=$$AMPL_BASE_BIN/ampl && cmake --build /tmp/ampls-preflight --target ampls_real_preflight -j$(BUILD_JOBS) && ctest --test-dir /tmp/ampls-preflight --output-on-failure'
+
 run-static-easy:
 	$(MAKE) run-demo SCENARIO=static_easy
 run-static-medium:
@@ -80,33 +102,3 @@ run-unknown-medium:
 	$(MAKE) run-demo SCENARIO=unknown_dynamic_medium
 run-unknown-hard:
 	$(MAKE) run-demo SCENARIO=unknown_dynamic_hard
-
-# ---- Interactive mode: click goals in RViz ----
-# Usage: make run-interactive
-#        make run-interactive NUM_OBSTACLES=100 DYNAMIC_RATIO=0.8
-
-NUM_OBSTACLES ?= 50
-DYNAMIC_RATIO ?= 0.65
-
-run-interactive:
-	$(DOCKER_FLAGS) -e MODE=interactive -e NUM_OBSTACLES=$(NUM_OBSTACLES) -e DYNAMIC_RATIO=$(DYNAMIC_RATIO) sando
-
-# ---- Mac interactive mode: browser-based RViz via Xpra ----
-# Usage: make run-mac-interactive
-#        make run-mac-interactive NUM_OBSTACLES=100 DYNAMIC_RATIO=0.8
-# Then open http://localhost:8080 in your browser.
-# Uses Xpra instead of X11 passthrough (which doesn't work on macOS Docker Desktop).
-run-mac-interactive:
-	docker run $(PLATFORM_FLAG) -it \
-		--privileged \
-		--env="QT_X11_NO_MITSHM=1" \
-		-e USE_XPRA=true \
-		-e MODE=interactive \
-		-e NUM_OBSTACLES=$(NUM_OBSTACLES) \
-		-e DYNAMIC_RATIO=$(DYNAMIC_RATIO) \
-		-p 8080:8080 \
-		--rm sando
-
-# ---- Debug shell ----
-shell:
-	$(DOCKER_FLAGS) --entrypoint /bin/bash sando

@@ -13,7 +13,12 @@
 #include <decomp_rviz_plugins/data_ros_utils.hpp>
 #include <sando/sando_type.hpp>
 #include "hgp/termcolor.hpp"
+#ifdef SANDO_USE_AMPL
+#include "sando/ampl_model.hpp"
+using namespace sando_ampl;
+#else
 #include "gurobi_c++.h"
+#endif
 #include "timer.hpp"
 #include <type_traits>
 #include <unsupported/Eigen/Polynomials>
@@ -560,6 +565,9 @@ class SolverGurobi {
 
   int N_of_polytopes_ = 3;
 
+#ifdef SANDO_USE_AMPL
+  GRBModel m_;
+#else
   // Shared Gurobi environment (singleton) — avoids repeated license token
   // acquisition when multiple SolverGurobi instances are created.
   // Thread-safe initialization via C++11 static local.
@@ -574,6 +582,7 @@ class SolverGurobi {
     return e;
   }
   GRBModel m_ = GRBModel(*getSharedEnv());
+#endif
 
   std::vector<GRBConstr> at_least_1_pol_cons_;     // Constraints at least in one polytope
   std::vector<GRBConstr> polytopes_cons_;          // for SANDO

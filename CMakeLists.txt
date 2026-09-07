@@ -46,7 +46,33 @@ find_package(std_srvs REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-# Gurobi
+# Solver backend
+option(SANDO_USE_AMPL "Use real AMPL models and AMPLS Gurobi" OFF)
+if(SANDO_USE_AMPL)
+  add_compile_definitions(SANDO_USE_AMPL=1)
+  set(AMPLS_ROOT "/opt/ampls-api" CACHE PATH "Matching AMPLS sources and solver library bundle")
+  set(AMPLS_DRIVER_DIR "${AMPLS_ROOT}/libs/ampls/linux64")
+  set(AMPLS_GUROBI_DIR "${AMPLS_ROOT}/libs/gurobi/lib/linux64")
+  set(GUROBI_INCLUDE_DIRS "${AMPLS_ROOT}/libs/gurobi/include")
+  find_library(AMPLS_DRIVER NAMES gurobi-lib PATHS "${AMPLS_DRIVER_DIR}" NO_DEFAULT_PATH REQUIRED)
+  find_library(AMPLS_GUROBI NAMES gurobi130 PATHS "${AMPLS_GUROBI_DIR}" NO_DEFAULT_PATH REQUIRED)
+  find_package(Threads REQUIRED)
+  add_library(sando_ampl_backend STATIC
+    src/sando/ampl_model.cpp src/sando/ampls_runtime.cpp
+    "${AMPLS_ROOT}/cpp/ampls/src/ampls.cpp"
+    "${AMPLS_ROOT}/cpp/ampls/src/csvReader.cpp"
+    "${AMPLS_ROOT}/cpp/gurobi/src/gurobi_interface.cpp"
+    "${AMPLS_ROOT}/cpp/gurobi/src/gurobi_callback.cpp")
+  target_include_directories(sando_ampl_backend PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/include" "${AMPLS_ROOT}/libs/gurobi/include"
+    PRIVATE "${AMPLS_ROOT}/cpp/ampls/include" "${AMPLS_ROOT}/cpp/gurobi/include")
+  target_compile_definitions(sando_ampl_backend PUBLIC SANDO_USE_AMPL=1)
+  target_compile_options(sando_ampl_backend PRIVATE -fno-fast-math)
+  target_link_libraries(sando_ampl_backend PUBLIC "${AMPLS_DRIVER}" "${AMPLS_GUROBI}" Threads::Threads ${CMAKE_DL_LIBS})
+  set(CMAKE_INSTALL_RPATH "${AMPLS_DRIVER_DIR};${AMPLS_GUROBI_DIR}")
+  set(GUROBI_LIBRARIES sando_ampl_backend)
+else()
+# Native Gurobi reference backend
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 find_package(GUROBI REQUIRED)
 
@@ -56,6 +82,9 @@ message(STATUS "GUROBI FOUND")
 else(GUROBI_FOUND)
 message(FATAL_ERROR "GUROBI NOT FOUND!")
 endif(GUROBI_FOUND)
+FILE(GLOB GurobiSOFiles $ENV{GUROBI_HOME}/lib/libgurobi*[0-9].so)
+set(GUROBI_LIBRARIES "$ENV{GUROBI_HOME}/lib/libgurobi_c++.a;${GurobiSOFiles};$ENV{GUROBI_HOME}/lib/")
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
@@ -72,13 +101,12 @@ include_directories(${EIGEN3_INCLUDE_DIR} ${PCL_INCLUDE_DIRS} ${DECOMP_UTIL_INCL
 link_directories(${PCL_LIBRARY_DIRS} ${BOOST_LIBRARY_DIRS} ${GAZEBO_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-# set up for gurobi
-FILE(GLOB GurobiSOFiles $ENV{GUROBI_HOME}/lib/libgurobi*[0-9].so) #files that are start with libgurobi and end with number.so
-set(GUROBI_LIBRARIES "$ENV{GUROBI_HOME}/lib/libgurobi_c++.a;${GurobiSOFiles};$ENV{GUROBI_HOME}/lib/" )
-
 # add executables
-add_executable(sando src/sando/sando_node.cpp src/sando/sando.cpp src/hgp/hgp_manager.cpp src/hgp/utils.cpp src/hgp/hgp_planner.cpp src/hgp/graph_search.cpp src/sando/utils.cpp src/sando/gurobi_solver.cpp)
-target_link_libraries(sando ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
+add_library(sando_planner STATIC src/sando/sando.cpp src/hgp/hgp_manager.cpp src/hgp/utils.cpp src/hgp/hgp_planner.cpp src/hgp/graph_search.cpp src/sando/utils.cpp src/sando/gurobi_solver.cpp)
+target_link_libraries(sando_planner ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
+ament_target_dependencies(sando_planner rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
+add_executable(sando src/sando/sando_node.cpp)
+target_link_libraries(sando sando_planner)
 ament_target_dependencies(sando rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
 
 # Add the fake_sim executable
@@ -149,16 +177,16 @@ add_executable(corridor_generator_node src/sando/corridor_generator_node.cpp src
 target_link_libraries(corridor_generator_node ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
 ament_target_dependencies(corridor_generator_node rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
 
-add_executable(local_traj_benchmark_node src/sando/local_traj_benchmark.cpp src/sando/sando.cpp src/hgp/hgp_manager.cpp src/hgp/utils.cpp src/hgp/hgp_planner.cpp src/hgp/graph_search.cpp src/sando/utils.cpp src/sando/gurobi_solver.cpp)
-target_link_libraries(local_traj_benchmark_node ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(local_traj_benchmark_node src/sando/local_traj_benchmark.cpp)
+target_link_libraries(local_traj_benchmark_node sando_planner)
 ament_target_dependencies(local_traj_benchmark_node rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
 
-add_executable(visualize_local_trajs_node src/sando/visualize_local_trajs.cpp src/sando/sando.cpp src/hgp/hgp_manager.cpp src/hgp/utils.cpp src/hgp/hgp_planner.cpp src/hgp/graph_search.cpp src/sando/utils.cpp src/sando/gurobi_solver.cpp)
-target_link_libraries(visualize_local_trajs_node ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(visualize_local_trajs_node src/sando/visualize_local_trajs.cpp)
+target_link_libraries(visualize_local_trajs_node sando_planner)
 ament_target_dependencies(visualize_local_trajs_node rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
 
-add_executable(temporal_layered_corridor_test_node src/sando/temporal_layered_corridor_test_node.cpp src/sando/sando.cpp src/hgp/hgp_manager.cpp src/hgp/utils.cpp src/hgp/hgp_planner.cpp src/hgp/graph_search.cpp src/sando/utils.cpp src/sando/gurobi_solver.cpp)
-target_link_libraries(temporal_layered_corridor_test_node ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(temporal_layered_corridor_test_node src/sando/temporal_layered_corridor_test_node.cpp)
+target_link_libraries(temporal_layered_corridor_test_node sando_planner)
 ament_target_dependencies(temporal_layered_corridor_test_node rclcpp visualization_msgs std_msgs geometry_msgs Eigen3 decomp_util decomp_ros_msgs decomp_rviz_plugins decomp_test_node tf2 tf2_ros tf2_geometry_msgs tf2_eigen std_srvs pcl_ros pcl_conversions sensor_msgs dynus_interfaces)
 
 # Benchmark analysis tool (C++ port of analyze_dynamic_benchmark.py)
@@ -227,5 +255,31 @@ install(PROGRAMS
   benchmarking/unc_benchmark_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
+
+if(SANDO_USE_AMPL)
+  enable_testing()
+  add_executable(ampl_model_test tests/ampl_model/test_ampl_model.cpp src/sando/ampl_model.cpp)
+  target_include_directories(ampl_model_test PRIVATE include)
+  target_compile_options(ampl_model_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME ampl_model_expressions COMMAND ampl_model_test)
+
+  add_executable(ampl_adapter_probe tests/ampls/adapter_probe.cpp)
+  target_link_libraries(ampl_adapter_probe sando_ampl_backend)
+  target_compile_options(ampl_adapter_probe PRIVATE -fno-fast-math)
+  add_test(NAME ampl_adapter_real_model COMMAND ampl_adapter_probe)
+
+  add_executable(ampl_persistent_probe tests/ampls/persistent_probe.cpp)
+  target_link_libraries(ampl_persistent_probe sando_ampl_backend)
+  target_compile_options(ampl_persistent_probe PRIVATE -fno-fast-math)
+  add_test(NAME ampl_persistent_updates COMMAND ampl_persistent_probe)
+  set_tests_properties(ampl_persistent_updates PROPERTIES ENVIRONMENT "SANDO_AMPL_VERIFY_UPDATES=1" TIMEOUT 180)
+
+  add_executable(ampl_trajectory_probe tests/ampls/trajectory_probe.cpp)
+  target_link_libraries(ampl_trajectory_probe sando_planner)
+  target_compile_options(ampl_trajectory_probe PRIVATE -fno-fast-math)
+  ament_target_dependencies(ampl_trajectory_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME ampl_trajectory_formulas COMMAND ampl_trajectory_probe)
+  set_tests_properties(ampl_adapter_real_model ampl_trajectory_formulas PROPERTIES TIMEOUT 180)
+endif()
 
 ament_package()

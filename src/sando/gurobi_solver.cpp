@@ -3651,11 +3651,14 @@ void SolverGurobi::getDependentCoefficientsN6Double() {
 }
 
 void SolverGurobi::removeVars() {
-  GRBVar* vars = 0;
-  vars = m_.getVars();
-  for (int i = 0; i < m_.get(GRB_IntAttr_NumVars); ++i) {
+  const int count = m_.get(GRB_IntAttr_NumVars);
+  auto vars = m_.getVars();
+  for (int i = 0; i < count; ++i) {
     m_.remove(vars[i]);
   }
+#ifndef SANDO_USE_AMPL
+  delete[] vars;
+#endif
   x_.clear();
   x_double_.clear();
 }
@@ -4759,7 +4762,10 @@ bool SolverGurobi::generateNewTrajectory(
     }
     auto t8 = clk::now();
     last_solve_timing_.postsolve_ms = 1e3 * dur(t8 - t7).count();
-  } catch (GRBException&) {
+  } catch (GRBException& error) {
+#ifdef SANDO_USE_AMPL
+    std::cerr << "SANDO AMPL solver error: " << error.getMessage() << std::endl;
+#endif
     gurobi_error_detected = true;
   }
 
@@ -4828,7 +4834,10 @@ bool SolverGurobi::generateNewTrajectorySequentialFactors(
             getDependentCoefficientsN6Double();
         }
       }
-    } catch (GRBException&) {
+    } catch (GRBException& error) {
+#ifdef SANDO_USE_AMPL
+      std::cerr << "SANDO AMPL solver error: " << error.getMessage() << std::endl;
+#endif
       gurobi_error_detected = true;
       solved = false;
       break;

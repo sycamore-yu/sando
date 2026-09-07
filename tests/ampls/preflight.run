@@ -1,0 +1,5 @@
+model preflight.mod;
+option solver gurobi;
+option presolve 0;
+option auxfiles cr;
+write gpreflight;

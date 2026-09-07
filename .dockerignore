@@ -11,3 +11,11 @@ paper_imgs/
 *.bag
 .claude/
 CLAUDE.md
+
+# Credentials and generated AMPL artifacts must never enter the build context.
+docker/gurobi.lic
+**/ampl.lic
+**/.amplkey/
+tests/ampls/build/
+docker/results/
+results/

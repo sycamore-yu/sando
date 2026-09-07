@@ -1,5 +1,9 @@
 # SANDO: Safe Autonomous Trajectory Planning for Dynamic Unknown Environments
 
+This fork adds an **AMPL → AMPLS → Gurobi** backend. The Docker Makefile uses it by default.
+See the [build and validation guide](docs/ampl-runtime.md) and [implementation report](docs/ampl-implementation.md).
+The original trajectory formulas and planning schedule are retained.
+
 If you like this project, please consider starring ⭐ the repo!
 
 **Submitted to the IEEE Transactions on Robotics (T-RO)**
@@ -90,16 +94,18 @@ Install **Docker Engine** (not Docker Desktop) by following the [official instal
 
 > **Important:** You must use **Docker Engine**, not Docker Desktop. Docker Desktop for Linux runs containers inside a VM, which breaks X11 display passthrough and GPU access. If you have Docker Desktop installed, [uninstall it](https://docs.docker.com/desktop/uninstall/) first.
 
-**2. Obtain a Gurobi WLS License**
+**2. Configure the AMPL license**
 
-Get a free [WLS Academic license](https://portal.gurobi.com/iam/licenses/request). Other license types (named-user, compute server) do not work inside Docker.
+Save your AMPL cloud-license UUID in `~/.config/ampl/uuid` (directory mode `0700`, file mode `0600`).
+The container activates it at startup through a read-only secret mount. Do not put the UUID or a license file in the repository.
+Use `AMPL_UUID_FILE=/absolute/path/to/uuid` with Make if the file is stored elsewhere.
+This AMPL backend does not use `docker/gurobi.lic`.
 
 **3. Clone the Repository**
 
 ```bash
-git clone --recursive https://github.com/mit-acl/sando.git
-cd sando/docker
-cp /path/to/your/gurobi.lic ./gurobi.lic   # required — change the path to your WLS license file
+git clone --recursive https://github.com/sycamore-yu/sando.git
+cd sando                         # sando/docker also works
 ```
 
 **4. Build the Docker Image**
@@ -111,6 +117,16 @@ make build BUILD_JOBS=1    # if you hit "killed cc1plus" or OOM errors
 ```
 
 > **Note on memory:** Template-heavy files like `gazebo_ros_camera.cpp` can consume 3-4 GB RAM per compiler process. If the build fails with `cannot allocate memory` or `killed cc1plus`, either lower `BUILD_JOBS` or increase Docker's memory limit.
+
+Optionally run the real AMPLS authorization/concurrency preflight after building:
+
+```bash
+make preflight BUILD_JOBS=4
+```
+
+`make build` creates `sando-ampl`; `sando-ampl-dependencies` alone cannot run the application.
+Defaults are persistent AMPLS models, ROS domain 42, and Gazebo master port 11346.
+Without `DISPLAY`, the container uses Xvfb; interactive goal clicking requires a visible desktop display.
 
 **5. Run Simulations**
 
@@ -183,9 +199,10 @@ SANDO runs on macOS via Docker with [Xpra](https://xpra.org/) for browser-based 
 
 Download and install [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/).
 
-**2. Obtain a Gurobi WLS License**
+**2. Configure the AMPL license**
 
-Get a free [WLS Academic license](https://portal.gurobi.com/iam/licenses/request). Other license types (named-user, compute server) do not work inside Docker.
+Use the same private `~/.config/ampl/uuid` file described in the Linux Docker instructions.
+This fork's AMPL macOS image path has not been revalidated on macOS.
 
 **3. Configure Docker Desktop**
 
@@ -197,9 +214,8 @@ Open Docker Desktop and go to **Settings** (gear icon):
 #### Building
 
 ```bash
-git clone --recursive https://github.com/mit-acl/sando.git
+git clone --recursive https://github.com/sycamore-yu/sando.git
 cd sando/docker
-cp /path/to/your/gurobi.lic ./gurobi.lic   # required — change the path to your WLS license file
 make build BUILD_JOBS=2
 ```
 

@@ -1,0 +1,5 @@
+model interrupt.mod;
+option solver gurobi;
+option presolve 0;
+option auxfiles cr;
+write ginterrupt;

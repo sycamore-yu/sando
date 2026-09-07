@@ -56,7 +56,7 @@ if [ "$MODE" = "demo" ]; then
             exit 1 ;;
     esac
     echo "[SANDO] Demo: $TYPE $DIFFICULTY"
-    python3 src/sando/scripts/run_sim.py --mode "$TYPE" --difficulty "$DIFFICULTY" -s "$SETUP_BASH"
+    python3 src/sando/scripts/run_sim.py --mode "$TYPE" --difficulty "$DIFFICULTY" --ros-domain-id "${ROS_DOMAIN_ID:-20}" -s "$SETUP_BASH"
 
 elif [ "$MODE" = "interactive" ]; then
     NUM_OBSTACLES="${NUM_OBSTACLES:-50}"
@@ -65,6 +65,7 @@ elif [ "$MODE" = "interactive" ]; then
     echo "[SANDO] Use RViz '2D Nav Goal' to send goals by clicking"
     python3 src/sando/scripts/run_sim.py \
         --mode interactive \
+        --ros-domain-id "${ROS_DOMAIN_ID:-20}" \
         --num-obstacles "$NUM_OBSTACLES" \
         --dynamic-ratio "$DYNAMIC_RATIO" \
         -s "$SETUP_BASH"

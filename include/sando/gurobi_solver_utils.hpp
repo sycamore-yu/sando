@@ -10,7 +10,12 @@
 
 #include <sstream>
 #include <Eigen/Dense>
+#ifdef SANDO_USE_AMPL
+#include "sando/ampl_model.hpp"
+using namespace sando_ampl;
+#else
 #include "gurobi_c++.h"
+#endif
 #include <type_traits>
 // using namespace std;
 
