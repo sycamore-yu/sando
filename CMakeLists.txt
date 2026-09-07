@@ -274,6 +274,12 @@ if(SANDO_USE_AMPL)
   add_test(NAME ampl_persistent_updates COMMAND ampl_persistent_probe)
   set_tests_properties(ampl_persistent_updates PROPERTIES ENVIRONMENT "SANDO_AMPL_VERIFY_UPDATES=1" TIMEOUT 180)
 
+  add_executable(ampl_cold_start_probe tests/ampls/cold_start_probe.cpp)
+  target_link_libraries(ampl_cold_start_probe sando_ampl_backend)
+  target_compile_options(ampl_cold_start_probe PRIVATE -fno-fast-math)
+  add_test(NAME ampl_cold_concurrent_start COMMAND ampl_cold_start_probe)
+  set_tests_properties(ampl_cold_concurrent_start PROPERTIES TIMEOUT 180)
+
   add_executable(ampl_trajectory_probe tests/ampls/trajectory_probe.cpp)
   target_link_libraries(ampl_trajectory_probe sando_planner)
   target_compile_options(ampl_trajectory_probe PRIVATE -fno-fast-math)

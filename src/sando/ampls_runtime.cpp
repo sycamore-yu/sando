@@ -109,6 +109,31 @@ struct CallbackRegistration {
   ~CallbackRegistration() { GRBsetcallbackfunc(model, nullptr, nullptr); }
 };
 
+// AMPLS/Gurobi's model import and destruction touch process-wide driver state.
+// Keep those lifecycle operations serialized, while leaving compilation and
+// native optimization concurrent. The deleter is locked independently because
+// a retained model can outlive the solve that created it.
+std::mutex& amplsLifecycleMutex() {
+  static std::mutex mutex;
+  return mutex;
+}
+
+struct GurobiModelDeleter {
+  void operator()(ampls::GurobiModel* model) const noexcept {
+    if (!model) return;
+    std::lock_guard<std::mutex> lock(amplsLifecycleMutex());
+    delete model;
+  }
+};
+
+using OwnedGurobiModel = std::unique_ptr<ampls::GurobiModel, GurobiModelDeleter>;
+
+OwnedGurobiModel loadGurobiModel(const char* path, const char** options) {
+  std::lock_guard<std::mutex> lock(amplsLifecycleMutex());
+  auto loaded = ampls::AMPLModel::load<ampls::GurobiModel>(path, options);
+  return OwnedGurobiModel(new ampls::GurobiModel(std::move(loaded)));
+}
+
 class AmplsRuntime final : public Runtime {
  public:
   RuntimeResult solve(const ModelSnapshot& snapshot, GRBCallback* callback,
@@ -129,11 +154,9 @@ class AmplsRuntime final : public Runtime {
       compileModel(directory.path);
       const auto compiled = std::chrono::steady_clock::now();
       const char* options[] = {"outlev=0", "cvt:names=1", nullptr};
-      std::unique_ptr<ampls::GurobiModel> imported;
+      OwnedGurobiModel imported;
       if (!updating) {
-        auto loaded = ampls::AMPLModel::load<ampls::GurobiModel>(
-            (directory.path / "model.nl").c_str(), options);
-        imported = std::make_unique<ampls::GurobiModel>(std::move(loaded));
+        imported = loadGurobiModel((directory.path / "model.nl").c_str(), options);
         if (keep_model) model_ = std::move(imported);
       } else updateNative(model_->getGRBmodel(), snapshot);
       ampls::GurobiModel* model = keep_model ? model_.get() : imported.get();
@@ -452,8 +475,8 @@ class AmplsRuntime final : public Runtime {
                            const RuntimeResult& result,
                            const RuntimeParameters& parameters) {
     const char* options[] = {"outlev=0", "cvt:names=1", nullptr};
-    auto verifier = ampls::AMPLModel::load<ampls::GurobiModel>(nl.c_str(), options);
-    GRBmodel* native = verifier.getGRBmodel();
+    auto verifier = loadGurobiModel(nl.c_str(), options);
+    GRBmodel* native = verifier->getGRBmodel();
     GRBenv* environment = GRBgetenv(native);
     check(GRBsetintparam(environment, GRB_INT_PAR_OUTPUTFLAG, parameters.output_flag), native, "Verify OutputFlag");
     check(GRBsetintparam(environment, GRB_INT_PAR_LOGTOCONSOLE, parameters.log_to_console), native, "Verify LogToConsole");
@@ -502,7 +525,7 @@ class AmplsRuntime final : public Runtime {
     verifyValues(snapshot, values, objective);
   }
 
-  std::unique_ptr<ampls::GurobiModel> model_;
+  OwnedGurobiModel model_;
 };
 }  // namespace
 

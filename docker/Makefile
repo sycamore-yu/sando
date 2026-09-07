@@ -1,4 +1,4 @@
-.PHONY: build build-ampl build-no-cache run-demo run-interactive run-mac-interactive shell preflight \
+.PHONY: build build-ampl build-no-cache run-demo run-interactive run-mac-interactive shell preflight stop \
         run-static-easy run-static-medium run-static-hard run-dynamic-easy \
         run-dynamic-medium run-dynamic-hard run-unknown-easy \
         run-unknown-medium run-unknown-hard
@@ -31,7 +31,7 @@ SOURCE_COMMIT ?= $(shell git -C "$(ROOT_DIR)" rev-parse HEAD 2>/dev/null || echo
 SANDO_AMPL_MODE ?= persistent
 SANDO_AMPL_VERIFY_UPDATES ?= 0
 SANDO_AMPL_TRACE ?= 0
-CONTAINER_NAME ?=
+CONTAINER_NAME ?= sando-ampl-session
 
 build:
 	docker build $(PLATFORM_FLAG) -f "$(ROOT_DIR)/docker/Dockerfile.ampl" -t $(IMAGE) \
@@ -69,6 +69,9 @@ run-demo:
 run-interactive:
 	$(call RUN_IMAGE,-e MODE=interactive -e NUM_OBSTACLES=$(NUM_OBSTACLES) -e DYNAMIC_RATIO=$(DYNAMIC_RATIO),)
 
+stop:
+	docker stop $(CONTAINER_NAME)
+
 run-mac-interactive:
 	docker run $(PLATFORM_FLAG) -it --rm --privileged \
 		--env=USE_XPRA=true --env=MODE=interactive \
@@ -83,6 +86,8 @@ shell:
 preflight: build
 	docker run --rm --mount=type=bind,src=$(AMPL_UUID_FILE),dst=/run/secrets/ampl_uuid,readonly $(IMAGE) \
 		bash -lc 'cmake -S /root/sando_ws/src/sando/tests/ampls -B /tmp/ampls-preflight -DAMPLS_ROOT=/opt/ampls-api -DGUROBI_ROOT=/opt/ampls-api/libs/gurobi -DAMPL_EXECUTABLE=$$AMPL_BASE_BIN/ampl && cmake --build /tmp/ampls-preflight --target ampls_real_preflight -j$(BUILD_JOBS) && ctest --test-dir /tmp/ampls-preflight --output-on-failure'
+	docker run --rm --mount=type=bind,src=$(AMPL_UUID_FILE),dst=/run/secrets/ampl_uuid,readonly $(IMAGE) \
+		bash -lc 'source /opt/ros/humble/setup.bash && source /root/sando_ws/install/setup.bash && ctest --test-dir /root/sando_ws/build/sando --output-on-failure && ctest --test-dir /root/sando_ws/build/sando --repeat until-fail:20 -R "^ampl_cold_concurrent_start$$" --output-on-failure'
 
 run-static-easy:
 	$(MAKE) run-demo SCENARIO=static_easy
