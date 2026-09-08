@@ -461,6 +461,13 @@ ModelSnapshot GRBModel::snapshot() const {
   for (const auto& [id, c] : data_->cons) s.constraints.push_back(c.value);
   return s;
 }
+const std::map<std::uint64_t, double>& GRBModel::solutionValues() const {
+  if (!data_->solved || data_->status != GRB_OPTIMAL ||
+      data_->solution_revision != data_->revision)
+    invalid("no valid optimal solution");
+  return data_->solution;
+}
+RuntimeParameters GRBModel::runtimeParameters() const { return data_->params; }
 void GRBModel::optimize() {
   invalidate(data_);
   update();

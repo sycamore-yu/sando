@@ -48,8 +48,11 @@ int main() {
   assert(x.getValue() == 0.0 && y.getValue() == -2.0);
   assert(product.getValue() == -20.0);
   assert(model.get(GRB_DoubleAttr_ObjVal) == 7.0);
+  assert(model.solutionValues().size() == 2);
+  assert(model.runtimeParameters().time_limit == GRB_INFINITY);
 
   model.remove(x);
+  assert(throws_grb([&] { (void)model.solutionValues(); }));
   bool stale = false;
   try {
     (void)y.getValue();

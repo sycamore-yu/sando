@@ -9,19 +9,27 @@
 #pragma once
 #include <fstream>
 #include <sstream>
+#include <memory>
 #include <Eigen/Dense>
 #include <decomp_rviz_plugins/data_ros_utils.hpp>
 #include <sando/sando_type.hpp>
 #include "hgp/termcolor.hpp"
 #ifdef SANDO_USE_AMPL
 #include "sando/ampl_model.hpp"
+#include "sando/corridor_policy.hpp"
+#include "sando/planning_instance.hpp"
 using namespace sando_ampl;
 #else
 #include "gurobi_c++.h"
 #endif
 #include "timer.hpp"
 #include <type_traits>
+#include <vector>
 #include <unsupported/Eigen/Polynomials>
+
+#ifndef SANDO_USE_AMPL
+namespace sando_learning { using Assignment = std::vector<int>; }
+#endif
 
 using namespace termcolor;
 enum ConstraintType { POSITION, VELOCITY, ACCELERATION, JERK };
@@ -109,7 +117,8 @@ class SolverGurobi {
       bool& gurobi_error_detected,
       double& gurobi_computation_time,
       double factor,
-      bool use_single_thread = false);
+      bool use_single_thread = false,
+      const sando_learning::Assignment* assignment = nullptr);
 
   /** @brief Try generating a trajectory by sweeping factors from initial to final.
    *  @param gurobi_error_detected Set to true if a Gurobi exception occurs.
@@ -505,6 +514,27 @@ class SolverGurobi {
    *  @return Objective value, or NaN if no solution has been found.
    */
   double getObjectiveValue() const { return objective_value_; }
+  bool hasSolverError() const { return solver_error_; }
+
+#ifdef SANDO_USE_AMPL
+  enum class CorridorMethod { Original, Previous, Learned };
+
+  void setCorridorPolicy(
+      std::shared_ptr<const sando_learning::CorridorPolicy> policy,
+      CorridorMethod method,
+      sando_learning::Assignment previous = {});
+  bool generateWithCorridorPolicy(
+      bool& gurobi_error_detected, double& gurobi_computation_time, double factor);
+  nlohmann::json getPolicyMetrics() const { return policy_metrics_; }
+  sando_learning::PlanningInstance getPlanningGeometry(double factor) const;
+  sando_learning::PlanningInstance captureExpertInstance(double factor);
+
+  // Serializable expert instances require the original MIQP. For a direct QP,
+  // only model/outcome are available; its intentionally absent binary mapping
+  // means it is not a serializable expert PlanningInstance.
+  sando_learning::PlanningInstance getPlanningInstance(double factor) const;
+  sando_learning::Assignment getLastAssignment() const { return last_assignment_; }
+#endif
 
   double objective_value_{std::numeric_limits<double>::quiet_NaN()};
   std::vector<RobotState> goal_setpoints_;
@@ -517,6 +547,7 @@ class SolverGurobi {
   MyCallback cb_;
 
  protected:
+  bool solver_error_{false};
   std::string planner_name_{"SANDO"};               // "SANDO" or "FASTER"
   std::vector<std::vector<GRBVar>> x_faster_vars_;  // [axis][4*N] coefficient vars for FASTER
   bool usingFaster_() const;
@@ -601,6 +632,24 @@ class SolverGurobi {
   std::vector<std::vector<GRBLinExpr>> v_cp_;
   std::vector<std::vector<GRBLinExpr>> a_cp_;
   std::vector<std::vector<GRBLinExpr>> j_cp_;
+  const sando_learning::Assignment* active_assignment_{nullptr};
+  void buildPlanningModel(double factor);
+#ifdef SANDO_USE_AMPL
+  sando_learning::Assignment last_assignment_;
+  sando_learning::Assignment previous_assignment_;
+  std::shared_ptr<const sando_learning::CorridorPolicy> corridor_policy_;
+  CorridorMethod corridor_method_{CorridorMethod::Original};
+  nlohmann::json policy_metrics_ = nlohmann::json::object();
+  nlohmann::json last_constraint_residuals_ = nullptr;
+  double last_validation_ms_{0.0};
+  bool model_ready_{false};
+  bool model_solve_attempted_{false};
+  bool model_is_direct_qp_{false};
+  double model_factor_{std::numeric_limits<double>::quiet_NaN()};
+
+  sando_learning::PlanningInstance makePlanningGeometry(double factor) const;
+  sando_learning::Assignment recoverAssignmentFromModel() const;
+#endif
   std::vector<GRBVar> d3_;
   std::vector<GRBVar> d4_;
   std::vector<GRBVar> d5_;

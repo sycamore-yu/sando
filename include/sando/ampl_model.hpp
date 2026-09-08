@@ -284,6 +284,8 @@ class GRBModel {
   double get(DoubleAttr attr) const;
   void optimize();
   ModelSnapshot snapshot() const;
+  const std::map<std::uint64_t, double>& solutionValues() const;
+  RuntimeParameters runtimeParameters() const;
   void exportModel(const std::string& path) const;
   void write(const std::string& path) const { exportModel(path); }
 

@@ -58,6 +58,8 @@ SANDO_NODE::SANDO_NODE() : Node("sando_node") {
   options_re_2.callback_group = this->cb_group_re_2_;
   rclcpp::SubscriptionOptions options_map;
   options_map.callback_group = this->cb_group_map_;
+  rclcpp::SubscriptionOptions options_mu_1;
+  options_mu_1.callback_group = this->cb_group_mu_1_;
 
   // Visulaization publishers
   pub_dynamic_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
@@ -143,7 +145,7 @@ SANDO_NODE::SANDO_NODE() : Node("sando_node") {
       std::bind(&SANDO_NODE::trajCallback, this, std::placeholders::_1), options_re_1);
   sub_state_ = this->create_subscription<dynus_interfaces::msg::State>(
       "state", critical_qos, std::bind(&SANDO_NODE::stateCallback, this, std::placeholders::_1),
-      options_re_1);
+      options_mu_1);
   sub_terminal_goal_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
       "term_goal", critical_qos,
       std::bind(&SANDO_NODE::terminalGoalCallback, this, std::placeholders::_1));
@@ -813,6 +815,7 @@ void SANDO_NODE::stateCallback(const dynus_interfaces::msg::State::SharedPtr msg
     double roll, pitch, yaw;
     quaternion2Euler(msg->quat, roll, pitch, yaw);
     current_state.setYaw(yaw);
+    current_state.setTimeStamp(rclcpp::Time(msg->header.stamp).seconds());
     sando_ptr_->updateState(current_state);
 
     // publish the state
@@ -832,7 +835,7 @@ void SANDO_NODE::stateCallback(const dynus_interfaces::msg::State::SharedPtr msg
       double roll, pitch, yaw;
       quaternion2Euler(msg->quat, roll, pitch, yaw);
       current_state.setYaw(yaw);
-      current_state.t = this->now().seconds();
+      current_state.setTimeStamp(rclcpp::Time(msg->header.stamp).seconds());
       sando_ptr_->updateState(current_state);
     }
     RCLCPP_INFO(this->get_logger(), "State initialized");

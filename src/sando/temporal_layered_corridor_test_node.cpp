@@ -25,6 +25,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include "hgp/hgp_manager.hpp"
 #include "sando/gurobi_solver.hpp"
+#include "sando/segment_time.hpp"
 #include "sando/sando_type.hpp"
 #include "sando/utils.hpp"
 #include <decomp_ros_msgs/msg/polyhedron_array.hpp>
@@ -485,7 +486,8 @@ class TemporalLayeredCorridorTestNode final : public rclcpp::Node {
 
     // 3) Update map with *dynamic obstacles* (this is the key part)
     // Use planning horizon as traj_max_time for spatio-temporal occupancy.
-    const double traj_max_time = (initial_dt_ * factor_final_) * static_cast<double>(N_local_);
+    const double traj_max_time = sando_time::segmentDuration(initial_dt_, dc_, factor_final_) *
+                                 static_cast<double>(N_local_);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr empty_pclptr_unk(new pcl::PointCloud<pcl::PointXYZ>());
     vec_Vecf<3> empty_obst_bbox;  // Empty bbox vector (no dynamic obstacles in this test)
@@ -526,7 +528,7 @@ class TemporalLayeredCorridorTestNode final : public rclcpp::Node {
 
   // Build time layers: t_end[n] = (n+1) * dt_layer
   void buildTimeLayers_() {
-    const double dt_layer = initial_dt_ * factor_;
+    const double dt_layer = sando_time::segmentDuration(initial_dt_, dc_, factor_);
     time_end_times_.clear();
     time_end_times_.reserve((size_t)N_local_);
     for (int n = 0; n < N_local_; ++n) time_end_times_.push_back((double)(n + 1) * dt_layer);
@@ -618,7 +620,7 @@ class TemporalLayeredCorridorTestNode final : public rclcpp::Node {
   void runPostCheck_() {
     // Sampled post-check: for each setpoint at time t = k*dc, map to layer n=floor(t/dt_layer)
     // and compute union violation min_p max(Ap-b).
-    const double dt_layer = initial_dt_ * factor_;
+    const double dt_layer = sando_time::segmentDuration(initial_dt_, dc_, factor_);
 
     double worst = -1e9;
     double t_at_worst = 0.0;

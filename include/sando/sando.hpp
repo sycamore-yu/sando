@@ -16,7 +16,9 @@
 #include <chrono>
 #include <cmath>
 #include <future>
+#include <fstream>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 #include <Eigen/StdVector>
@@ -30,6 +32,10 @@
 #include "hgp/termcolor.hpp"
 #include "sando/sando_type.hpp"
 #include "timer.hpp"
+#ifdef SANDO_USE_AMPL
+#include "sando/instance_reservoir.hpp"
+#include <nlohmann/json.hpp>
+#endif
 
 enum { MAP = 0, UNKNOWN_MAP = 1 };
 enum { RETURN_LAST_VERTEX = 0, RETURN_INTERSECTION = 1 };
@@ -489,6 +495,26 @@ class SANDO {
   std::shared_ptr<sando::VoxelMapUtil> getMapUtilSharedPtr();
 
  private:
+#ifdef SANDO_USE_AMPL
+  std::unique_ptr<sando_learning::InstanceReservoir> instance_reservoir_;
+  nlohmann::json capture_metadata_;
+  std::uint64_t capture_request_id_{0};
+  double capture_request_time_{0.0}, capture_observation_time_{0.0};
+  std::shared_ptr<const sando_learning::CorridorPolicy> corridor_policy_;
+  SolverGurobi::CorridorMethod corridor_method_{SolverGurobi::CorridorMethod::Original};
+  sando_learning::Assignment last_appended_assignment_;
+  sando_learning::Assignment pending_assignment_;
+  sando_learning::Assignment last_replan_chosen_assignment_;
+  bool pending_assignment_valid_{false};
+  int last_replan_chosen_factor_{-1};
+  std::string replan_metrics_path_;
+  double last_parallel_opt_ms_{0.0};
+  double last_cancel_drain_ms_{0.0};
+  std::vector<double> last_replan_factors_;
+  std::vector<nlohmann::json> last_factor_policy_metrics_;
+  std::vector<double> last_replan_decomp_times_;
+  std::ofstream replan_metrics_stream_;
+#endif
   // Parameters
   Parameters par_;          // Parameters of the planner
   HGPManager hgp_manager_;  // HGP Manager

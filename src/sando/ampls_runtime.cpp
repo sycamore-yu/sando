@@ -1,4 +1,5 @@
 #include "sando/ampl_model.hpp"
+#include "sando/ampl_centering.hpp"
 // Keep the recorder header before Gurobi's macro definitions.
 #include "gurobi_interface.h"
 
@@ -12,6 +13,7 @@
 #include <iostream>
 #include <iomanip>
 #include <memory>
+#include <optional>
 #include <spawn.h>
 #include <sstream>
 #include <set>
@@ -26,6 +28,27 @@ namespace sando_ampl {
 namespace {
 namespace fs = std::filesystem;
 
+// AMPLS/Gurobi's model import and destruction touch process-wide driver state.
+// The same boundary also protects libc environment traversal and AMPL process
+// creation.  It is intentionally held only for those short lifecycle calls;
+// waitpid and native optimization remain concurrent.
+std::mutex& amplsLifecycleMutex() {
+  static std::mutex mutex;
+  return mutex;
+}
+
+std::optional<std::string> environmentValue(const char* name) {
+  std::lock_guard<std::mutex> lock(amplsLifecycleMutex());
+  const char* value = std::getenv(name);
+  if (!value) return std::nullopt;
+  return std::string(value);
+}
+
+fs::path temporaryDirectoryPath() {
+  std::lock_guard<std::mutex> lock(amplsLifecycleMutex());
+  return fs::temp_directory_path();
+}
+
 void check(int code, GRBmodel* model, const char* operation) {
   if (code)
     throw GRBException(std::string(operation) + ": " +
@@ -35,7 +58,7 @@ void check(int code, GRBmodel* model, const char* operation) {
 class WorkDirectory {
  public:
   WorkDirectory() {
-    std::string pattern = (fs::temp_directory_path() / "sando-ampl-XXXXXX").string();
+    std::string pattern = (temporaryDirectoryPath() / "sando-ampl-XXXXXX").string();
     std::vector<char> name(pattern.begin(), pattern.end());
     name.push_back('\0');
     const char* created = mkdtemp(name.data());
@@ -60,8 +83,8 @@ void compileModel(const fs::path& directory) {
            << (directory / "model").string() << ";\n";
     if (!stream) throw GRBException("Cannot write AMPL compilation commands");
   }
-  const char* configured = std::getenv("SANDO_AMPL_EXECUTABLE");
-  std::string executable = configured ? configured : "ampl";
+  const auto configured = environmentValue("SANDO_AMPL_EXECUTABLE");
+  std::string executable = configured.value_or("ampl");
   std::string input = run.string();
   char* arguments[] = {executable.data(), input.data(), nullptr};
   posix_spawn_file_actions_t actions;
@@ -72,7 +95,12 @@ void compileModel(const fs::path& directory) {
                                            log.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0600);
   if (!result) result = posix_spawn_file_actions_adddup2(&actions, STDOUT_FILENO, STDERR_FILENO);
   pid_t pid = -1;
-  if (!result) result = posix_spawnp(&pid, executable.c_str(), &actions, nullptr, arguments, environ);
+  if (!result) {
+    // Keep evaluation of environ and the complete spawn call inside the same
+    // lifecycle boundary.  The lock is released before waiting for AMPL.
+    std::lock_guard<std::mutex> lock(amplsLifecycleMutex());
+    result = posix_spawnp(&pid, executable.c_str(), &actions, nullptr, arguments, environ);
+  }
   posix_spawn_file_actions_destroy(&actions);
   if (result) throw GRBException("Cannot execute AMPL interpreter: " + executable, result);
   int status = 0;
@@ -109,15 +137,6 @@ struct CallbackRegistration {
   ~CallbackRegistration() { GRBsetcallbackfunc(model, nullptr, nullptr); }
 };
 
-// AMPLS/Gurobi's model import and destruction touch process-wide driver state.
-// Keep those lifecycle operations serialized, while leaving compilation and
-// native optimization concurrent. The deleter is locked independently because
-// a retained model can outlive the solve that created it.
-std::mutex& amplsLifecycleMutex() {
-  static std::mutex mutex;
-  return mutex;
-}
-
 struct GurobiModelDeleter {
   void operator()(ampls::GurobiModel* model) const noexcept {
     if (!model) return;
@@ -127,6 +146,34 @@ struct GurobiModelDeleter {
 };
 
 using OwnedGurobiModel = std::unique_ptr<ampls::GurobiModel, GurobiModelDeleter>;
+
+std::map<std::uint64_t, double> restoreValues(
+    const ModelSnapshot& centered, const std::map<std::uint64_t, double>& values,
+    const std::map<std::uint64_t, double>& offsets) {
+  std::map<std::uint64_t, double> restored;
+  for (const auto& variable : centered.variables) {
+    const auto value = values.find(variable.id);
+    if (value == values.end()) continue;
+    const auto offset = offsets.find(variable.id);
+    restored.emplace(variable.id, value->second +
+                                      (offset == offsets.end() ? 0.0 : offset->second));
+  }
+  return restored;
+}
+
+void writeOffsets(const fs::path& path, const std::map<std::uint64_t, double>& offsets) {
+  std::ofstream stream(path);
+  if (!stream) throw GRBException("Cannot write centering offsets");
+  stream << "{\n  \"offsets\": {\n";
+  bool first = true;
+  for (const auto& [id, offset] : offsets) {
+    if (!first) stream << ",\n";
+    first = false;
+    stream << "    \"" << id << "\": " << std::setprecision(17) << offset;
+  }
+  stream << "\n  }\n}\n";
+  if (!stream) throw GRBException("Cannot write centering offsets");
+}
 
 OwnedGurobiModel loadGurobiModel(const char* path, const char** options) {
   std::lock_guard<std::mutex> lock(amplsLifecycleMutex());
@@ -148,8 +195,10 @@ class AmplsRuntime final : public Runtime {
         return stopped;
       }
       const auto begin = std::chrono::steady_clock::now();
+      const auto centered = sando_ampl::detail::centerContinuousObjective(snapshot);
+      const ModelSnapshot& prepared_snapshot = centered.snapshot;
       WorkDirectory directory;
-      exportAmplModel(snapshot, (directory.path / "model.mod").string());
+      exportAmplModel(prepared_snapshot, (directory.path / "model.mod").string());
       const auto exported = std::chrono::steady_clock::now();
       compileModel(directory.path);
       const auto compiled = std::chrono::steady_clock::now();
@@ -158,13 +207,17 @@ class AmplsRuntime final : public Runtime {
       if (!updating) {
         imported = loadGurobiModel((directory.path / "model.nl").c_str(), options);
         if (keep_model) model_ = std::move(imported);
-      } else updateNative(model_->getGRBmodel(), snapshot);
+      } else updateNative(model_->getGRBmodel(), prepared_snapshot);
       ampls::GurobiModel* model = keep_model ? model_.get() : imported.get();
       GRBmodel* native = model->getGRBmodel();
       GRBenv* environment = GRBgetenv(native);
       check(GRBsetintparam(environment, GRB_INT_PAR_OUTPUTFLAG, parameters.output_flag), native, "OutputFlag");
       check(GRBsetintparam(environment, GRB_INT_PAR_LOGTOCONSOLE, parameters.log_to_console), native, "LogToConsole");
       check(GRBsetintparam(environment, GRB_INT_PAR_THREADS, parameters.threads), native, "Threads");
+      // Centering handles the translated objective; retain shared default
+      // Gurobi presolve and numerical settings for both MIQP and QP.
+      check(GRBsetintparam(environment, GRB_INT_PAR_PRESOLVE, -1), native, "Presolve");
+      check(GRBsetintparam(environment, GRB_INT_PAR_NUMERICFOCUS, 0), native, "NumericFocus");
       check(GRBsetdblparam(environment, GRB_DBL_PAR_TIMELIMIT, parameters.time_limit), native, "TimeLimit");
 
       // AMPL/MP may reorder columns and introduce auxiliaries. Match the stable
@@ -186,12 +239,12 @@ class AmplsRuntime final : public Runtime {
           if (term.coefficient != 0) { referenced.insert(term.first); referenced.insert(term.second); }
         }
       };
-      references(snapshot.objective);
-      for (const auto& constraint : snapshot.constraints) {
+      references(prepared_snapshot.objective);
+      for (const auto& constraint : prepared_snapshot.constraints) {
         references(constraint.expression);
         if (constraint.indicator) referenced.insert(constraint.indicator_variable);
       }
-      for (const auto& variable : snapshot.variables) {
+      for (const auto& variable : prepared_snapshot.variables) {
         const std::string name = "v_" + std::to_string(variable.id);
         auto found = native_names.find(name);
         if (found == native_names.end()) {
@@ -207,9 +260,12 @@ class AmplsRuntime final : public Runtime {
         } else columns.emplace(variable.id, found->second);
       }
       check(GRBupdatemodel(native), native, "Update restored variables");
-      if (const char* audit = std::getenv("SANDO_AMPL_AUDIT_DIR")) {
-        const fs::path target = fs::path(audit) / directory.path.filename();
+      const auto audit = environmentValue("SANDO_AMPL_AUDIT_DIR");
+      if (audit) {
+        const fs::path target = fs::path(*audit) / directory.path.filename();
         fs::create_directories(target);
+        exportAmplModel(snapshot, (target / "original_model.mod").string());
+        writeOffsets(target / "offsets.json", centered.offsets);
         for (const char* file : {"model.mod", "model.nl", "model.col", "model.row"})
           fs::copy_file(directory.path / file, target / file);
         check(GRBwrite(native, (target / "native.lp").c_str()), native, "Write native audit");
@@ -243,6 +299,7 @@ class AmplsRuntime final : public Runtime {
           if (!std::isfinite(value)) throw GRBException("Non-finite AMPLS solution");
           result.values.emplace(column.first, value);
         }
+        result.values = restoreValues(prepared_snapshot, result.values, centered.offsets);
         // Postsolve into the original model: native MIQCP ObjVal can differ
         // numerically from its quadratic evaluated at the returned X. Report
         // the recorded objective at that same point, keeping raw ObjVal in the
@@ -250,7 +307,8 @@ class AmplsRuntime final : public Runtime {
         result.objective = evaluate(snapshot.objective, result.values);
         if (!std::isfinite(result.objective)) throw GRBException("Non-finite original objective");
       }
-      if (const char* trace = std::getenv("SANDO_AMPL_TRACE"); trace && std::string(trace) == "1") {
+      const auto trace = environmentValue("SANDO_AMPL_TRACE");
+      if (trace && *trace == "1") {
         const auto read = std::chrono::steady_clock::now();
         auto ms = [](auto a, auto b) { return std::chrono::duration<double, std::milli>(b - a).count(); };
         static std::mutex output_mutex;
@@ -271,11 +329,12 @@ class AmplsRuntime final : public Runtime {
       // The callback points at a stack object.  Never leave it installed on
       // the retained model after this request returns.
       check(GRBsetcallbackfunc(native, nullptr, nullptr), native, "Clear callback");
-      const char* verify = std::getenv("SANDO_AMPL_VERIFY_UPDATES");
-      if (updating && verify && std::string(verify) == "1" &&
+      const auto verify = environmentValue("SANDO_AMPL_VERIFY_UPDATES");
+      if (updating && verify && *verify == "1" &&
           (result.status == GRB_OPTIMAL || result.status == GRB_INFEASIBLE ||
            result.status == GRB_UNBOUNDED || result.status == GRB_INF_OR_UNBD))
-        verifyUpdate(directory.path / "model.nl", snapshot, result, parameters);
+        verifyUpdate(directory.path / "model.nl", snapshot, prepared_snapshot,
+                     centered.offsets, result, parameters);
       // model remains the sole owner of the borrowed native pointer.
       return result;
     } catch (const GRBException&) {
@@ -287,8 +346,8 @@ class AmplsRuntime final : public Runtime {
 
  private:
   static bool persistent() {
-    const char* mode = std::getenv("SANDO_AMPL_MODE");
-    return mode && std::string(mode) == "persistent";
+    const auto mode = environmentValue("SANDO_AMPL_MODE");
+    return mode && *mode == "persistent";
   }
 
   static std::map<std::uint64_t, int> nativeColumns(GRBmodel* native) {
@@ -471,7 +530,9 @@ class AmplsRuntime final : public Runtime {
       throw GRBException("persistent verification objective mismatch", 10006);
   }
 
-  static void verifyUpdate(const fs::path& nl, const ModelSnapshot& snapshot,
+  static void verifyUpdate(const fs::path& nl, const ModelSnapshot& original,
+                           const ModelSnapshot& centered,
+                           const std::map<std::uint64_t, double>& offsets,
                            const RuntimeResult& result,
                            const RuntimeParameters& parameters) {
     const char* options[] = {"outlev=0", "cvt:names=1", nullptr};
@@ -481,6 +542,9 @@ class AmplsRuntime final : public Runtime {
     check(GRBsetintparam(environment, GRB_INT_PAR_OUTPUTFLAG, parameters.output_flag), native, "Verify OutputFlag");
     check(GRBsetintparam(environment, GRB_INT_PAR_LOGTOCONSOLE, parameters.log_to_console), native, "Verify LogToConsole");
     check(GRBsetintparam(environment, GRB_INT_PAR_THREADS, parameters.threads), native, "Verify Threads");
+    // Keep the verification solve numerically aligned with production.
+    check(GRBsetintparam(environment, GRB_INT_PAR_PRESOLVE, -1), native, "Verify Presolve");
+    check(GRBsetintparam(environment, GRB_INT_PAR_NUMERICFOCUS, 0), native, "Verify NumericFocus");
     check(GRBsetdblparam(environment, GRB_DBL_PAR_TIMELIMIT, parameters.time_limit), native, "Verify TimeLimit");
     check(GRBoptimize(native), native, "Verify optimize");
     int status = 0;
@@ -494,7 +558,7 @@ class AmplsRuntime final : public Runtime {
     if (status != GRB_OPTIMAL) return;
     std::map<std::uint64_t, double> values;
     const auto columns = nativeColumns(native);
-    for (const auto& variable : snapshot.variables) {
+    for (const auto& variable : centered.variables) {
       auto found = columns.find(variable.id);
       double value = 0;
       if (found != columns.end()) {
@@ -507,8 +571,8 @@ class AmplsRuntime final : public Runtime {
             if ((term.first == variable.id || term.second == variable.id) && term.coefficient != 0) return true;
           return false;
         };
-        bool referenced = refers(snapshot.objective);
-        for (const auto& constraint : snapshot.constraints)
+        bool referenced = refers(centered.objective);
+        for (const auto& constraint : centered.constraints)
           referenced = referenced || refers(constraint.expression) ||
               (constraint.indicator && constraint.indicator_variable == variable.id);
         if (referenced && variable.lb != variable.ub)
@@ -518,11 +582,12 @@ class AmplsRuntime final : public Runtime {
       }
       values.emplace(variable.id, value);
     }
-    const double objective = evaluate(snapshot.objective, values);
+    values = restoreValues(centered, values, offsets);
+    const double objective = evaluate(original.objective, values);
     if (std::abs(objective - result.objective) > 2e-6 * std::max(1.0, std::abs(result.objective)))
       throw GRBException("persistent verification objective mismatch", 10006);
-    verifyValues(snapshot, result.values, result.objective);
-    verifyValues(snapshot, values, objective);
+    verifyValues(original, result.values, result.objective);
+    verifyValues(original, values, objective);
   }
 
   OwnedGurobiModel model_;

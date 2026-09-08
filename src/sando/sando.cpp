@@ -7,8 +7,13 @@
  * -------------------------------------------------------------------------- */
 
 #include "sando/sando.hpp"
+#include "sando/segment_time.hpp"
 #include <chrono>
 #include <fstream>
+#include <cstdlib>
+#include <cerrno>
+#include <fcntl.h>
+#include <unistd.h>
 
 using namespace sando;
 using namespace termcolor;
@@ -18,6 +23,51 @@ typedef timer::Timer MyTimer;
 // ----------------------------------------------------------------------------
 
 SANDO::SANDO(Parameters par) : par_(par) {
+#ifdef SANDO_USE_AMPL
+  if (const char* metrics_path = std::getenv("SANDO_REPLAN_METRICS"))
+    replan_metrics_path_ = metrics_path;
+  if (!replan_metrics_path_.empty()) {
+    const int descriptor = ::open(
+        replan_metrics_path_.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+    if (descriptor >= 0) {
+      ::close(descriptor);
+    } else {
+      throw std::runtime_error("cannot create exclusive SANDO replan metrics file");
+    }
+    replan_metrics_stream_.open(replan_metrics_path_, std::ios::out | std::ios::app);
+    if (!replan_metrics_stream_)
+      throw std::runtime_error("cannot open SANDO replan metrics file");
+  }
+  if (const char* method = std::getenv("SANDO_CORRIDOR_METHOD")) {
+    const std::string selected(method);
+    if (selected == "previous") corridor_method_ = SolverGurobi::CorridorMethod::Previous;
+    else if (selected == "learned") corridor_method_ = SolverGurobi::CorridorMethod::Learned;
+    else if (selected != "original")
+      std::cerr << "SANDO corridor policy: unknown method '" << selected
+                << "'; using original\n";
+  }
+  if (const char* policy_path = std::getenv("SANDO_CORRIDOR_POLICY")) {
+    try {
+      corridor_policy_ = std::make_shared<const sando_learning::CorridorPolicy>(
+          sando_learning::CorridorPolicy::load(policy_path));
+    } catch (const std::exception& error) {
+      std::cerr << "SANDO corridor policy: cannot load model: " << error.what() << '\n';
+      corridor_policy_.reset();
+    }
+  }
+  if (const char* config_path = std::getenv("SANDO_CAPTURE_CONFIG")) {
+    std::ifstream stream(config_path);
+    if (!stream) throw std::runtime_error("cannot read SANDO capture configuration");
+    nlohmann::json configuration;
+    stream >> configuration;
+    capture_metadata_ = configuration.at("metadata");
+    instance_reservoir_ = std::make_unique<sando_learning::InstanceReservoir>(
+        configuration.at("output").get<std::string>(),
+        configuration.at("capacity").get<std::size_t>(),
+        configuration.at("seed").get<std::uint64_t>(), capture_metadata_);
+    instance_reservoir_->flush();
+  }
+#endif
   // Set up hgp_manager
   hgp_manager_.setParameters(par_);
 
@@ -71,7 +121,8 @@ SANDO::SANDO(Parameters par) : par_(par) {
   tmp_end_state.setPos(par_.num_P * par_.max_dist_vertexes, 0.0, 0.0);
   tmp_traj_solver_ptr->setX0(tmp_start_state);
   tmp_traj_solver_ptr->setXf(tmp_end_state);
-  worst_traj_time_ = tmp_traj_solver_ptr->getInitialDt() * par_.num_N;
+  worst_traj_time_ = sando_time::segmentDuration(
+                        tmp_traj_solver_ptr->getInitialDt(), par_.dc, 1.0) * par_.num_N;
 
   // Set up basis converter
   BasisConverter basis_converter;
@@ -574,6 +625,53 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   /* -------------------- Housekeeping -------------------- */
 
   MyTimer timer_housekeeping(true);
+#ifdef SANDO_USE_AMPL
+  last_parallel_opt_ms_ = 0.0;
+  last_cancel_drain_ms_ = 0.0;
+  last_replan_factors_.clear();
+  last_factor_policy_metrics_.clear();
+  last_replan_decomp_times_.clear();
+  pending_assignment_.clear();
+  pending_assignment_valid_ = false;
+  last_replan_chosen_assignment_.clear();
+  last_replan_chosen_factor_ = -1;
+  const auto replan_started = std::chrono::steady_clock::now();
+  const double replan_wall_unix = std::chrono::duration<double>(
+      std::chrono::system_clock::now().time_since_epoch()).count();
+  const auto emit_replan_metrics = [&](bool success, bool append_success, bool planning_attempted) {
+    if (!planning_attempted || replan_metrics_path_.empty()) return;
+    nlohmann::json metrics{{"schema_version", 1}, {"request_id", capture_request_id_},
+                           {"current_time", current_time}, {"wall_unix_time", replan_wall_unix},
+                           {"total_ms", std::chrono::duration<double, std::milli>(
+                                      std::chrono::steady_clock::now() - replan_started).count()},
+                           {"planning_attempted", planning_attempted},
+                           {"success", success}, {"append_success", append_success},
+                           {"selected_factor_index", last_replan_chosen_factor_ >= 0
+                                ? nlohmann::json(last_replan_chosen_factor_) : nlohmann::json(nullptr)},
+                           {"parallel_ms", last_parallel_opt_ms_},
+                           {"cancel_drain_ms", last_cancel_drain_ms_},
+                           {"actual_chosen_assignment", nlohmann::json::array()},
+                           {"proposed_chosen_assignment", nlohmann::json::array()},
+                           {"factors", nlohmann::json::array()}};
+    if (append_success && !last_appended_assignment_.empty())
+      metrics["actual_chosen_assignment"] = last_appended_assignment_;
+    if (!last_replan_chosen_assignment_.empty())
+      metrics["proposed_chosen_assignment"] = last_replan_chosen_assignment_;
+    for (std::size_t i = 0; i < whole_traj_solver_ptrs_.size(); ++i) {
+      nlohmann::json factor{{"index", i}};
+      if (i < last_replan_factors_.size()) factor["factor"] = last_replan_factors_[i];
+      if (i < last_replan_decomp_times_.size())
+        factor["decomp_ms"] = last_replan_decomp_times_[i];
+      if (i < last_factor_policy_metrics_.size())
+        factor["policy"] = last_factor_policy_metrics_[i];
+      metrics["factors"].push_back(std::move(factor));
+    }
+    replan_metrics_stream_ << metrics.dump() << '\n';
+    replan_metrics_stream_.flush();
+    if (!replan_metrics_stream_)
+      std::cerr << "SANDO_INSTRUMENTATION_ERROR replan_metrics write failed\n";
+  };
+#endif
 
   // Reset Data
   resetData();
@@ -581,6 +679,9 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   // Check if we need to replan
   if (!checkReadyToReplan()) {
     std::cout << bold << red << "Planner is not ready to replan" << reset << std::endl;
+#ifdef SANDO_USE_AMPL
+    emit_replan_metrics(false, false, false);
+#endif
     return std::make_tuple(false, false);
   }
 
@@ -589,15 +690,23 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   getState(local_state);
   getGterm(local_G_term);
   getLastPlanState(last_plan_state);
-
   // Check if we need to replan based on the distance to the terminal goal
-  if (!needReplan(local_state, local_G_term, last_plan_state)) return std::make_tuple(false, false);
+  if (!needReplan(local_state, local_G_term, last_plan_state)) {
+#ifdef SANDO_USE_AMPL
+    emit_replan_metrics(false, false, false);
+#endif
+    return std::make_tuple(false, false);
+  }
 
   // Hover avoidance: check obstacles and potentially set evasion goal
   if (par_.hover_avoidance_enabled && (drone_status_ == DroneStatus::GOAL_REACHED ||
                                        drone_status_ == DroneStatus::HOVER_AVOIDING)) {
-    if (!checkHoverAvoidance(current_time))
+    if (!checkHoverAvoidance(current_time)) {
+#ifdef SANDO_USE_AMPL
+      emit_replan_metrics(false, false, false);
+#endif
       return std::make_tuple(false, false);  // no avoidance needed, stay hovering
+    }
   }
 
   if (par_.debug_verbose)
@@ -606,12 +715,20 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
 
   /* -------------------- Global Planning -------------------- */
 
+#ifdef SANDO_USE_AMPL
+  ++capture_request_id_;
+  capture_request_time_ = current_time;
+  capture_observation_time_ = local_state.t;
+#endif
   MyTimer timer_global(true);
   vec_Vecf<3> global_path;
   if (!generateGlobalPath(global_path, current_time, last_replaning_computation_time)) {
     if (par_.debug_verbose)
       std::cout << "Global Planning: " << timer_global.getElapsedMicros() / 1000.0 << " ms"
                 << std::endl;
+#ifdef SANDO_USE_AMPL
+    emit_replan_metrics(false, false, true);
+#endif
     return std::make_tuple(false, false);
   }
   if (par_.debug_verbose)
@@ -625,6 +742,9 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
     if (par_.debug_verbose)
       std::cout << "Local Trajectory Optimization: " << timer_local.getElapsedMicros() / 1000.0
                 << " ms" << std::endl;
+#ifdef SANDO_USE_AMPL
+    emit_replan_metrics(false, false, true);
+#endif
     return std::make_tuple(false, true);
   }
   if (par_.debug_verbose)
@@ -638,8 +758,16 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
     if (par_.debug_verbose)
       std::cout << "Append to Plan: " << timer_append.getElapsedMicros() / 1000.0 << " ms"
                 << std::endl;
+#ifdef SANDO_USE_AMPL
+    emit_replan_metrics(false, false, true);
+#endif
     return std::make_tuple(false, true);
   }
+#ifdef SANDO_USE_AMPL
+  if (pending_assignment_valid_) last_appended_assignment_ = pending_assignment_;
+  pending_assignment_.clear();
+  pending_assignment_valid_ = false;
+#endif
   if (par_.debug_verbose)
     std::cout << "Append to Plan: " << timer_append.getElapsedMicros() / 1000.0 << " ms"
               << std::endl;
@@ -657,6 +785,9 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
     std::cout << "Final Housekeeping: " << timer_final.getElapsedMicros() / 1000.0 << " ms"
               << std::endl;
 
+#ifdef SANDO_USE_AMPL
+  emit_replan_metrics(true, true, true);
+#endif
   return std::make_tuple(true, true);
 }
 
@@ -850,7 +981,19 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
    */
 
   // Reset whole trajectory planners to nominal state
+#ifdef SANDO_USE_AMPL
+  last_replan_factors_ = factors_;
+  pending_assignment_.clear();
+  pending_assignment_valid_ = false;
+  last_replan_chosen_assignment_.clear();
+#endif
   for (auto& solver : whole_traj_solver_ptrs_) solver->resetToNominalState();
+#ifdef SANDO_USE_AMPL
+  // Copy the assignment that was actually appended on the previous request
+  // into every worker before any factor thread starts.
+  for (auto& solver : whole_traj_solver_ptrs_)
+    solver->setCorridorPolicy(corridor_policy_, corridor_method_, last_appended_assignment_);
+#endif
 
   // Get the base map vector
   vec_Vec3f base_map;
@@ -913,7 +1056,8 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
       // across all factor threads. This inflates every obstacle by obst_max_vel * max_time,
       // producing the most conservative corridors (ablation baseline).
       const double max_time_horizon =
-          static_cast<double>(par_.num_N) * initial_dt * factors_.back();
+          static_cast<double>(par_.num_N) *
+          sando_time::segmentDuration(initial_dt, par_.dc, factors_.back());
       seg_end_times.assign(P, max_time_horizon);
     } else {
       // Static environment: compute seg_end_times based on worst-case trajectory time per spatial
@@ -1010,6 +1154,9 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
   std::vector<bool> collected(num_factors, false);
   size_t num_collected = 0;
   int winner_index = -1;
+#ifdef SANDO_USE_AMPL
+  last_cancel_drain_ms_ = 0.0;
+#endif
 
   // Poll until we find a winner or all futures are collected
   while (num_collected < num_factors) {
@@ -1025,12 +1172,17 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
            thread_poly_out_safe] = futures[i].get();
       collected[i] = true;
       num_collected++;
+      vec_gurobi_times[i] = thread_gurobi_time;
+      vec_convx_decomp_times[i] = thread_convx_decomp_time;
 
       // Save polytopes for visualization even if the optimizer failed
       if (poly_out_safe_.empty() && !thread_poly_out_safe.empty())
         poly_out_safe_ = thread_poly_out_safe;
 
       if (!result) continue;
+      // Preserve the first observed successful worker. Other ready futures
+      // are still collected below, but must not replace the selected output.
+      if (winner_index >= 0) continue;
 
       // First success — immediately stop all other solvers
       for (size_t j = 0; j < num_factors; ++j) {
@@ -1060,13 +1212,22 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
     // If we found a winner, still drain remaining futures (they should exit fast
     // due to stopExecution + any_thread_succeeded flag)
     if (winner_index >= 0 && num_collected < num_factors) {
+#ifdef SANDO_USE_AMPL
+      const auto drain_started = std::chrono::steady_clock::now();
+#endif
       for (size_t i = 0; i < num_factors; ++i) {
         if (!collected[i]) {
-          futures[i].get();  // These should return quickly since solvers were stopped
+          const auto drained = futures[i].get();
+          vec_gurobi_times[i] = std::get<1>(drained);
+          vec_convx_decomp_times[i] = std::get<2>(drained);
           collected[i] = true;
           num_collected++;
         }
       }
+#ifdef SANDO_USE_AMPL
+      last_cancel_drain_ms_ = std::chrono::duration<double, std::milli>(
+          std::chrono::steady_clock::now() - drain_started).count();
+#endif
       break;
     }
 
@@ -1078,6 +1239,62 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
   auto parallel_opt_end = std::chrono::steady_clock::now();
   double parallel_opt_ms =
       std::chrono::duration<double, std::milli>(parallel_opt_end - parallel_opt_start).count();
+#ifdef SANDO_USE_AMPL
+  last_parallel_opt_ms_ = parallel_opt_ms;
+  last_factor_policy_metrics_.clear();
+  last_factor_policy_metrics_.reserve(whole_traj_solver_ptrs_.size());
+  for (const auto& solver : whole_traj_solver_ptrs_)
+    last_factor_policy_metrics_.push_back(solver->getPolicyMetrics());
+  last_replan_decomp_times_ = vec_convx_decomp_times;
+#endif
+
+#ifdef SANDO_USE_AMPL
+  // Full snapshots are collected only in dedicated capture runs, after every
+  // factor worker has stopped. Formal timing runs leave this disabled.
+  if (instance_reservoir_) {
+    for (size_t i = 0; i < num_factors; ++i) {
+      try {
+        auto instance = whole_traj_solver_ptrs_[i]->captureExpertInstance(factors_[i]);
+        instance.scene_id = capture_metadata_.at("scene_id").get<std::string>();
+        instance.episode_id = capture_metadata_.at("episode_id").get<std::string>();
+        instance.source_id = capture_metadata_.at("source_id").get<std::string>();
+        instance.config_id = capture_metadata_.at("config_id").get<std::string>();
+        instance.request_id = std::to_string(capture_request_id_);
+        instance.factor_id = std::to_string(i);
+        instance.planning_start_time = capture_request_time_;
+        instance.observation_time = capture_observation_time_;
+        instance.outcome["observation_time_source"] = "state_message_header";
+        instance.outcome["capture"] = capture_metadata_;
+        instance.outcome["parallel_optimization_ms"] = parallel_opt_ms;
+        instance.outcome["selected_for_append"] = vec_optimization_succeeded[i] &&
+            std::none_of(vec_optimization_succeeded.begin(), vec_optimization_succeeded.begin() + i,
+                         [](bool successful) { return successful; });
+        instance.outcome["cancel_reason"] = instance.outcome.at("cancelled").get<bool>()
+            ? "another_factor_succeeded" : "";
+        instance_reservoir_->ingest(instance);
+      } catch (const std::exception& error) {
+        instance_reservoir_->reject(error.what());
+      }
+    }
+    try {
+      instance_reservoir_->flush();
+    } catch (const std::exception& error) {
+      std::cerr << "SANDO_INSTRUMENTATION_ERROR capture flush failed: " << error.what() << '\n';
+    }
+  }
+#endif
+
+  // Recreate failed solver instances only after every worker has joined.
+  // Cancellation reads the shared pointers while workers are active.
+  for (auto& solver : whole_traj_solver_ptrs_) {
+    if (solver->hasSolverError()) {
+      auto replacement = std::make_shared<SolverGurobi>();
+      const int cores = static_cast<int>(std::thread::hardware_concurrency());
+      replacement->setGurobiThreads(std::max(1, cores / std::max(1, num_dynamic_factors_)));
+      replacement->initializeSolver(par_);
+      solver = std::move(replacement);
+    }
+  }
 
   // Find the first successful optimization
   int successful_index = -1;
@@ -1092,6 +1309,12 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
       successful_factor_ = factors_[i];
       poly_out_safe_ = vec_poly_out_safe[i];
       successful_index = i;
+#ifdef SANDO_USE_AMPL
+      last_replan_chosen_factor_ = static_cast<int>(i);
+      pending_assignment_ = whole_traj_solver_ptrs_[i]->getLastAssignment();
+      pending_assignment_valid_ = pending_assignment_.size() == static_cast<std::size_t>(par_.num_N);
+      last_replan_chosen_assignment_ = pending_assignment_;
+#endif
       break;  // Exit the loop after the first success
     }
   }
@@ -1177,7 +1400,7 @@ std::vector<double> SANDO::computeWorstSegEndTimesPoly(
   const int P = std::max(0, par_.num_P);
   if (P <= 0) {
     // Fallback: still produce valid per-segment times
-    const double dt = initial_dt * factor;
+    const double dt = sando_time::segmentDuration(initial_dt, par_.dc, factor);
     double t_acc = 0.0;
     for (size_t i = 0; i < num_seg; ++i) {
       t_acc += dt;
@@ -1205,7 +1428,7 @@ std::vector<double> SANDO::computeWorstSegEndTimesPoly(
   if (first_segments > 0) segments_per_poly[0] += first_segments;
 
   // Convert to per-segment cumulative end times
-  const double dt = initial_dt * factor;
+  const double dt = sando_time::segmentDuration(initial_dt, par_.dc, factor);
   double t_acc = 0.0;
 
   size_t produced = 0;
@@ -1256,8 +1479,8 @@ bool SANDO::generateLocalTrajectory(
   if (N == 0) return false;
 
   // Local time layers: end time of local segment n
-  // NOTE: this matches your solver's uniform dt assumption (dt = initial_dt * factor).
-  const double dt_layer = initial_dt * factor;
+  // Use the same actual segment duration as the trajectory solver.
+  const double dt_layer = sando_time::segmentDuration(initial_dt, par_.dc, factor);
   std::vector<double> time_end_times;
   time_end_times.reserve(N);
   for (size_t n = 0; n < N; ++n)
@@ -1317,13 +1540,16 @@ bool SANDO::generateLocalTrajectory(
 
   // Solve the optimization problem.
   bool gurobi_error_detected = false;
+#ifdef SANDO_USE_AMPL
+  bool gurobi_result = whole_traj_solver_ptr->generateWithCorridorPolicy(
+      gurobi_error_detected, gurobi_computation_time, factor);
+#else
   bool gurobi_result = whole_traj_solver_ptr->generateNewTrajectory(
       gurobi_error_detected, gurobi_computation_time, factor);
+#endif
 
-  // If a Gurobi error occurred, reset the solver and return.
+  // The caller resets failed solvers after joining all factor workers.
   if (gurobi_error_detected) {
-    whole_traj_solver_ptr = std::make_shared<SolverGurobi>();
-    whole_traj_solver_ptr->initializeSolver(par_);
     return false;
   }
 
@@ -1354,6 +1580,8 @@ bool SANDO::appendToPlan() {
       std::cout << bold << red << "(plan_size - k_value_) = " << (plan_size - k_value_) << " < 0"
                 << reset << std::endl;
     k_value_ = std::max(1, plan_size - 1);  // Decrease k_value_ to plan_size - 1 but at least 1
+    mtx_plan_.unlock();
+    return false;
   } else  // If the plan size is greater than k_value_, which means we haven't passed point A yet,
           // we can use this plan
   {

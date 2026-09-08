@@ -11,6 +11,10 @@
 #include <iomanip>
 #include <sando/gurobi_solver.hpp>
 #include <sando/gurobi_solver_utils.hpp>
+#include <sando/segment_time.hpp>
+#include <cmath>
+#include <regex>
+#include <stdexcept>
 
 void MyCallback::callback() {  // This function is called periodically along the optimization
                                // process.
@@ -23,7 +27,15 @@ void MyCallback::callback() {  // This function is called periodically along the
 
 void SolverGurobi::stopExecution() { cb_.should_terminate_ = true; }
 
-void SolverGurobi::resetToNominalState() { cb_.should_terminate_ = false; }
+void SolverGurobi::resetToNominalState() {
+  cb_.should_terminate_ = false;
+#ifdef SANDO_USE_AMPL
+  model_ready_ = false;
+  model_solve_attempted_ = false;
+  model_is_direct_qp_ = false;
+  policy_metrics_ = nlohmann::json::object();
+#endif
+}
 
 SolverGurobi::SolverGurobi() {
   // Model
@@ -3984,22 +3996,20 @@ void SolverGurobi::setPolytopesConstraints() {
     at_least_1_pol_cons_.clear();
   }
 
-  // Remove previous binary variables
-  if (!b_.empty()) {
-    for (int i = 0; i < b_.size(); i++) {
-      for (int j = 0; j < b_[i].size(); j++) {
-        m_.remove(b_[i][j]);
-      }
-    }
-    b_.clear();
-  }
-
   // Remove previous miqp_polytopes_cons_ constraints
   if (!miqp_polytopes_cons_.empty()) {
     for (int i = 0; i < miqp_polytopes_cons_.size(); i++) {
       m_.remove(miqp_polytopes_cons_[i]);
     }
     miqp_polytopes_cons_.clear();
+  }
+
+  // Binary variables must be removed after all indicator constraints refering
+  // to them have been removed.
+  if (!b_.empty()) {
+    for (const auto& row : b_)
+      for (const auto& var : row) m_.remove(var);
+    b_.clear();
   }
 
   // Set polytope constraints (either MIQP or SANDO approach)
@@ -4010,6 +4020,34 @@ void SolverGurobi::setPolyConsts() {
   if (!hasPolytopes_()) return;
 
   const int P = numSpatialPolys_();
+
+  // A fixed assignment is the SANDO, linear branch.  Do not create binary
+  // variables or indicator constraints in this mode.
+  if (active_assignment_ != nullptr) {
+    if (static_cast<int>(active_assignment_->size()) != N_)
+      throw std::invalid_argument("assignment must contain one polytope per segment");
+    for (int t = 0; t < N_; ++t) {
+      const int p = (*active_assignment_)[t];
+      if (p < 0 || p >= P) throw std::invalid_argument("assignment polytope index out of range");
+      const auto& poly = polyAt_(t, p);
+      const auto A = poly.A();
+      const auto bb = poly.b();
+      if (bb.rows() == 0 || A.rows() != bb.rows() || A.cols() != 3)
+        throw std::invalid_argument("assignment selects an invalid polytope");
+      const auto cp0 = getCP0(t), cp1 = getCP1(t), cp2 = getCP2(t), cp3 = getCP3(t);
+      const auto Astd = eigenMatrix2std(A);
+      const auto add_rows = [&](const std::vector<GRBLinExpr>& cp, const std::string& suffix) {
+        const auto lhs = MatrixMultiply(Astd, cp);
+        for (int i = 0; i < bb.rows(); ++i)
+          polytopes_cons_.push_back(m_.addConstr(
+              lhs[i] <= bb[i], "fixed_corridor_t" + std::to_string(t) + "_p" +
+                                   std::to_string(p) + "_face" + std::to_string(i) + "_" + suffix));
+      };
+      add_rows(cp0, "cp0"); add_rows(cp1, "cp1");
+      add_rows(cp2, "cp2"); add_rows(cp3, "cp3");
+    }
+    return;
+  }
 
   for (int t = 0; t < N_; t++) {
     std::vector<GRBVar> row;
@@ -4683,11 +4721,108 @@ bool SolverGurobi::controlPointDependsOnD3OrD4OrD5(ConstraintType type, int seg,
 
 double SolverGurobi::getFactorThatWorked() { return factor_that_worked_; }
 
+void SolverGurobi::buildPlanningModel(double factor) {
+  using clk = std::chrono::steady_clock;
+  using dur = std::chrono::duration<double>;
+  last_solve_timing_ = SolveTimingBreakdown{};
+
+  auto t0 = clk::now();
+  findDT(factor);
+  auto t1 = clk::now();
+  last_solve_timing_.findDT_ms = 1e3 * dur(t1 - t0).count();
+
+  if (usingFaster_() || !using_variable_elimination_) {
+    setXFaster_();
+    setConstraintsX0();
+    setConstraintsXf();
+    setContinuityConstraints();
+  } else {
+    setX();
+  }
+  auto t2 = clk::now();
+  last_solve_timing_.setX_ms = 1e3 * dur(t2 - t1).count();
+
+  setPolytopesConstraints();
+  auto t3 = clk::now();
+  last_solve_timing_.polytopes_ms = 1e3 * dur(t3 - t2).count();
+
+  setDynamicConstraints();
+  auto t4 = clk::now();
+  last_solve_timing_.dynamic_ms = 1e3 * dur(t4 - t3).count();
+
+  setObjective();
+  auto t5 = clk::now();
+  last_solve_timing_.objective_ms = 1e3 * dur(t5 - t4).count();
+
+  setMapSizeConstraints();
+  auto t6 = clk::now();
+  last_solve_timing_.mapsize_ms = 1e3 * dur(t6 - t5).count();
+}
+
 bool SolverGurobi::generateNewTrajectory(
     bool& gurobi_error_detected,
     double& gurobi_computation_time,
     double factor,
-    bool use_single_thread) {
+    bool use_single_thread,
+    const sando_learning::Assignment* assignment) {
+  gurobi_error_detected = false;
+  gurobi_computation_time = 0.0;
+  solver_error_ = false;
+  last_solve_timing_ = SolveTimingBreakdown{};
+  objective_value_ = std::numeric_limits<double>::quiet_NaN();
+#ifdef SANDO_USE_AMPL
+  model_ready_ = false;
+  model_solve_attempted_ = false;
+  last_constraint_residuals_ = nullptr;
+  last_validation_ms_ = 0.0;
+  last_assignment_.clear();
+  model_is_direct_qp_ = false;
+#endif
+  try {
+    (void)sando_time::segmentDuration(initial_dt_, dc_, factor);
+  } catch (const std::invalid_argument&) {
+    return false;
+  }
+  // Validate before changing dt, variables, or constraints.  Learned corridor
+  // assignments are defined only for the fixed five-segment SANDO formulation.
+  if (assignment != nullptr) {
+    if (planner_name_ != "SANDO" || dynamic_constraint_type_ != "Linf" || N_ != 5 ||
+        use_single_thread)
+      return false;
+    if (assignment->size() != static_cast<size_t>(N_) || !hasPolytopes_()) return false;
+    const int P = numSpatialPolys_();
+    if (P <= 0 || P > 3 || (use_time_layered_polytopes_ &&
+                   polytopes_time_layered_.size() != static_cast<size_t>(N_ * P)))
+      return false;
+    for (int t = 0; t < N_; ++t) {
+      const int p = (*assignment)[t];
+      if (p < 0 || p >= P) return false;
+      for (int candidate = 0; candidate < P; ++candidate) {
+        const auto& poly = polyAt_(t, candidate);
+        const auto A = poly.A();
+        const auto bb = poly.b();
+        if (A.rows() != bb.rows() || A.cols() != 3) return false;
+        if (bb.rows() == 0) {
+          if (candidate == p) return false;
+          continue;
+        }
+        for (int i = 0; i < A.size(); ++i) if (!std::isfinite(A(i))) return false;
+        for (int i = 0; i < bb.size(); ++i) if (!std::isfinite(bb(i))) return false;
+        for (int r = 0; r < A.rows(); ++r) {
+          const double normal_norm = std::sqrt(A(r, 0) * A(r, 0) + A(r, 1) * A(r, 1) +
+                                               A(r, 2) * A(r, 2));
+          if (!std::isfinite(normal_norm) || normal_norm == 0.0) return false;
+        }
+      }
+    }
+  }
+  struct AssignmentRestore {
+    const sando_learning::Assignment*& slot;
+    const sando_learning::Assignment* previous;
+    ~AssignmentRestore() { slot = previous; }
+  } assignment_restore{active_assignment_, active_assignment_};
+  active_assignment_ = assignment;
+
   // Use sequential factor sweeping for FASTER
   if (use_single_thread) {
     double factor_used = factor;
@@ -4699,52 +4834,35 @@ bool SolverGurobi::generateNewTrajectory(
   }
 
   bool solved = false;
-  last_solve_timing_ = SolveTimingBreakdown{};
-
   using clk = std::chrono::steady_clock;
   using dur = std::chrono::duration<double>;
 
   try {
     if (cb_.should_terminate_) return false;
 
-    auto t0 = clk::now();
-    findDT(factor);
-    auto t1 = clk::now();
-    last_solve_timing_.findDT_ms = 1e3 * dur(t1 - t0).count();
-
-    if (usingFaster_() || !using_variable_elimination_) {
-      setXFaster_();
-      setConstraintsX0();
-      setConstraintsXf();
-      setContinuityConstraints();
-    } else {
-      setX();
-    }
-    auto t2 = clk::now();
-    last_solve_timing_.setX_ms = 1e3 * dur(t2 - t1).count();
-
-    setPolytopesConstraints();
-    auto t3 = clk::now();
-    last_solve_timing_.polytopes_ms = 1e3 * dur(t3 - t2).count();
-
-    setDynamicConstraints();
-    auto t4 = clk::now();
-    last_solve_timing_.dynamic_ms = 1e3 * dur(t4 - t3).count();
-
-    setObjective();
-    auto t5 = clk::now();
-    last_solve_timing_.objective_ms = 1e3 * dur(t5 - t4).count();
-
-    setMapSizeConstraints();
+    buildPlanningModel(factor);
     auto t6 = clk::now();
-    last_solve_timing_.mapsize_ms = 1e3 * dur(t6 - t5).count();
 
+#ifdef SANDO_USE_AMPL
+    model_ready_ = true;
+    model_factor_ = factor;
+    model_is_direct_qp_ = assignment != nullptr;
+#endif
     if (cb_.should_terminate_) return false;
 
+#ifdef SANDO_USE_AMPL
+    model_solve_attempted_ = true;
+#endif
     solved = callOptimizer();
     auto t7 = clk::now();
     last_solve_timing_.callOptimizer_ms = 1e3 * dur(t7 - t6).count();
+    gurobi_computation_time = m_.get(GRB_DoubleAttr_Runtime) * 1000;
 
+    if (cb_.should_terminate_) {
+      // Keep the current completed model for capture, but never accept its
+      // trajectory. Calls cancelled before building still have model_ready_=false.
+      return false;
+    }
     if (solved) {
       gurobi_computation_time = m_.get(GRB_DoubleAttr_Runtime) * 1000;
       initializeGoalSetpoints();
@@ -4759,6 +4877,10 @@ bool SolverGurobi::generateNewTrajectory(
         else if (N_ == 6)
           getDependentCoefficientsN6Double();
       }
+#ifdef SANDO_USE_AMPL
+      if (assignment != nullptr) last_assignment_ = *assignment;
+      else last_assignment_ = recoverAssignmentFromModel();
+#endif
     }
     auto t8 = clk::now();
     last_solve_timing_.postsolve_ms = 1e3 * dur(t8 - t7).count();
@@ -4767,9 +4889,22 @@ bool SolverGurobi::generateNewTrajectory(
     std::cerr << "SANDO AMPL solver error: " << error.getMessage() << std::endl;
 #endif
     gurobi_error_detected = true;
+    solver_error_ = true;
+    solved = false;
+#ifdef SANDO_USE_AMPL
+    model_ready_ = false;
+#endif
+  } catch (const std::exception& error) {
+    std::cerr << "SANDO solver error: " << error.what() << std::endl;
+    gurobi_error_detected = true;
+    solver_error_ = true;
+    solved = false;
+#ifdef SANDO_USE_AMPL
+    model_ready_ = false;
+#endif
   }
 
-  return solved;
+  return solved && !cb_.should_terminate_;
 }
 
 bool SolverGurobi::generateNewTrajectorySequentialFactors(
@@ -4818,6 +4953,10 @@ bool SolverGurobi::generateNewTrajectorySequentialFactors(
       setObjective();
       setMapSizeConstraints();
       solved = callOptimizer();
+      if (cb_.should_terminate_) {
+        solved = false;
+        break;
+      }
       if (solved) {
         initializeGoalSetpoints();
         factor_that_worked = f;
@@ -4848,14 +4987,369 @@ bool SolverGurobi::generateNewTrajectorySequentialFactors(
   return solved;
 }
 
+#ifdef SANDO_USE_AMPL
+sando_learning::PlanningInstance SolverGurobi::makePlanningGeometry(double factor) const {
+  sando_learning::PlanningInstance instance;
+  instance.n = N_;
+  instance.norm = dynamic_constraint_type_;
+  instance.planner = planner_name_;
+  instance.factor = factor;
+  instance.initial_dt = initial_dt_;
+  instance.dc = dc_;
+  instance.segment_dt = sando_time::segmentDuration(initial_dt_, dc_, factor);
+  instance.t0 = t0_;
+  for (int i = 0; i < 9; ++i) {
+    instance.start[static_cast<std::size_t>(i)] = x0_[i];
+    instance.goal[static_cast<std::size_t>(i)] = xf_[i];
+  }
+  instance.map_bounds = {x_min_, x_max_, y_min_, y_max_, z_min_, z_max_};
+
+  const int P = numSpatialPolys_();
+  instance.corridors.resize(static_cast<std::size_t>(N_));
+  instance.valid_mask.resize(static_cast<std::size_t>(N_));
+  instance.assignment_variables.resize(static_cast<std::size_t>(N_));
+  for (int t = 0; t < N_; ++t) {
+    instance.corridors[t].resize(static_cast<std::size_t>(std::max(0, P)));
+    instance.valid_mask[t].resize(static_cast<std::size_t>(std::max(0, P)), false);
+    // Geometry instances intentionally have no model variable ids. Keeping
+    // the shape makes them validatable with require_model=false.
+    instance.assignment_variables[t].assign(static_cast<std::size_t>(std::max(0, P)), 0);
+    for (int p = 0; p < P; ++p) {
+      const auto A = polyAt_(t, p).A();
+      const auto bb = polyAt_(t, p).b();
+      auto& corridor = instance.corridors[t][p];
+      if (A.cols() != 3 || A.rows() != bb.rows()) continue;
+      corridor.planes.reserve(static_cast<std::size_t>(bb.rows()));
+      bool valid = bb.rows() > 0;
+      for (int r = 0; r < bb.rows(); ++r) {
+        std::array<double, 4> plane{A(r, 0), A(r, 1), A(r, 2), bb(r)};
+        corridor.planes.push_back(plane);
+        for (double value : plane) valid = valid && std::isfinite(value);
+        const double normal = std::hypot(std::hypot(plane[0], plane[1]), plane[2]);
+        valid = valid && std::isfinite(normal) && normal > 0.0;
+      }
+      instance.valid_mask[t][p] = valid;
+    }
+  }
+  sando_learning::validateInstance(instance, false);
+  return instance;
+}
+
+sando_learning::PlanningInstance SolverGurobi::getPlanningGeometry(double factor) const {
+  return makePlanningGeometry(factor);
+}
+
+sando_learning::Assignment SolverGurobi::recoverAssignmentFromModel() const {
+  sando_learning::Assignment result(static_cast<std::size_t>(N_), -1);
+  if (b_.size() != static_cast<std::size_t>(N_)) return {};
+  for (int t = 0; t < N_; ++t) {
+    for (std::size_t p = 0; p < b_[t].size(); ++p) {
+      if (b_[t][p].get(GRB_DoubleAttr_X) > 0.5 && polyAt_(t, p).b().rows() > 0) {
+        result[t] = static_cast<int>(p);
+        break;
+      }
+    }
+  }
+  if (std::any_of(result.begin(), result.end(), [](int p) { return p < 0; })) return {};
+  return result;
+}
+
+void SolverGurobi::setCorridorPolicy(
+    std::shared_ptr<const sando_learning::CorridorPolicy> policy,
+    CorridorMethod method,
+    sando_learning::Assignment previous) {
+  corridor_policy_ = std::move(policy);
+  corridor_method_ = method;
+  previous_assignment_ = std::move(previous);
+}
+
+bool SolverGurobi::generateWithCorridorPolicy(
+    bool& gurobi_error_detected, double& gurobi_computation_time, double factor) {
+  using clk = std::chrono::steady_clock;
+  using dur = std::chrono::duration<double, std::milli>;
+  const auto started = clk::now();
+  // Invalidate capture even when cancellation exits before model construction.
+  model_ready_ = false;
+  model_solve_attempted_ = false;
+  model_is_direct_qp_ = false;
+  gurobi_error_detected = false;
+  gurobi_computation_time = 0.0;
+  policy_metrics_ = {
+      {"proposed_assignments", nlohmann::json::array()},
+      {"accepted_assignment", nullptr},
+      {"attempts", nlohmann::json::array()},
+      {"total_ms", 0.0}, {"ranking_ms", 0.0}, {"qp_ms", 0.0},
+      {"fallback_ms", 0.0}, {"model_prepare_ms", 0.0},
+      {"fallback_used", false}, {"fallback_reason", ""}, {"cancelled", false}};
+
+  const auto finish = [&](bool result) {
+    policy_metrics_["total_ms"] = dur(clk::now() - started).count();
+    policy_metrics_["cancelled"] = cb_.should_terminate_.load();
+    return result && !cb_.should_terminate_.load();
+  };
+  const auto cancelled = [&]() { return cb_.should_terminate_.load(); };
+  if (cancelled()) {
+    policy_metrics_["fallback_reason"] = "cancelled";
+    policy_metrics_["cancelled"] = true;
+    return finish(false);
+  }
+
+  sando_learning::PlanningInstance geometry;
+  if (corridor_method_ != CorridorMethod::Original) try {
+    if (cancelled()) return finish(false);
+    geometry = getPlanningGeometry(factor);
+  } catch (const std::exception& error) {
+    policy_metrics_["fallback_reason"] = "invalid_geometry";
+    std::cerr << "SANDO corridor policy: invalid geometry: " << error.what() << '\n';
+  }
+  if (cancelled()) return finish(false);
+
+  const bool supported = geometry.n == 5 && geometry.norm == "Linf" &&
+      geometry.planner == "SANDO" && geometry.corridors.size() == 5 &&
+      !geometry.corridors.empty() && geometry.corridors.front().size() > 0 &&
+      geometry.corridors.front().size() <= 3;
+  std::vector<sando_learning::Assignment> candidates;
+  if (corridor_method_ != CorridorMethod::Original && supported &&
+      policy_metrics_["fallback_reason"] != "invalid_geometry") {
+    try {
+      const auto all = sando_learning::enumerateAssignments(geometry);
+      if (corridor_method_ == CorridorMethod::Learned) {
+        if (!corridor_policy_) {
+          policy_metrics_["fallback_reason"] = "model_missing";
+          throw std::invalid_argument("corridor policy model is missing");
+        }
+        const auto ranking_started = clk::now();
+        const auto ranked = corridor_policy_->rank(geometry);
+        policy_metrics_["ranking_ms"] = dur(clk::now() - ranking_started).count();
+        if (cancelled()) return finish(false);
+        for (const auto& assignment : ranked) {
+          sando_learning::validateAssignment(geometry, assignment);
+          if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
+            candidates.push_back(assignment);
+          if (candidates.size() == 3) break;
+        }
+        if (candidates.size() > 3) candidates.resize(3);
+      } else if (corridor_method_ == CorridorMethod::Previous) {
+        if (!previous_assignment_.empty()) {
+          try {
+            sando_learning::validateAssignment(geometry, previous_assignment_);
+            candidates.push_back(previous_assignment_);
+          } catch (const std::exception&) {
+            policy_metrics_["fallback_reason"] = "previous_assignment_invalid";
+          }
+        }
+        for (const auto& assignment : all) {
+          if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
+            candidates.push_back(assignment);
+          if (candidates.size() == 3) break;
+        }
+      }
+    } catch (const std::exception& error) {
+      if (policy_metrics_["fallback_reason"].get<std::string>().empty())
+        policy_metrics_["fallback_reason"] = corridor_method_ == CorridorMethod::Learned
+            ? "model_invalid" : "input_abnormal";
+      std::cerr << "SANDO corridor policy: " << error.what() << '\n';
+      candidates.clear();
+    }
+  } else if (corridor_method_ != CorridorMethod::Original &&
+             policy_metrics_["fallback_reason"] != "invalid_geometry") {
+    policy_metrics_["fallback_reason"] = "unsupported_formulation";
+  }
+
+  if (cancelled()) return finish(false);
+  for (const auto& assignment : candidates)
+    policy_metrics_["proposed_assignments"].push_back(assignment);
+
+  const auto record_attempt = [&](const sando_learning::Assignment* assignment,
+                                  const char* kind, bool success, bool error,
+                                  double wall_ms, double backend_ms, double prepare_ms) {
+    nlohmann::json attempt{{"assignment", assignment ? nlohmann::json(*assignment) : nlohmann::json(nullptr)},
+                           {"kind", kind}, {"success", success},
+                           {"status", model_ready_ ? nlohmann::json(model_solve_attempted_
+                                ? m_.get(GRB_IntAttr_Status) : GRB_INTERRUPTED) : nlohmann::json(nullptr)},
+                           {"solve_attempted", model_solve_attempted_},
+                           {"residuals", last_constraint_residuals_},
+                           {"validation_ms", last_validation_ms_},
+                           {"error", error}, {"wall_ms", std::max(0.0, wall_ms)},
+                           {"backend_ms", std::max(0.0, backend_ms)},
+                           {"model_prepare_ms", std::max(0.0, prepare_ms)}};
+    policy_metrics_["attempts"].push_back(std::move(attempt));
+    policy_metrics_["model_prepare_ms"] = policy_metrics_["model_prepare_ms"].get<double>() + prepare_ms;
+  };
+
+  if (corridor_method_ != CorridorMethod::Original && supported && !candidates.empty()) {
+    for (const auto& assignment : candidates) {
+      if (cancelled()) return finish(false);
+      const auto attempt_started = clk::now();
+      bool error = false;
+      double backend = 0.0;
+      const bool solved = generateNewTrajectory(error, backend, factor, false, &assignment);
+      const double wall = dur(clk::now() - attempt_started).count();
+      const auto& timing = last_solve_timing_;
+      const double prepare = timing.findDT_ms + timing.setX_ms + timing.polytopes_ms +
+          timing.dynamic_ms + timing.objective_ms + timing.mapsize_ms;
+      record_attempt(&assignment, "qp", solved, error, wall, backend, prepare);
+      policy_metrics_["qp_ms"] = policy_metrics_["qp_ms"].get<double>() + wall;
+      gurobi_error_detected = gurobi_error_detected || error;
+      gurobi_computation_time += backend;
+      if (cancelled()) return finish(false);
+      if (solved) {
+        gurobi_error_detected = false;
+        policy_metrics_["accepted_assignment"] = assignment;
+        return finish(true);
+      }
+    }
+  }
+
+  if (cancelled()) return finish(false);
+  const bool using_policy_fallback = corridor_method_ != CorridorMethod::Original;
+  if (using_policy_fallback && policy_metrics_["fallback_reason"].get<std::string>().empty())
+    policy_metrics_["fallback_reason"] = candidates.empty() ? "no_candidate" : "candidate_exhausted";
+  if (cancelled()) return finish(false);
+  const auto fallback_started = clk::now();
+  policy_metrics_["fallback_used"] = using_policy_fallback;
+  bool fallback_error = false;
+  double fallback_backend = 0.0;
+  const bool fallback_solved = generateNewTrajectory(fallback_error, fallback_backend, factor);
+  const double fallback_wall = dur(clk::now() - fallback_started).count();
+  const auto& timing = last_solve_timing_;
+  const double prepare = timing.findDT_ms + timing.setX_ms + timing.polytopes_ms +
+      timing.dynamic_ms + timing.objective_ms + timing.mapsize_ms;
+  const auto recovered = fallback_solved ? last_assignment_ : sando_learning::Assignment{};
+  record_attempt(recovered.empty() ? nullptr : &recovered, "miqp", fallback_solved,
+                 fallback_error, fallback_wall, fallback_backend, prepare);
+  policy_metrics_["fallback_ms"] = using_policy_fallback ? fallback_wall : 0.0;
+  // A candidate backend error is recorded in its attempt, but a successful
+  // original fallback is still a successful planner request.
+  gurobi_error_detected = fallback_error;
+  gurobi_computation_time += fallback_backend;
+  if (fallback_solved && !recovered.empty()) policy_metrics_["accepted_assignment"] = recovered;
+  if (cancelled()) return finish(false);
+  return finish(fallback_solved);
+}
+
+sando_learning::PlanningInstance SolverGurobi::getPlanningInstance(double factor) const {
+  if (!model_ready_ || !std::isfinite(model_factor_) || factor != model_factor_)
+    throw std::runtime_error("planning model is not available for this factor");
+
+  sando_learning::PlanningInstance instance;
+  instance.n = N_;
+  instance.norm = dynamic_constraint_type_;
+  instance.planner = planner_name_;
+  instance.factor = factor;
+  instance.initial_dt = initial_dt_;
+  instance.dc = dc_;
+  const double expected_dt = sando_time::segmentDuration(initial_dt_, dc_, factor);
+  if (dt_.empty() || std::abs(dt_.front() - expected_dt) >
+                         sando_learning::kResidualTolerance * std::max(1.0, std::abs(expected_dt)))
+    throw std::runtime_error("planning model has inconsistent segment duration");
+  instance.segment_dt = expected_dt;
+  instance.t0 = t0_;
+  for (int i = 0; i < 9; ++i) {
+    instance.start[static_cast<size_t>(i)] = x0_[i];
+    instance.goal[static_cast<size_t>(i)] = xf_[i];
+  }
+  instance.map_bounds = {x_min_, x_max_, y_min_, y_max_, z_min_, z_max_};
+  const int P = numSpatialPolys_();
+  instance.corridors.resize(static_cast<size_t>(N_));
+  instance.valid_mask.resize(static_cast<size_t>(N_));
+  for (int t = 0; t < N_; ++t) {
+    instance.corridors[t].resize(static_cast<size_t>(P));
+    instance.valid_mask[t].resize(static_cast<size_t>(P), false);
+    for (int p = 0; p < P; ++p) {
+      const auto A = polyAt_(t, p).A();
+      const auto bb = polyAt_(t, p).b();
+      auto& corridor = instance.corridors[t][p];
+      if (A.cols() != 3 || A.rows() != bb.rows()) continue;
+      corridor.planes.reserve(static_cast<size_t>(bb.rows()));
+      bool valid = bb.rows() > 0;
+      for (int r = 0; r < bb.rows(); ++r) {
+        std::array<double, 4> plane{A(r, 0), A(r, 1), A(r, 2), bb(r)};
+        corridor.planes.push_back(plane);
+        for (double value : plane) valid = valid && std::isfinite(value);
+      }
+      instance.valid_mask[t][p] = valid;
+    }
+  }
+  instance.model = m_.snapshot();
+  instance.runtime = m_.runtimeParameters();
+  instance.assignment_variables.assign(static_cast<size_t>(N_),
+                                       std::vector<std::uint64_t>(static_cast<size_t>(P), 0));
+  for (const auto& variable : instance.model.variables) {
+    std::smatch match;
+    if (std::regex_match(variable.name, match, std::regex("s([0-9]+)_([0-9]+)"))) {
+      const int p = std::stoi(match[1].str()), t = std::stoi(match[2].str());
+      if (t >= 0 && t < N_ && p >= 0 && p < P) instance.assignment_variables[t][p] = variable.id;
+    }
+  }
+  for (int axis = 0; axis < 3; ++axis) {
+    instance.coefficients[axis].reserve(x_[axis].size());
+    for (const auto& expression : x_[axis]) {
+      sando_ampl::ExpressionSnapshot snapshot;
+      snapshot.constant = expression.constant();
+      for (const auto& term : expression.terms())
+        snapshot.linear.push_back({term.first, term.second});
+      instance.coefficients[axis].push_back(std::move(snapshot));
+    }
+  }
+  const int status = model_solve_attempted_ ? m_.get(GRB_IntAttr_Status) : GRB_INTERRUPTED;
+  instance.outcome["status"] = status;
+  instance.outcome["solve_attempted"] = model_solve_attempted_;
+  instance.outcome["cancelled"] = cb_.should_terminate_.load();
+  instance.outcome["objective"] = nullptr;
+  instance.outcome["solution_values"] = nlohmann::json::object();
+  if (status == GRB_OPTIMAL) {
+    instance.outcome["objective"] = m_.get(GRB_DoubleAttr_ObjVal);
+    for (const auto& [id, value] : m_.solutionValues())
+      instance.outcome["solution_values"][std::to_string(id)] = value;
+  }
+  instance.outcome["previous_appended_assignment"] = previous_assignment_;
+  instance.outcome["residuals"] = model_solve_attempted_ ? last_constraint_residuals_ : nlohmann::json(nullptr);
+  if (!policy_metrics_.empty()) instance.outcome["policy_metrics"] = policy_metrics_;
+  return instance;
+}
+
+sando_learning::PlanningInstance SolverGurobi::captureExpertInstance(double factor) {
+  if (!model_ready_ || !std::isfinite(model_factor_) || factor != model_factor_)
+    throw std::runtime_error("planning model is not available for this factor");
+
+  // An original MIQP is already a complete expert instance. A direct QP is
+  // rebuilt as an unsolved original MIQP so no QP outcome is mislabeled as an
+  // expert solution.
+  if (!model_is_direct_qp_) return getPlanningInstance(factor);
+  const nlohmann::json saved_metrics = policy_metrics_;
+  const sando_learning::Assignment saved_assignment = last_assignment_;
+  active_assignment_ = nullptr;
+  model_ready_ = false;
+  model_solve_attempted_ = false;
+  buildPlanningModel(factor);
+  model_ready_ = true;
+  model_factor_ = factor;
+  model_is_direct_qp_ = false;
+  last_assignment_ = saved_assignment;
+
+  auto instance = getPlanningInstance(factor);
+  instance.outcome["status"] = nullptr;
+  instance.outcome["original_status"] = "not_run";
+  instance.outcome["solve_attempted"] = false;
+  instance.outcome["cancelled"] = cb_.should_terminate_.load();
+  instance.outcome["objective"] = nullptr;
+  instance.outcome["solution_values"] = nlohmann::json::object();
+  instance.outcome["policy_metrics"] = saved_metrics;
+  return instance;
+}
+#endif
+
 void SolverGurobi::setInitialDt(double initial_dt) { initial_dt_ = initial_dt; }
 
 void SolverGurobi::findDT(double factor) {
   // Clear the previous dt
+  const double segment_dt = sando_time::segmentDuration(initial_dt_, dc_, factor);
   dt_.clear();
 
   // FASTER's approach
-  for (int i = 0; i < N_; i++) dt_.push_back(factor * std::max(initial_dt_, 2 * dc_));
+  for (int i = 0; i < N_; i++)
+    dt_.push_back(segment_dt);
 
   // Compute total_traj_time_, which is used to fill goal_setpoints_
   total_traj_time_ = std::accumulate(dt_.begin(), dt_.end(), 0.0);
@@ -4981,10 +5475,23 @@ bool SolverGurobi::callOptimizer() {
   // Optimize
   m_.optimize();
 
+  // An interrupted solve must never be reported as an accepted solution,
+  // even if the backend happened to return an optimal status while stopping.
+  if (cb_.should_terminate_) return false;
+
   int optimstatus = m_.get(GRB_IntAttr_Status);
 
   // Check if the optimization was successful
   if (optimstatus == GRB_OPTIMAL) {
+#ifdef SANDO_USE_AMPL
+    const auto validation_started = std::chrono::steady_clock::now();
+    const auto residuals = sando_learning::checkResiduals(
+        m_.snapshot(), m_.solutionValues(), m_.get(GRB_DoubleAttr_ObjVal));
+    last_validation_ms_ = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - validation_started).count();
+    last_constraint_residuals_ = sando_learning::residualsToJson(residuals);
+    if (!residuals.valid || cb_.should_terminate_) return false;
+#endif
     solved = true;
     objective_value_ = m_.get(GRB_DoubleAttr_ObjVal);
   } else {

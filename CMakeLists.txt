@@ -58,7 +58,8 @@ if(SANDO_USE_AMPL)
   find_library(AMPLS_GUROBI NAMES gurobi130 PATHS "${AMPLS_GUROBI_DIR}" NO_DEFAULT_PATH REQUIRED)
   find_package(Threads REQUIRED)
   add_library(sando_ampl_backend STATIC
-    src/sando/ampl_model.cpp src/sando/ampls_runtime.cpp
+    src/sando/ampl_model.cpp src/sando/ampl_centering.cpp src/sando/ampls_runtime.cpp src/sando/planning_instance.cpp
+    src/sando/instance_reservoir.cpp src/sando/corridor_policy.cpp
     "${AMPLS_ROOT}/cpp/ampls/src/ampls.cpp"
     "${AMPLS_ROOT}/cpp/ampls/src/csvReader.cpp"
     "${AMPLS_ROOT}/cpp/gurobi/src/gurobi_interface.cpp"
@@ -68,9 +69,21 @@ if(SANDO_USE_AMPL)
     PRIVATE "${AMPLS_ROOT}/cpp/ampls/include" "${AMPLS_ROOT}/cpp/gurobi/include")
   target_compile_definitions(sando_ampl_backend PUBLIC SANDO_USE_AMPL=1)
   target_compile_options(sando_ampl_backend PRIVATE -fno-fast-math)
-  target_link_libraries(sando_ampl_backend PUBLIC "${AMPLS_DRIVER}" "${AMPLS_GUROBI}" Threads::Threads ${CMAKE_DL_LIBS})
+  target_link_libraries(sando_ampl_backend PUBLIC "${AMPLS_DRIVER}" "${AMPLS_GUROBI}" Threads::Threads ${CMAKE_DL_LIBS} nlohmann_json::nlohmann_json Eigen3::Eigen)
   set(CMAKE_INSTALL_RPATH "${AMPLS_DRIVER_DIR};${AMPLS_GUROBI_DIR}")
   set(GUROBI_LIBRARIES sando_ampl_backend)
+  add_executable(label_planning_instances src/sando/label_planning_instances.cpp)
+  target_link_libraries(label_planning_instances sando_ampl_backend)
+  target_compile_options(label_planning_instances PRIVATE -fno-fast-math)
+  install(TARGETS label_planning_instances DESTINATION lib/${PROJECT_NAME})
+  add_executable(replay_integer_planning src/sando/replay_integer_planning.cpp)
+  target_link_libraries(replay_integer_planning sando_ampl_backend)
+  target_compile_options(replay_integer_planning PRIVATE -fno-fast-math)
+  install(TARGETS replay_integer_planning DESTINATION lib/${PROJECT_NAME})
+  add_executable(corridor_policy_probe tests/ampls/corridor_policy_probe.cpp)
+  target_link_libraries(corridor_policy_probe sando_ampl_backend)
+  target_compile_options(corridor_policy_probe PRIVATE -fno-fast-math)
+  install(TARGETS corridor_policy_probe DESTINATION lib/${PROJECT_NAME})
 else()
 # Native Gurobi reference backend
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
@@ -103,6 +116,8 @@ add_definitions(${PCL_DEFINITIONS})
 
 # add executables
 add_library(sando_planner STATIC src/sando/sando.cpp src/hgp/hgp_manager.cpp src/hgp/utils.cpp src/hgp/hgp_planner.cpp src/hgp/graph_search.cpp src/sando/utils.cpp src/sando/gurobi_solver.cpp)
+# Nonfinite input checks must remain effective in every comparison group.
+target_compile_options(sando_planner PRIVATE -fno-fast-math)
 target_link_libraries(sando_planner ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
 ament_target_dependencies(sando_planner rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
 add_executable(sando src/sando/sando_node.cpp)
@@ -186,6 +201,7 @@ target_link_libraries(visualize_local_trajs_node sando_planner)
 ament_target_dependencies(visualize_local_trajs_node rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
 
 add_executable(temporal_layered_corridor_test_node src/sando/temporal_layered_corridor_test_node.cpp)
+target_compile_options(temporal_layered_corridor_test_node PRIVATE -fno-fast-math -O1)
 target_link_libraries(temporal_layered_corridor_test_node sando_planner)
 ament_target_dependencies(temporal_layered_corridor_test_node rclcpp visualization_msgs std_msgs geometry_msgs Eigen3 decomp_util decomp_ros_msgs decomp_rviz_plugins decomp_test_node tf2 tf2_ros tf2_geometry_msgs tf2_eigen std_srvs pcl_ros pcl_conversions sensor_msgs dynus_interfaces)
 
@@ -258,10 +274,78 @@ install(PROGRAMS
 
 if(SANDO_USE_AMPL)
   enable_testing()
+  add_executable(segment_time_test tests/ampl_model/test_segment_time.cpp)
+  target_include_directories(segment_time_test PRIVATE include)
+  target_compile_options(segment_time_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME segment_time_consistency COMMAND segment_time_test)
+
+  add_executable(planning_instance_test tests/ampl_model/test_planning_instance.cpp)
+  target_link_libraries(planning_instance_test sando_ampl_backend)
+  target_compile_options(planning_instance_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME planning_instance_roundtrip COMMAND planning_instance_test)
+
+  add_executable(instance_reservoir_test tests/ampl_model/test_instance_reservoir.cpp)
+  target_link_libraries(instance_reservoir_test sando_ampl_backend)
+  target_compile_options(instance_reservoir_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME instance_reservoir_sampling COMMAND instance_reservoir_test)
+
+  add_executable(candidate_costs_test tests/ampl_model/test_candidate_costs.cpp src/sando/label_planning_instances.cpp)
+  target_compile_definitions(candidate_costs_test PRIVATE SANDO_LABEL_PLANNING_INSTANCES_NO_MAIN=1)
+  target_link_libraries(candidate_costs_test sando_ampl_backend)
+  target_compile_options(candidate_costs_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME candidate_costs_complete COMMAND candidate_costs_test)
+
+  add_executable(corridor_policy_test tests/ampl_model/test_corridor_policy.cpp)
+  target_link_libraries(corridor_policy_test sando_ampl_backend)
+  target_compile_options(corridor_policy_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME corridor_policy_features COMMAND corridor_policy_test)
+
+  add_executable(integer_replay_test tests/ampl_model/test_integer_replay.cpp)
+  target_link_libraries(integer_replay_test sando_ampl_backend)
+  target_compile_options(integer_replay_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME integer_replay_methods COMMAND integer_replay_test)
+
+  add_executable(assignment_probe tests/ampls/assignment_probe.cpp)
+  target_link_libraries(assignment_probe sando_planner)
+  target_compile_options(assignment_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(assignment_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME assignment_qp_equivalence COMMAND assignment_probe)
+  set_tests_properties(assignment_qp_equivalence PROPERTIES TIMEOUT 180)
+
+  add_executable(online_corridor_probe tests/ampls/online_corridor_probe.cpp)
+  target_link_libraries(online_corridor_probe sando_planner)
+  target_compile_options(online_corridor_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(online_corridor_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME online_corridor_candidates COMMAND online_corridor_probe)
+  set_tests_properties(online_corridor_candidates PROPERTIES TIMEOUT 180)
+
+  add_test(NAME baseline_capture_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_capture.py")
+  add_test(NAME baseline_arrival_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_sim.py")
+  add_test(NAME integer_capture_campaign COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_capture_campaign.py")
+  add_test(NAME integer_label_report COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_integer_label_report.py")
+  add_test(NAME integer_evaluation_campaign COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_integer_evaluation_campaign.py")
+  add_test(NAME integer_evaluation_report COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_integer_evaluation_report.py")
+  add_test(NAME urdf_mesh_resources COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/check_urdf_meshes.py")
   add_executable(ampl_model_test tests/ampl_model/test_ampl_model.cpp src/sando/ampl_model.cpp)
   target_include_directories(ampl_model_test PRIVATE include)
   target_compile_options(ampl_model_test PRIVATE -UNDEBUG -fno-fast-math)
   add_test(NAME ampl_model_expressions COMMAND ampl_model_test)
+
+  add_executable(ampl_centering_test tests/ampl_model/test_ampl_centering.cpp)
+  target_link_libraries(ampl_centering_test sando_ampl_backend)
+  target_compile_options(ampl_centering_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME ampl_objective_centering COMMAND ampl_centering_test)
+
+  add_executable(numeric_focus_probe tests/ampls/numeric_focus_probe.cpp)
+  target_link_libraries(numeric_focus_probe sando_ampl_backend)
+  target_compile_options(numeric_focus_probe PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME ampl_numeric_conditioning COMMAND numeric_focus_probe "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampls/fixtures/translated_trajectory.json")
+  add_test(NAME ampl_numeric_conditioning_second COMMAND numeric_focus_probe "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampls/fixtures/translated_trajectory_second.json" "64294.3349625")
+  add_test(NAME ampl_numeric_centering_persistent COMMAND numeric_focus_probe
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampls/fixtures/translated_trajectory.json" "91659.8128"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampls/fixtures/translated_trajectory_second.json" "64294.3349625")
+  set_tests_properties(ampl_numeric_conditioning ampl_numeric_conditioning_second ampl_numeric_centering_persistent PROPERTIES TIMEOUT 180)
+  set_tests_properties(ampl_numeric_centering_persistent PROPERTIES ENVIRONMENT "SANDO_AMPL_MODE=persistent;SANDO_AMPL_VERIFY_UPDATES=1")
 
   add_executable(ampl_adapter_probe tests/ampls/adapter_probe.cpp)
   target_link_libraries(ampl_adapter_probe sando_ampl_backend)
