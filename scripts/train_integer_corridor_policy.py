@@ -18,6 +18,15 @@ import torch.nn.functional as F
 
 from integer_corridor_policy import FEATURE_SPEC, CorridorPolicy, valid_assignments
 from integer_corridor_training_batch import batched_scores, prepare_records
+from integer_set_supervision import (
+    PURPOSE_COMPLETE,
+    PURPOSE_EXPERT,
+    SET_COST_WEIGHT,
+    WARMUP_EPOCHS,
+    assignment_tuple,
+    near_optimal_mask,
+    set_supervision_loss_torch,
+)
 
 _INSTANCE_KEYS = ("schema_version", "n", "norm", "planner", "scene_id", "episode_id", "request_id", "factor_id", "source_id", "config_id", "factor", "initial_dt", "dc", "segment_dt", "planning_start_time", "observation_time", "t0", "start", "goal", "map_bounds", "corridors", "valid_mask", "assignment_variables", "outcome")
 
@@ -106,7 +115,44 @@ def _validated_record(record: dict[str, Any]) -> dict[str, Any] | None:
     best = min(assignment for assignment, candidate in zip(expected, ordered)
                if candidate.get("classification") == "feasible"
                and float(candidate["cost"]) <= minimum_cost + 2e-6)
-    return {"instance": instance, "assignments": expected, "candidates": ordered, "best": expected.index(best)}
+    good = [bool(flag) for flag in near_optimal_mask(ordered)]
+    return {"instance": instance, "assignments": expected, "candidates": ordered,
+            "best": expected.index(best), "good_mask": good, "record_purpose": PURPOSE_COMPLETE,
+            "costs_complete": True}
+
+
+def _validated_expert_record(record: dict[str, Any]) -> dict[str, Any] | None:
+    instance = _instance(record)
+    expected = valid_assignments(instance)
+    if not expected:
+        return None
+    good = [assignment_tuple(item) for item in record.get("good_assignments") or []]
+    if not good or any(item not in expected for item in good):
+        return None
+    demonstration = record.get("demonstration")
+    if not isinstance(demonstration, dict):
+        raise ValueError("expert demo requires a demonstration object")
+    demo_assignment = assignment_tuple(demonstration.get("assignment"))
+    if demo_assignment not in good:
+        raise ValueError("demonstration assignment is not in the good set")
+    return {
+        "instance": instance,
+        "assignments": expected,
+        "candidates": [{"assignment": list(item), "classification": "not_solved", "raw_objective": None, "cost": None}
+                       for item in expected],
+        "best": expected.index(demo_assignment),
+        "good_mask": [item in set(good) for item in expected],
+        "record_purpose": PURPOSE_EXPERT,
+        "costs_complete": False,
+    }
+
+
+def _parse_record(record: dict[str, Any]) -> dict[str, Any] | None:
+    purpose = record.get("record_purpose")
+    if purpose == PURPOSE_EXPERT or (purpose is None and record.get("costs_complete") is not True
+                                     and record.get("good_assignments")):
+        return _validated_expert_record(record)
+    return _validated_record(record)
 
 
 def load_labelled(path: str | Path, validation: bool = False, statistics=None) -> list[dict[str, Any]]:
@@ -130,7 +176,7 @@ def load_labelled(path: str | Path, validation: bool = False, statistics=None) -
                     raise ValueError(f"duplicate planning instance in training inputs: {key}")
                 seen.add(key)
                 statistics["total"] += 1
-                parsed = _validated_record(record)
+                parsed = _parse_record(record)
                 if parsed is not None:
                     parsed["instance"] = _slim_instance(parsed["instance"])
                     parsed["candidates"] = [{key: candidate[key] for key in ("assignment", "classification", "raw_objective", "cost")} for candidate in parsed["candidates"]]
@@ -201,13 +247,20 @@ def validation_metric_batched(policy: CorridorPolicy, records: list[dict[str, An
     return float(np.mean(values))
 
 
+def _set_loss(scores: torch.Tensor, record: dict[str, Any]) -> torch.Tensor:
+    mask = torch.tensor(record["good_mask"], dtype=torch.bool)
+    return set_supervision_loss_torch(scores, mask)
+
+
 def train(train_records: list[dict[str, Any]], validation_records: list[dict[str, Any]], method: str, seed: int, epochs: int = 100, batch_size: int = 32, callback: Callable[[CorridorPolicy, dict[str, torch.Tensor], dict[str, Any]], None] | None = None) -> tuple[CorridorPolicy, dict[str, Any], list[dict[str, Any]]]:
-    if method not in ("bc", "cost"):
-        raise ValueError("method must be bc or cost")
+    if method not in ("bc", "cost", "set"):
+        raise ValueError("method must be bc, cost, or set")
     if seed not in (0, 1, 2):
         raise ValueError("seed must be 0, 1, or 2")
     if not train_records or not validation_records:
         raise ValueError("training and validation require at least one usable record")
+    if method == "cost" and any(not record.get("costs_complete") for record in train_records + validation_records):
+        raise ValueError("cost training requires complete cost tables")
     random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
     policy = CorridorPolicy()
     optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
@@ -225,10 +278,16 @@ def train(train_records: list[dict[str, Any]], validation_records: list[dict[str
             batch = [train_records[index] for index in batch_indices]
             logits = batched_scores(policy, [prepared_train[index] for index in batch_indices])
             ce_loss = torch.stack([F.cross_entropy(scores.reshape(1, -1), torch.tensor([record["best"]])) for scores, record in zip(logits, batch)]).mean()
+            set_loss = torch.stack([_set_loss(scores, record) for scores, record in zip(logits, batch)]).mean()
             loss = ce_loss
-            if method == "cost" and epoch > 20:
+            if method == "set":
+                loss = set_loss
+            if method == "cost" and epoch > WARMUP_EPOCHS:
                 expected_cost = torch.stack([torch.softmax(scores, dim=0).dot(_costs(record)) for scores, record in zip(logits, batch)]).mean()
-                loss = expected_cost + 0.1 * ce_loss
+                loss = expected_cost + SET_COST_WEIGHT * ce_loss
+            if method == "set" and epoch > WARMUP_EPOCHS and all(record.get("costs_complete") for record in batch):
+                expected_cost = torch.stack([torch.softmax(scores, dim=0).dot(_costs(record)) for scores, record in zip(logits, batch)]).mean()
+                loss = expected_cost + SET_COST_WEIGHT * set_loss
             loss.backward(); optimizer.step(); losses.append(float(loss.detach()))
         policy.eval()
         metric = validation_metric_batched(policy, validation_records, prepared_validation)
@@ -270,7 +329,7 @@ def main() -> int:
     parser.add_argument("--train", nargs="+", required=True)
     parser.add_argument("--validation", nargs="+", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--method", choices=("bc", "cost"), default="bc")
+    parser.add_argument("--method", choices=("bc", "cost", "set"), default="bc")
     parser.add_argument("--seed", type=int, choices=(0, 1, 2), default=0)
     parser.add_argument("--threads", type=int, default=4)
     args = parser.parse_args()

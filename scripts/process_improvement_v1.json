@@ -1,0 +1,18 @@
+{
+  "id": "process_improvement_v1",
+  "schema_version": 1,
+  "eps_rel": 0.01,
+  "j_scale": 1.0,
+  "eps_abs": 2e-6,
+  "label_tolerance_m": 2e-6,
+  "set_cost_weight": 0.1,
+  "warmup_epochs": 20,
+  "official_capture_capacity_round0": 10,
+  "official_capture_capacity_closed_loop": 5,
+  "dev_capture_capacity_round0": 20,
+  "dagger_batch_mix": 0.5,
+  "max_label_workers_during_official_capture": 1,
+  "unknown_retry_limit": 2,
+  "sampling_protocol_official": "uniform_reservoir_v1",
+  "sampling_protocol_dev": "uniform_plus_diverse_v1"
+}
