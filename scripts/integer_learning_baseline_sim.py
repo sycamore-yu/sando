@@ -772,7 +772,11 @@ def _run(args):
             capture_config_path = output_dir / "capture_config.json"
             _write_json(capture_config_path, {
                 "output": str(output_dir / "instances.jsonl"),
-                "capacity": 5 if args.capture_round else 10,
+                "capacity": (
+                    args.capture_capacity if getattr(args, "capture_capacity", None) is not None
+                    else (5 if args.capture_round else 10)
+                ),
+                "sampling_protocol": getattr(args, "sampling_protocol", "uniform_reservoir_v1"),
                 "seed": int.from_bytes(hashlib.sha256(
                     metadata["episode_id"].encode()).digest()[:8], "big"),
                 "metadata": metadata,
@@ -996,6 +1000,9 @@ def main():
     parser.add_argument("--setup-bash", type=Path, required=True)
     parser.add_argument("--capture", action="store_true")
     parser.add_argument("--capture-round", type=int, choices=(0, 1, 2), default=0)
+    parser.add_argument("--capture-capacity", type=int, default=None)
+    parser.add_argument("--sampling-protocol", choices=("uniform_reservoir_v1", "uniform_plus_diverse_v1"),
+                        default="uniform_reservoir_v1")
     parser.add_argument("--method", choices=("original", "previous", "bc", "cost", "closed_loop"), default="original")
     parser.add_argument("--policy", type=Path)
     parser.add_argument("--metrics", type=Path)

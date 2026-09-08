@@ -116,7 +116,9 @@ int main() {
     std::ofstream(occupied) << "foreign\n";
     assert(throws([&] { InstanceReservoir bad(occupied, 1, 1, metadata()); }));
     assert(throws([&] { InstanceReservoir bad(root / "new.jsonl", 0, 1, metadata()); }));
-    assert(throws([&] { InstanceReservoir bad(root / "new2.jsonl", 11, 1, metadata()); }));
+    assert(throws([&] { InstanceReservoir bad(root / "new2.jsonl", 21, 1, metadata()); }));
+    InstanceReservoir allowed(root / "cap20.jsonl", 20, 1, metadata());
+    assert(allowed.capacity() == 20);
     assert(throws([&] { InstanceReservoir bad(root / "new3.jsonl", 1, 1, {{"scene_id", "s"}}); }));
 
     std::filesystem::remove_all(root);

@@ -21,6 +21,7 @@ from integer_scene_protocol import (
     randomization_for_split,
     scene_id as protocol_scene_id,
 )
+from integer_instance_sampler import select_instances
 
 BASELINE = Path(__file__).with_name("integer_learning_baseline_sim.py")
 SEEDS = {
@@ -163,7 +164,8 @@ def _pilot_select(rows, target=100, seed=0):
     return selected[:target]
 
 
-def _run_config(config, output, setup_bash, capture_round):
+def _run_config(config, output, setup_bash, capture_round, capture_capacity=None,
+                sampling_protocol="uniform_reservoir_v1"):
     run_name = config.get("scene_id") or (
         f"seed{config['seed']}_n{config['num_obstacles']}_d{config['dynamic_ratio']:g}"
     )
@@ -178,6 +180,10 @@ def _run_config(config, output, setup_bash, capture_round):
         "--start-randomization", str(config.get("start_randomization", "none")),
         "--protocol-id", str(config.get("protocol_id", "legacy")),
     ]
+    if capture_capacity is not None:
+        command.extend(["--capture-capacity", str(capture_capacity)])
+    if sampling_protocol and sampling_protocol != "uniform_reservoir_v1":
+        command.extend(["--sampling-protocol", sampling_protocol])
     if config.get("method", "original") != "original":
         command.extend(["--method", config["method"]])
     if config.get("policy"):
@@ -280,11 +286,18 @@ def run_campaign(args):
     duplicate_count = 0
     required_invalid = False
     episode_counts = {}
-    limit = 10 if args.round == 0 else 5
+    capture_capacity = getattr(args, "capture_capacity", None)
+    if capture_capacity is not None and not 1 <= int(capture_capacity) <= 20:
+        raise ValueError("capture capacity must be between 1 and 20")
+    limit = int(capture_capacity) if capture_capacity is not None else (10 if args.round == 0 else 5)
+    sampling_protocol = getattr(args, "sampling_protocol", None) or "uniform_reservoir_v1"
     for index, config in enumerate(configs, 1):
         print(f"[campaign] {index}/{len(configs)} seed={config['seed']} n={config['num_obstacles']} ratio={config['dynamic_ratio']}", flush=True)
-        entry = _run_config(config, output, args.setup_bash.resolve(), args.round)
+        entry = _run_config(config, output, args.setup_bash.resolve(), args.round,
+                            capture_capacity=capture_capacity, sampling_protocol=sampling_protocol)
         captured_rows = entry.pop("rows")
+        if sampling_protocol == "uniform_plus_diverse_v1" and captured_rows:
+            captured_rows = select_instances(captured_rows, sampling_protocol, limit)
         if entry["excluded_reason"] and entry["excluded_reason"].startswith(("invalid_capture", "capturemissing")):
             if entry["success"] or entry["excluded_reason"].startswith("invalid_capture"):
                 required_invalid = True
@@ -380,6 +393,10 @@ def main(argv=None):
     parser.add_argument("--scene-families", nargs="+", dest="scene_families",
                         choices=("unknown_dynamic", "static_forest", "known_dynamic"))
     parser.add_argument("--start-randomization", choices=("none", "train_box_v1"))
+    parser.add_argument("--capture-capacity", type=int, dest="capture_capacity",
+                        help="optional per-episode retain cap in 1..20; default remains 10/5 by round")
+    parser.add_argument("--sampling-protocol", choices=("uniform_reservoir_v1", "uniform_plus_diverse_v1"),
+                        default="uniform_reservoir_v1")
     args = parser.parse_args(argv)
     try:
         return run_campaign(args)

@@ -20,8 +20,8 @@ InstanceReservoir::InstanceReservoir(std::filesystem::path output, std::size_t c
                                      std::uint64_t seed, nlohmann::json metadata)
     : output_(std::move(output)), capacity_(capacity), seed_(seed), metadata_(std::move(metadata)), rng_(seed) {
   if (output_.empty()) throw std::invalid_argument("reservoir output path is empty");
-  if (capacity_ == 0 || capacity_ > 10)
-    throw std::invalid_argument("reservoir capacity must be between 1 and 10");
+  if (capacity_ == 0 || capacity_ > 20)
+    throw std::invalid_argument("reservoir capacity must be between 1 and 20");
   validateMetadata(metadata_);
   const auto summary = summaryPath();
   if (std::filesystem::exists(output_))

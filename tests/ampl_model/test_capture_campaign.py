@@ -154,5 +154,35 @@ with tempfile.TemporaryDirectory() as temporary:
     assert families == {"unknown_dynamic", "static_forest"}
     assert len(aligned_calls) == 6
     assert all(item["start_randomization"] == "train_box_v1" for item in aligned_manifest["all_scene_configs"])
+    assert all("--capture-capacity" not in command for command in aligned_calls)
+
+    capacity_calls = []
+
+    def capacity_run(command, check=False):
+        # Legacy capacity path is not train_box_v1; do not reuse aligned_run asserts.
+        capacity_calls.append(command)
+        run_dir = Path(command[command.index("--output") + 1])
+        scene = run_dir.name
+        run_dir.mkdir(parents=True, exist_ok=True)
+        row = {"schema_version": 1, "scene_id": scene, "episode_id": f"{scene}:capture:r0",
+               "request_id": "0", "factor_id": "0", "source_id": "src", "config_id": "cfg",
+               "outcome": {"capture": {"split": "train", "capture_round": 0}}}
+        (run_dir / "instances.jsonl").write_text(json.dumps(row) + "\n")
+        (run_dir / "instances.jsonl.summary.json").write_text(json.dumps({
+            "total_eligible": 1, "invalid_reasons": {},
+            "metadata": {"scene_id": scene, "source_id": "src", "config_id": "cfg"},
+        }))
+        (run_dir / "result.json").write_text(json.dumps({"success": True, "capture": {"source_id": "src", "config_id": "cfg"}}))
+        return Completed()
+
+    campaign.subprocess.run = capacity_run
+    capacity_args = Namespace(output=root / "capacity20", setup_bash=setup, split="train", round=0,
+                              counts=[50], ratios=[0.65], seeds=[0], pilot=False,
+                              protocol="legacy", capture_capacity=20,
+                              sampling_protocol="uniform_plus_diverse_v1")
+    assert campaign.run_campaign(capacity_args) == 0
+    assert any("--capture-capacity" in command and "20" in command for command in capacity_calls)
+    assert any("--sampling-protocol" in command and "uniform_plus_diverse_v1" in command
+               for command in capacity_calls)
 
 print("PASS: campaign split/round validation, deterministic pilot subset, duplicate-safe manifest, failure accounting")
