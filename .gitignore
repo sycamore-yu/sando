@@ -16,6 +16,7 @@ __pycache__/
 data/
 benchmark_data/
 docker/results/
+docker/dev-workspace/
 
 # Large media (host externally)
 mp4/

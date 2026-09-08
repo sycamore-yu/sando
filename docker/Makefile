@@ -1,7 +1,8 @@
 .PHONY: build build-ampl build-no-cache run-demo run-interactive run-mac-interactive shell preflight stop \
         run-static-easy run-static-medium run-static-hard run-dynamic-easy \
         run-dynamic-medium run-dynamic-hard run-unknown-easy \
-        run-unknown-medium run-unknown-hard
+        run-unknown-medium run-unknown-hard \
+        dev-up dev-build dev-test dev-shell dev-status dev-down dev-freeze
 
 UNAME_S := $(shell uname -s)
 ROOT_DIR := $(abspath $(CURDIR)/..)
@@ -107,3 +108,36 @@ run-unknown-medium:
 	$(MAKE) run-demo SCENARIO=unknown_dynamic_medium
 run-unknown-hard:
 	$(MAKE) run-demo SCENARIO=unknown_dynamic_hard
+
+SANDO_DEV_IMAGE ?= sando-integer-centered:20260907
+SANDO_DEV_CONTAINER ?= sando-dev
+
+dev-up:
+	AMPL_UUID_FILE="$(AMPL_UUID_FILE)" SANDO_DEV_IMAGE="$(SANDO_DEV_IMAGE)" \
+	SANDO_DEV_CONTAINER="$(SANDO_DEV_CONTAINER)" BUILD_JOBS="$(BUILD_JOBS)" \
+	"$(CURDIR)/dev.sh" up
+
+dev-build:
+	AMPL_UUID_FILE="$(AMPL_UUID_FILE)" SANDO_DEV_IMAGE="$(SANDO_DEV_IMAGE)" \
+	SANDO_DEV_CONTAINER="$(SANDO_DEV_CONTAINER)" BUILD_JOBS="$(BUILD_JOBS)" \
+	"$(CURDIR)/dev.sh" build
+
+dev-test:
+	AMPL_UUID_FILE="$(AMPL_UUID_FILE)" SANDO_DEV_IMAGE="$(SANDO_DEV_IMAGE)" \
+	SANDO_DEV_CONTAINER="$(SANDO_DEV_CONTAINER)" BUILD_JOBS="$(BUILD_JOBS)" \
+	"$(CURDIR)/dev.sh" test
+
+dev-shell:
+	AMPL_UUID_FILE="$(AMPL_UUID_FILE)" SANDO_DEV_IMAGE="$(SANDO_DEV_IMAGE)" \
+	SANDO_DEV_CONTAINER="$(SANDO_DEV_CONTAINER)" "$(CURDIR)/dev.sh" shell
+
+dev-status:
+	AMPL_UUID_FILE="$(AMPL_UUID_FILE)" SANDO_DEV_IMAGE="$(SANDO_DEV_IMAGE)" \
+	SANDO_DEV_CONTAINER="$(SANDO_DEV_CONTAINER)" "$(CURDIR)/dev.sh" status
+
+dev-down:
+	SANDO_DEV_CONTAINER="$(SANDO_DEV_CONTAINER)" "$(CURDIR)/dev.sh" down
+
+dev-freeze:
+	SANDO_DEV_IMAGE="$(SANDO_DEV_IMAGE)" SANDO_DEV_CONTAINER="$(SANDO_DEV_CONTAINER)" \
+	"$(CURDIR)/dev.sh" freeze
