@@ -1445,6 +1445,9 @@ void SANDO_NODE::publishOwnTraj() {
 
   // Publish the trajectory
   pub_own_traj_->publish(msg);
+#ifdef SANDO_USE_AMPL
+  sando_ptr_->notePublishComplete();
+#endif
 }
 
 // ----------------------------------------------------------------------------

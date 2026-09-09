@@ -170,6 +170,55 @@ int main() {
             "fallback changed the requested factor");
     require(all_candidates_fail.solver.getLastAssignment() == accepted_fallback,
             "successful MIQP assignment was not retained");
+    require(all_candidates_fail.solver.corridorCandidateLimit() == 3,
+            "default candidate limit was not 3");
+    require(fallback_metrics.at("candidate_limit") == 3,
+            "default candidate limit was not recorded");
+    require(fallback_metrics.at("proposed_assignments").size() == 3,
+            "default Learned path did not propose three complete assignments");
+
+    Fixture one_candidate(true);
+    one_candidate.solver.setCorridorCandidateLimit(1);
+    require(one_candidate.solver.corridorCandidateLimit() == 1,
+            "candidate limit 1 was not stored");
+    one_candidate.solver.setCorridorPolicy(zeroPolicy(), SolverGurobi::CorridorMethod::Learned);
+    error = false;
+    require(one_candidate.solver.generateWithCorridorPolicy(error, backend_ms, 1.0) && !error,
+            "one failed QP did not fall back to the original MIQP");
+    const auto one_metrics = one_candidate.solver.getPolicyMetrics();
+    require(one_metrics.at("candidate_limit") == 1, "limit 1 was not recorded");
+    require(one_metrics.at("proposed_assignments").size() == 1,
+            "limit 1 did not propose exactly one complete assignment");
+    require(one_metrics.at("attempts").size() == 2,
+            "expected exactly one QP attempt and one MIQP fallback");
+    require(one_metrics.at("attempts").at(0).at("kind") == "qp" &&
+                !one_metrics.at("attempts").at(0).at("success").get<bool>(),
+            "the single proposed assignment unexpectedly solved");
+    require(one_metrics.at("attempts").at(1).at("kind") == "miqp" &&
+                one_metrics.at("attempts").at(1).at("success").get<bool>(),
+            "MIQP fallback did not solve after one failed QP");
+    require(one_metrics.at("fallback_used").get<bool>(),
+            "limit 1 did not record MIQP fallback");
+
+    Fixture invalid_limit;
+    bool threw_zero = false;
+    try {
+      invalid_limit.solver.setCorridorCandidateLimit(0);
+    } catch (const std::invalid_argument&) {
+      threw_zero = true;
+    }
+    require(threw_zero, "candidate limit 0 did not throw");
+    require(invalid_limit.solver.corridorCandidateLimit() == 3,
+            "invalid limit 0 changed the default");
+    bool threw_negative = false;
+    try {
+      invalid_limit.solver.setCorridorCandidateLimit(-1);
+    } catch (const std::invalid_argument&) {
+      threw_negative = true;
+    }
+    require(threw_negative, "negative candidate limit did not throw");
+    require(invalid_limit.solver.corridorCandidateLimit() == 3,
+            "invalid negative limit changed the default");
 
     Fixture cancelled;
     cancelled.solver.stopExecution();

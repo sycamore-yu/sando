@@ -111,6 +111,11 @@ class SANDO {
    */
   std::tuple<bool, bool> replan(double last_replaning_computation_time, double current_time);
 
+#ifdef SANDO_USE_AMPL
+  /** @brief Records publish_ms for the last replan (second JSONL event; does not alter total_ms). */
+  void notePublishComplete();
+#endif
+
   /** @brief Enables adaptive k-value computation based on accumulated replanning computation times.
    */
   void startAdaptKValue();
@@ -515,6 +520,9 @@ class SANDO {
   std::string replan_metrics_path_;
   double last_parallel_opt_ms_{0.0};
   double last_cancel_drain_ms_{0.0};
+  double last_usable_ms_{0.0};
+  double last_reclaim_ms_{0.0};
+  std::chrono::steady_clock::time_point last_replan_started_{};
   std::vector<double> last_replan_factors_;
   std::vector<nlohmann::json> last_factor_policy_metrics_;
   std::vector<double> last_replan_decomp_times_;

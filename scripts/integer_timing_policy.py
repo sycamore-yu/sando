@@ -6,6 +6,7 @@ import numpy as np
 FEATURE_SPEC = ("goal_position_delta", "start_velocity", "start_acceleration", "goal_velocity", "goal_acceleration", "initial_dt", "dc")
 FEATURE_DIM = 17
 LOG_BOUNDS = (math.log(1.0), math.log(5.0))
+SINGLE_LOG_BOUNDS = (math.log(1.0), math.log(2.5))
 
 def raw_features(instance):
     start, goal = instance["start"], instance["goal"]
@@ -33,8 +34,15 @@ def normalize(features, mean, std):
 
 def sample_logfactors(model, features, k=3):
     import torch
-    if k != 3: raise ValueError("timing policy requires K=3")
-    q = torch.tensor([-1.0, 0.0, 1.0], dtype=torch.float64)
+    single = model.get("schema_version") == 2
+    if single:
+        if k != 1: raise ValueError("timing policy requires K=1")
+        q = torch.tensor([0.0], dtype=torch.float64)
+        bounds = SINGLE_LOG_BOUNDS
+    else:
+        if k != 3: raise ValueError("timing policy requires K=3")
+        q = torch.tensor([-1.0, 0.0, 1.0], dtype=torch.float64)
+        bounds = LOG_BOUNDS
     x = torch.as_tensor(features, dtype=torch.float64)
     if x.shape != (FEATURE_DIM,) or not torch.isfinite(x).all():
         raise ValueError('invalid normalized timing features')
@@ -44,7 +52,7 @@ def sample_logfactors(model, features, k=3):
         values = value + residual * q
         if not torch.isfinite(values).all():
             raise ValueError('nonfinite timing prediction')
-        return torch.clamp(values, *LOG_BOUNDS)
+        return torch.clamp(values, *bounds)
     values = []
     for latent in q:
         state = latent
@@ -56,13 +64,17 @@ def sample_logfactors(model, features, k=3):
             state = state + velocity.reshape(()) / model.get("nfe", 1)
             if not torch.isfinite(state):
                 raise ValueError('nonfinite flow state')
-        values.append(torch.clamp(state, *LOG_BOUNDS))
+        values.append(torch.clamp(state, *bounds))
     return torch.stack(values)
 
-def export_model(kind, net, mean, std, residual_std=0.0, nfe=1):
+def export_model(kind, net, mean, std, residual_std=0.0, nfe=1, output_mode="three"):
     if kind not in ("regression", "flow"):
         raise ValueError("unknown timing policy type")
+    if output_mode not in ("three", "single"):
+        raise ValueError("unknown timing output mode")
     weights = [p.detach().cpu().numpy().tolist() for p in net.parameters()]
+    if output_mode == "single":
+        return {"schema_version": 2, "type": kind, "output_mode": "single", "proposal_count": 1, "feature_spec": list(FEATURE_SPEC), "mean": np.asarray(mean).tolist(), "std": np.asarray(std).tolist(), "logfactor_bounds": list(SINGLE_LOG_BOUNDS), "residual_std": float(residual_std), "nfe": int(nfe), "latent_quantiles": [0.0], "weights": weights}
     return {"schema_version": 1, "type": kind, "feature_spec": list(FEATURE_SPEC), "mean": np.asarray(mean).tolist(), "std": np.asarray(std).tolist(), "logfactor_bounds": list(LOG_BOUNDS), "residual_std": float(residual_std), "nfe": int(nfe), "latent_quantiles": [-1.0, 0.0, 1.0], "weights": weights}
 
 def build_mlp(input_dim, output_dim=1):
@@ -71,11 +83,17 @@ def build_mlp(input_dim, output_dim=1):
 
 def load_model(record):
     import torch
-    if record.get("schema_version") != 1 or record.get("type") not in ("regression", "flow"):
+    schema = record.get("schema_version")
+    if schema not in (1, 2) or record.get("type") not in ("regression", "flow"):
         raise ValueError("unsupported timing policy model")
+    bounds = list(LOG_BOUNDS) if schema == 1 else list(SINGLE_LOG_BOUNDS)
+    quantiles = [-1.0, 0.0, 1.0] if schema == 1 else [0.0]
     if (record.get('feature_spec') != list(FEATURE_SPEC)
-            or record.get('logfactor_bounds') != list(LOG_BOUNDS)
-            or record.get('latent_quantiles') != [-1.0, 0.0, 1.0]):
+            or record.get('logfactor_bounds') != bounds
+            or record.get('latent_quantiles') != quantiles
+            or (schema == 2 and (record.get('output_mode') != 'single'
+                                 or type(record.get('proposal_count')) is not int
+                                 or record.get('proposal_count') != 1))):
         raise ValueError('invalid timing feature or sampling specification')
     residual = record.get('residual_std')
     if (isinstance(residual, bool) or not isinstance(residual, (int, float))

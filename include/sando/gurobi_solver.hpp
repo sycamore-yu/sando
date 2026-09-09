@@ -523,6 +523,9 @@ class SolverGurobi {
       std::shared_ptr<const sando_learning::CorridorPolicy> policy,
       CorridorMethod method,
       sando_learning::Assignment previous = {});
+  // Complete-assignment QP attempts before original MIQP fallback. Default 3; must be >= 1.
+  void setCorridorCandidateLimit(int limit);
+  int corridorCandidateLimit() const;
   bool generateWithCorridorPolicy(
       bool& gurobi_error_detected, double& gurobi_computation_time, double factor);
   nlohmann::json getPolicyMetrics() const { return policy_metrics_; }
@@ -639,6 +642,7 @@ class SolverGurobi {
   sando_learning::Assignment previous_assignment_;
   std::shared_ptr<const sando_learning::CorridorPolicy> corridor_policy_;
   CorridorMethod corridor_method_{CorridorMethod::Original};
+  int corridor_candidate_limit_{3};
   nlohmann::json policy_metrics_ = nlohmann::json::object();
   nlohmann::json last_constraint_residuals_ = nullptr;
   double last_validation_ms_{0.0};

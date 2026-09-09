@@ -16,4 +16,13 @@ inline double segmentDuration(double initial_dt, double dc, double factor) {
   return dt;
 }
 
+inline double baseDuration(double initial_dt, double dc) {
+  return segmentDuration(initial_dt, dc, 1.0);
+}
+
+inline double horizonDuration(int n, double initial_dt, double dc, double factor) {
+  if (n <= 0) throw std::invalid_argument("invalid segment count");
+  return static_cast<double>(n) * segmentDuration(initial_dt, dc, factor);
+}
+
 }  // namespace sando_time

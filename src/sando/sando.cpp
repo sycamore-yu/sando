@@ -126,6 +126,18 @@ SANDO::SANDO(Parameters par) : par_(par) {
     solver->initializeSolver(par_);
     whole_traj_solver_ptrs_.push_back(solver);
   }
+#ifdef SANDO_USE_AMPL
+  {
+    int candidate_limit = 3;
+    if (const char* raw = std::getenv("SANDO_CORRIDOR_CANDIDATE_LIMIT")) {
+      candidate_limit = std::stoi(raw);
+    } else if (timing_policy_enabled_ && timing_policy_->proposalCount() == 1) {
+      candidate_limit = 1;
+    }
+    for (auto& solver : whole_traj_solver_ptrs_)
+      solver->setCorridorCandidateLimit(candidate_limit);
+  }
+#endif
 
   // Set up decomp ellip workers for each thread
   ellip_workers_.resize(whole_traj_solver_ptrs_.size());
@@ -139,8 +151,8 @@ SANDO::SANDO(Parameters par) : par_(par) {
   tmp_end_state.setPos(par_.num_P * par_.max_dist_vertexes, 0.0, 0.0);
   tmp_traj_solver_ptr->setX0(tmp_start_state);
   tmp_traj_solver_ptr->setXf(tmp_end_state);
-  worst_traj_time_ = sando_time::segmentDuration(
-                        tmp_traj_solver_ptr->getInitialDt(), par_.dc, 1.0) * par_.num_N;
+  worst_traj_time_ = sando_time::horizonDuration(
+                        par_.num_N, tmp_traj_solver_ptr->getInitialDt(), par_.dc, 1.0);
 
   // Set up basis converter
   BasisConverter basis_converter;
@@ -646,6 +658,8 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
 #ifdef SANDO_USE_AMPL
   last_parallel_opt_ms_ = 0.0;
   last_cancel_drain_ms_ = 0.0;
+  last_usable_ms_ = 0.0;
+  last_reclaim_ms_ = 0.0;
   last_replan_factors_.clear();
   last_factor_policy_metrics_.clear();
   last_timing_policy_metrics_ = nlohmann::json::object();
@@ -654,7 +668,8 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   pending_assignment_valid_ = false;
   last_replan_chosen_assignment_.clear();
   last_replan_chosen_factor_ = -1;
-  const auto replan_started = std::chrono::steady_clock::now();
+  last_replan_started_ = std::chrono::steady_clock::now();
+  const auto replan_started = last_replan_started_;
   const double replan_wall_unix = std::chrono::duration<double>(
       std::chrono::system_clock::now().time_since_epoch()).count();
   const auto emit_replan_metrics = [&](bool success, bool append_success, bool planning_attempted) {
@@ -669,6 +684,9 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
                                 ? nlohmann::json(last_replan_chosen_factor_) : nlohmann::json(nullptr)},
                            {"parallel_ms", last_parallel_opt_ms_},
                            {"cancel_drain_ms", last_cancel_drain_ms_},
+                           {"usable_ms", last_usable_ms_},
+                           {"reclaim_ms", last_reclaim_ms_},
+                           {"publish_ms", nullptr},
                            {"timing_policy", last_timing_policy_metrics_},
                            {"actual_chosen_assignment", nlohmann::json::array()},
                            {"proposed_chosen_assignment", nlohmann::json::array()},
@@ -810,6 +828,22 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
 #endif
   return std::make_tuple(true, true);
 }
+
+#ifdef SANDO_USE_AMPL
+void SANDO::notePublishComplete() {
+  if (replan_metrics_path_.empty() || !replan_metrics_stream_) return;
+  const double publish_ms = std::chrono::duration<double, std::milli>(
+      std::chrono::steady_clock::now() - last_replan_started_).count();
+  nlohmann::json event{{"schema_version", 1},
+                       {"kind", "publish"},
+                       {"request_id", capture_request_id_},
+                       {"publish_ms", publish_ms}};
+  replan_metrics_stream_ << event.dump() << '\n';
+  replan_metrics_stream_.flush();
+  if (!replan_metrics_stream_)
+    std::cerr << "SANDO_INSTRUMENTATION_ERROR replan_metrics publish write failed\n";
+}
+#endif
 
 // ----------------------------------------------------------------------------
 
@@ -1057,14 +1091,19 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
     const auto timing_started = std::chrono::steady_clock::now();
     last_timing_policy_metrics_ = {
         {"method", timing_policy_->type()}, {"nfe", timing_policy_->nfe()},
-        {"requested_network_evaluations", timing_policy_->type() == "regression" ? 1 : 3 * timing_policy_->nfe()},
+        {"proposal_count", timing_policy_->proposalCount()},
+        {"requested_network_evaluations",
+         timing_policy_->type() == "regression"
+             ? 1
+             : timing_policy_->proposalCount() * timing_policy_->nfe()},
         {"path", timing_policy_->path()}, {"proposals", nlohmann::json::array()},
         {"fallback_reason", nullptr}, {"inference_ms", 0.0}};
     try {
       const auto logs = timing_policy_->predict(local_E.pos - local_A.pos, local_A.vel,
                                                 local_A.accel, local_E.vel, local_E.accel,
                                                 initial_dt, par_.dc);
-      if (logs.size() != 3) throw std::runtime_error("timing policy returned wrong proposal count");
+      if (static_cast<int>(logs.size()) != timing_policy_->proposalCount())
+        throw std::runtime_error("timing policy returned wrong proposal count");
       factors_.clear();
       for (double value : logs) {
         const double factor = std::exp(value);
@@ -1208,6 +1247,8 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
   int winner_index = -1;
 #ifdef SANDO_USE_AMPL
   last_cancel_drain_ms_ = 0.0;
+  last_usable_ms_ = 0.0;
+  last_reclaim_ms_ = 0.0;
 #endif
 
   // Poll until we find a winner or all futures are collected
@@ -1259,6 +1300,10 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
       vec_poly_out_safe[i] = thread_poly_out_safe;
       vec_optimization_succeeded[i] = true;
       winner_index = static_cast<int>(i);
+#ifdef SANDO_USE_AMPL
+      last_usable_ms_ = std::chrono::duration<double, std::milli>(
+          std::chrono::steady_clock::now() - last_replan_started_).count();
+#endif
     }
 
     // If we found a winner, still drain remaining futures (they should exit fast
@@ -1323,6 +1368,17 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
                          [](bool successful) { return successful; });
         instance.outcome["cancel_reason"] = instance.outcome.at("cancelled").get<bool>()
             ? "another_factor_succeeded" : "";
+        nlohmann::json path = nlohmann::json::array();
+        for (const auto& vertex : global_path)
+          path.push_back({vertex[0], vertex[1], vertex[2]});
+        instance.outcome["reconstructable"] = {
+            {"v_max", par_.v_max},
+            {"a_max", par_.a_max},
+            {"j_max", par_.j_max},
+            {"jerk_smooth_weight", par_.jerk_smooth_weight},
+            {"environment_assumption", par_.environment_assumption},
+            {"global_path", path},
+            {"visible_map", nullptr}};
         instance_reservoir_->ingest(instance);
       } catch (const std::exception& error) {
         instance_reservoir_->reject(error.what());
@@ -1347,6 +1403,10 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
       solver = std::move(replacement);
     }
   }
+#ifdef SANDO_USE_AMPL
+  last_reclaim_ms_ = std::chrono::duration<double, std::milli>(
+      std::chrono::steady_clock::now() - last_replan_started_).count();
+#endif
 
   // Find the first successful optimization
   int successful_index = -1;

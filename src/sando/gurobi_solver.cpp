@@ -5063,6 +5063,13 @@ void SolverGurobi::setCorridorPolicy(
   previous_assignment_ = std::move(previous);
 }
 
+void SolverGurobi::setCorridorCandidateLimit(int limit) {
+  if (limit < 1) throw std::invalid_argument("corridor candidate limit must be >= 1");
+  corridor_candidate_limit_ = limit;
+}
+
+int SolverGurobi::corridorCandidateLimit() const { return corridor_candidate_limit_; }
+
 bool SolverGurobi::generateWithCorridorPolicy(
     bool& gurobi_error_detected, double& gurobi_computation_time, double factor) {
   using clk = std::chrono::steady_clock;
@@ -5078,6 +5085,7 @@ bool SolverGurobi::generateWithCorridorPolicy(
       {"proposed_assignments", nlohmann::json::array()},
       {"accepted_assignment", nullptr},
       {"attempts", nlohmann::json::array()},
+      {"candidate_limit", corridor_candidate_limit_},
       {"total_ms", 0.0}, {"ranking_ms", 0.0}, {"qp_ms", 0.0},
       {"fallback_ms", 0.0}, {"model_prepare_ms", 0.0},
       {"fallback_used", false}, {"fallback_reason", ""}, {"cancelled", false}};
@@ -5109,6 +5117,7 @@ bool SolverGurobi::generateWithCorridorPolicy(
       !geometry.corridors.empty() && geometry.corridors.front().size() > 0 &&
       geometry.corridors.front().size() <= 3;
   std::vector<sando_learning::Assignment> candidates;
+  const std::size_t candidate_limit = static_cast<std::size_t>(corridor_candidate_limit_);
   if (corridor_method_ != CorridorMethod::Original && supported &&
       policy_metrics_["fallback_reason"] != "invalid_geometry") {
     try {
@@ -5126,9 +5135,9 @@ bool SolverGurobi::generateWithCorridorPolicy(
           sando_learning::validateAssignment(geometry, assignment);
           if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
             candidates.push_back(assignment);
-          if (candidates.size() == 3) break;
+          if (candidates.size() == candidate_limit) break;
         }
-        if (candidates.size() > 3) candidates.resize(3);
+        if (candidates.size() > candidate_limit) candidates.resize(candidate_limit);
       } else if (corridor_method_ == CorridorMethod::Previous) {
         if (!previous_assignment_.empty()) {
           try {
@@ -5141,7 +5150,7 @@ bool SolverGurobi::generateWithCorridorPolicy(
         for (const auto& assignment : all) {
           if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
             candidates.push_back(assignment);
-          if (candidates.size() == 3) break;
+          if (candidates.size() == candidate_limit) break;
         }
       }
     } catch (const std::exception& error) {

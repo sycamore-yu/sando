@@ -197,11 +197,18 @@ class AmplsRuntime final : public Runtime {
       const auto begin = std::chrono::steady_clock::now();
       const auto centered = sando_ampl::detail::centerContinuousObjective(snapshot);
       const ModelSnapshot& prepared_snapshot = centered.snapshot;
+      // ponytail: updateNative uses the snapshot only; export+compile were unused on
+      // the update path (ceiling: audit still needs files; upgrade: structure-hash skip).
+      const auto audit = environmentValue("SANDO_AMPL_AUDIT_DIR");
       WorkDirectory directory;
-      exportAmplModel(prepared_snapshot, (directory.path / "model.mod").string());
-      const auto exported = std::chrono::steady_clock::now();
-      compileModel(directory.path);
-      const auto compiled = std::chrono::steady_clock::now();
+      auto exported = begin;
+      auto compiled = begin;
+      if (!updating || audit) {
+        exportAmplModel(prepared_snapshot, (directory.path / "model.mod").string());
+        exported = std::chrono::steady_clock::now();
+        compileModel(directory.path);
+        compiled = std::chrono::steady_clock::now();
+      }
       const char* options[] = {"outlev=0", "cvt:names=1", nullptr};
       OwnedGurobiModel imported;
       if (!updating) {
@@ -260,7 +267,6 @@ class AmplsRuntime final : public Runtime {
         } else columns.emplace(variable.id, found->second);
       }
       check(GRBupdatemodel(native), native, "Update restored variables");
-      const auto audit = environmentValue("SANDO_AMPL_AUDIT_DIR");
       if (audit) {
         const fs::path target = fs::path(*audit) / directory.path.filename();
         fs::create_directories(target);
