@@ -345,6 +345,14 @@ if(SANDO_USE_AMPL)
   add_test(NAME reconstruct_planning_request COMMAND reconstruct_request_probe)
   set_tests_properties(reconstruct_planning_request PROPERTIES TIMEOUT 180)
 
+  add_executable(null_class_decomp_probe tests/ampls/null_class_decomp_probe.cpp)
+  target_link_libraries(null_class_decomp_probe sando_planner)
+  target_compile_options(null_class_decomp_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(null_class_decomp_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME null_class_live_map_decomp COMMAND null_class_decomp_probe)
+  set_tests_properties(null_class_live_map_decomp PROPERTIES TIMEOUT 180)
+
+
   add_test(NAME baseline_capture_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_capture.py")
   add_test(NAME baseline_arrival_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_sim.py")
   add_test(NAME integer_capture_campaign COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_capture_campaign.py")
