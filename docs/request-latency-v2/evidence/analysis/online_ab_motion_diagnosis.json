@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "kind": "online_ab_motion_diagnosis",
+  "base_git": "095cfb5+classify_gate",
+  "paired_scene": {
+    "family": "static_forest",
+    "seed": 210,
+    "method": "original",
+    "num_obstacles": 50,
+    "candidate_limit": 1
+  },
+  "finding": "Both frozen install and install-dev fail before append. Stage isolation (install-dev): global_path ok, corridor ok, optimizer entered, all MIQP status=3 infeasible, append_ok=0. Classify gating alone does not restore motion because A (frozen) fails the same way.",
+  "runs": {
+    "A_frozen_s210_orig": {
+      "n": 81,
+      "append_ok": 0,
+      "failure_stage": {
+        "None": 81
+      },
+      "kinds": {
+        "miqp": 530
+      },
+      "top_status": [
+        [
+          "('miqp', 3, False)",
+          530
+        ]
+      ]
+    },
+    "B_dev_s210_orig": {
+      "n": 90,
+      "append_ok": 0,
+      "failure_stage": {
+        "corridor_decomposition": 1,
+        "optimization": 89
+      },
+      "kinds": {
+        "miqp": 585
+      },
+      "top_status": [
+        [
+          "('miqp', 3, False)",
+          585
+        ]
+      ]
+    },
+    "ctrl_frozen_s33_cost_box": {
+      "n": 124,
+      "append_ok": 0,
+      "failure_stage": {
+        "None": 124
+      },
+      "kinds": {
+        "qp": 2412,
+        "miqp": 804
+      },
+      "top_status": [
+        [
+          "('qp', 3, False)",
+          2412
+        ],
+        [
+          "('miqp', 3, False)",
+          804
+        ]
+      ]
+    }
+  },
+  "controls": {
+    "hist_success_ref": "learning-stages-v2/.../static_forest-easy-seed33 goal_reached=true with train_box start and cost",
+    "ctrl_same_start_still_fail": "frozen+cost+seed33+train_box+same world sha still append_ok=0; all qp/miqp status=3",
+    "integer_learning_source_manifest_diff": {
+      "hist": "c455ce50... size=449948",
+      "current": "511eb91d... size=339678 (/opt/sando-integer-source.json matches integer-centered-image)"
+    },
+    "offline_replay": "selected12 limit=3 still accepts some MIQP solutions \u2014 solver stack alive; online geometry/live map path is the suspect"
+  },
+  "classify_gate": {
+    "status": "landed on feat/ampl-gurobi as b04506a",
+    "classification_ms_online": "null on non-capture runs as expected",
+    "motion_restored": false
+  },
+  "next": [
+    "Compare online corridor constraints / start state vs offline feasible replay of similar forest",
+    "Check unknown-boundary inflation / factor window online",
+    "Try hist-matching ROS_DOMAIN and no candidate_limit with full timeout once map-warm confirmed"
+  ],
+  "hgp_null_class_regression": {
+    "status": "passed",
+    "note": "null_class_decomp_probe: polys=5 planes=75 assignments=1 objective\u22480.049"
+  },
+  "post_classify_B_dev_v2": {
+    "n": 44,
+    "append_ok": 0,
+    "failure_stage": {
+      "corridor_decomposition": 1,
+      "optimization": 43
+    },
+    "base_map_size_typical": 21699,
+    "spatial_poly_count_typical": 3,
+    "global_path_size_typical": 4,
+    "classification_ms": "null",
+    "conclusion": "Map is populated and corridor decomp succeeds; all optimizer attempts still Gurobi status=3 infeasible. Root cause is not empty-map and not classify-on-hot-path."
+  }
+}

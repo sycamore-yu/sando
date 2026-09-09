@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "title": "Z-assignment route latency attribution",
+  "created_utc": "2026-09-09",
+  "local_git_head": "b04506a95a163276a238fe1bb4ef1891e09c2443",
+  "offline_evidence_git": "3a13bf9b628eb81514b0aba55115a5c36b18d152",
+  "branch": "feat/ampl-gurobi",
+  "plan": "docs/unified-plan.md",
+  "report_md": "docs/request-latency-v2/evidence/analysis/Z分配路线耗时归因结论.md",
+  "verdict": {
+    "offline_single_time_chain": {
+      "method": "cost",
+      "baseline": "original",
+      "field": "timing.total_ms",
+      "corpus": "selected60 formal run1-5, k=1, one_fresh_runtime_per_method",
+      "median_ms": {"original": 73.928, "cost": 52.351},
+      "p95_ms": {"original": 130.713, "cost": 72.01},
+      "paired_both_main_accept_n": 210,
+      "paired_delta_cost_minus_original_median_ms": -25.737,
+      "faster": true
+    },
+    "online_request_total_ms_stage2": {
+      "field": "replan_metrics.total_ms -> planning_latency_ms",
+      "dynamic_p95_ms": {"original": 708.7, "cost": 1066.0},
+      "forest_p95_ms": {"original": 409.6, "cost": 811.0},
+      "faster": false,
+      "primary_factors": ["parallel_ms", "cancel_drain_ms", "historical_multi_factor_and_k3"]
+    },
+    "planning_input_to_usable_traj_k1_online": {
+      "status": "blocked",
+      "note": "online motion / infeasible MIQP; usable_ms campaign not healthy"
+    }
+  },
+  "success_rates_selected60": {
+    "original": {"first_accept": 0.75, "fallback_accept": 0.0, "final_accept": 0.75},
+    "cost": {"first_accept": 0.70, "fallback_accept": 0.05, "final_accept": 0.75}
+  },
+  "layer_medians_selected60_ms": {
+    "original": {"adapter_ms": 66.723, "backend_ms": 8.244, "ranking_ms": 0.0},
+    "cost": {"adapter_ms": 45.779, "backend_ms": 2.7, "ranking_ms": 2.461}
+  },
+  "lifecycle_fresh_vs_persistent": {
+    "process_wall_speedup_approx": 3.87,
+    "accept_agree": "120/120",
+    "not_a_method_speedup": true
+  }
+}
