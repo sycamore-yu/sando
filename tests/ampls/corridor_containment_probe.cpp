@@ -150,10 +150,15 @@ int main(int argc, char** argv) {
 
     const int start_inside0 = report["start_layer0"]["inside_count"].get<int>();
     const int goal_insideN = report["goal_layerN"]["inside_count"].get<int>();
+    const bool start_ok = start_inside0 > 0;
+    const bool goal_ok = goal_insideN > 0;
     report["verdict"] = {
-        {"start_in_layer0", start_inside0 > 0},
-        {"goal_in_layerN", goal_insideN > 0},
-        {"likely_containment_bug", start_inside0 == 0 || goal_insideN == 0},
+        {"start_in_layer0", start_ok},
+        {"goal_in_layerN", goal_ok},
+        {"likely_containment_bug", !start_ok || !goal_ok},
+        {"regression",
+         "continuous start must lie in a layer-0 polytope; continuous goal must "
+         "lie in a final-layer polytope"},
     };
 
     const std::string text = report.dump(2);
@@ -164,6 +169,9 @@ int main(int argc, char** argv) {
       std::cerr << "wrote " << out_path << '\n';
     }
     std::cout << text << '\n';
+    // Permanent regression: voxel-center path ends must not exclude continuous X0/Xf.
+    require(start_ok, "endpoint containment regression: start outside all layer-0 polytopes");
+    require(goal_ok, "endpoint containment regression: goal outside all final-layer polytopes");
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "corridor_containment_probe: " << error.what() << '\n';

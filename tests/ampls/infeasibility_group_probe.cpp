@@ -103,14 +103,15 @@ void dump_model(const ModelSnapshot& model, const std::string& path) {
             << path << '\n';
 }
 
-void solve_ablation(const char* label, const ModelSnapshot& model,
-                    const sando_ampl::RuntimeParameters& runtime) {
+int solve_ablation(const char* label, const ModelSnapshot& model,
+                   const sando_ampl::RuntimeParameters& runtime) {
   auto rt = sando_ampl::createRuntime();
   require(rt != nullptr, "createRuntime returned null");
   const auto result = rt->solve(model, nullptr, runtime);
   std::cout << "ablation=" << label << " constraints=" << model.constraints.size()
             << " status=" << status_name(result.status) << " (" << result.status << ")"
             << " runtime_s=" << result.runtime << '\n';
+  return result.status;
 }
 
 }  // namespace
@@ -164,10 +165,16 @@ int main(int argc, char** argv) {
               << " corridor=" << (full.constraints.size() - no_cor.constraints.size())
               << " map=" << (full.constraints.size() - no_map.constraints.size()) << '\n';
 
-    solve_ablation("full", full, runtime);
+    const int full_status = solve_ablation("full", full, runtime);
     solve_ablation("remove_dynamics", no_dyn, runtime);
     solve_ablation("remove_corridor_indicator", no_cor, runtime);
     solve_ablation("remove_map_bounds", no_map, runtime);
+    // Minimal planning regression after endpoint snap: full MIQP must be optimal
+    // on this frozen forest observation (captures voxel-endpoint → all-infeasible).
+    require(full_status == sando_ampl::GRB_OPTIMAL,
+            "planning regression: full MIQP not optimal after endpoint snap "
+            "(status=" +
+                std::to_string(full_status) + ")");
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "infeasibility_group_probe: " << error.what() << '\n';

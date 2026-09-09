@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "kind": "engineering_baseline_freeze",
+  "baseline_commit": "103faa1c328d09f7ef0936118cd191ae4528c4f1",
+  "branch": "feat/ampl-gurobi",
+  "remote": "personal/feat/ampl-gurobi",
+  "authority_plan": "docs/fromchat/plan.md",
+  "note": "Milestone 0 / Phase I engineering baseline. Not Ultimate Definition of Done.",
+  "models": {
+    "timing_qp_seed0": "prototypes/time_fixed_z_qp/evidence/train16_run/timing_qp_seed0.json",
+    "timing_supervised": "docker/dev-workspace/results/joint-time-v2/models/timing-schema2-regression.json",
+    "corridor_cost": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json"
+  },
+  "solver": {
+    "backend": "AMPL->AMPLS->Gurobi",
+    "ampl_mode": "persistent",
+    "hard_constraints": "not relaxed for training or benchmarks"
+  },
+  "benchmark": {
+    "protocol_id": "benchmark_aligned_v1",
+    "pilot_seed": 200,
+    "scene_family_pilot": "static_forest",
+    "num_obstacles_pilot": 50
+  },
+  "permanent_regressions": [
+    "corridor_containment_probe (start in layer-0, goal in final layer)",
+    "infeasibility_group_probe full MIQP optimal on frozen forest obs/2.json"
+  ],
+  "fd_timing_status": "trajectory-sensitivity prototype only; not true Diff-QP"
+}
