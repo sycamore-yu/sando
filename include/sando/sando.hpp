@@ -18,6 +18,7 @@
 #include <future>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -27,6 +28,7 @@
 #include <decomp_util/seed_decomp.h>
 #include <decomp_rviz_plugins/data_ros_utils.hpp>
 #include <sando/gurobi_solver.hpp>
+#include <sando/timing_policy.hpp>
 #include <sando/utils.hpp>
 #include "hgp/hgp_manager.hpp"
 #include "hgp/termcolor.hpp"
@@ -495,6 +497,9 @@ class SANDO {
   std::shared_ptr<sando::VoxelMapUtil> getMapUtilSharedPtr();
 
  private:
+  // Called with mtx_state_goal_ held and a real state already available.
+  void applyTerminalGoal(const RobotState& term_goal);
+
 #ifdef SANDO_USE_AMPL
   std::unique_ptr<sando_learning::InstanceReservoir> instance_reservoir_;
   nlohmann::json capture_metadata_;
@@ -527,14 +532,17 @@ class SANDO {
   double v_max_;                                 // Maximum speed
   double max_dist_vertexes_;                     // Maximum velocity
   std::vector<double> factors_;                  // Factors for time allocation
+  std::shared_ptr<sando_learning::TimingPolicy> timing_policy_;
+  bool timing_policy_enabled_{false};
+  nlohmann::json last_timing_policy_metrics_;
   int num_dynamic_factors_;
   bool dynamic_factor_inital_sucess_ = false;
   double worst_traj_time_ = 0.0;  // Worst case trajectory time for pre-computation
   double traj_max_time_ = 0.0;    // Maximum trajectory time for map update
 
   // Flags
-  bool state_initialized_ = false;          // State initialized
-  bool terminal_goal_initialized_ = false;  // Terminal goal initialized
+  std::atomic<bool> state_initialized_{false};
+  std::atomic<bool> terminal_goal_initialized_{false};
   bool use_adapt_k_value_ = false;          // Use adapt k value
   bool kdtree_map_initialized_ = false;     // Kd-tree for the map initialized
   bool kdtree_unk_initialized_ = false;     // Kd-tree for the map initialized
@@ -598,6 +606,8 @@ class SANDO {
 
   // Mutex
   std::mutex mtx_plan_;                  // Mutex for the plan_
+  std::mutex mtx_state_goal_;  // Serializes first state and terminal-goal initialization.
+  std::optional<RobotState> pending_terminal_goal_;
   std::mutex mtx_state_;                 // Mutex for the state_
   std::mutex mtx_G_;                     // Mutex for the G_
   std::mutex mtx_A_;                     // Mutex for the A_

@@ -5173,6 +5173,14 @@ bool SolverGurobi::generateWithCorridorPolicy(
                            {"error", error}, {"wall_ms", std::max(0.0, wall_ms)},
                            {"backend_ms", std::max(0.0, backend_ms)},
                            {"model_prepare_ms", std::max(0.0, prepare_ms)}};
+    attempt["raw_objective"] = success && std::isfinite(objective_value_)
+        ? nlohmann::json(objective_value_) : nlohmann::json(nullptr);
+    if (success) {
+      double duration = 0.0;
+      for (double dt : dt_) duration += dt;
+      attempt["segment_durations_s"] = dt_;
+      attempt["trajectory_duration_s"] = duration;
+    }
     policy_metrics_["attempts"].push_back(std::move(attempt));
     policy_metrics_["model_prepare_ms"] = policy_metrics_["model_prepare_ms"].get<double>() + prepare_ms;
   };

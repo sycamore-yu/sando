@@ -71,8 +71,26 @@ SANDO::SANDO(Parameters par) : par_(par) {
   // Set up hgp_manager
   hgp_manager_.setParameters(par_);
 
+  if (const char* timing_path = std::getenv("SANDO_TIMING_POLICY")) {
+    try {
+      timing_policy_ = std::make_shared<sando_learning::TimingPolicy>(timing_path);
+      if (const char* nfe = std::getenv("SANDO_TIMING_NFE")) {
+        int value = std::stoi(nfe);
+        timing_policy_->setNfe(value);
+      }
+      timing_policy_enabled_ = true;
+    } catch (const std::exception& error) {
+      std::cerr << "SANDO_INSTRUMENTATION_ERROR timing policy: cannot load model: " << error.what() << '\n';
+      throw std::runtime_error(std::string("SANDO timing policy: cannot load model: ") + error.what());
+    }
+  }
+
   // Compute factors_ for time allocation
-  if (par_.use_dynamic_factor) {
+  if (timing_policy_enabled_) {
+    // The validated policy schema defines the timing domain [1, 5].
+    factors_ = {1.0, std::sqrt(5.0), 5.0};
+    num_dynamic_factors_ = 3;
+  } else if (par_.use_dynamic_factor) {
     // Dynamic factor search
     num_dynamic_factors_ =
         static_cast<int>((2 * par_.dynamic_factor_k_radius) / par_.factor_constant_step_size) + 1;
@@ -630,6 +648,7 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   last_cancel_drain_ms_ = 0.0;
   last_replan_factors_.clear();
   last_factor_policy_metrics_.clear();
+  last_timing_policy_metrics_ = nlohmann::json::object();
   last_replan_decomp_times_.clear();
   pending_assignment_.clear();
   pending_assignment_valid_ = false;
@@ -650,6 +669,7 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
                                 ? nlohmann::json(last_replan_chosen_factor_) : nlohmann::json(nullptr)},
                            {"parallel_ms", last_parallel_opt_ms_},
                            {"cancel_drain_ms", last_cancel_drain_ms_},
+                           {"timing_policy", last_timing_policy_metrics_},
                            {"actual_chosen_assignment", nlohmann::json::array()},
                            {"proposed_chosen_assignment", nlohmann::json::array()},
                            {"factors", nlohmann::json::array()}};
@@ -982,7 +1002,7 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
 
   // Reset whole trajectory planners to nominal state
 #ifdef SANDO_USE_AMPL
-  last_replan_factors_ = factors_;
+  // Factors are copied after optional timing-policy prediction below.
   pending_assignment_.clear();
   pending_assignment_valid_ = false;
   last_replan_chosen_assignment_.clear();
@@ -1033,6 +1053,38 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
   whole_traj_solver_ptrs_[0]->setX0(local_A);
   whole_traj_solver_ptrs_[0]->setXf(local_E);
   double initial_dt = whole_traj_solver_ptrs_[0]->getInitialDt();
+  if (timing_policy_enabled_) {
+    const auto timing_started = std::chrono::steady_clock::now();
+    last_timing_policy_metrics_ = {
+        {"method", timing_policy_->type()}, {"nfe", timing_policy_->nfe()},
+        {"requested_network_evaluations", timing_policy_->type() == "regression" ? 1 : 3 * timing_policy_->nfe()},
+        {"path", timing_policy_->path()}, {"proposals", nlohmann::json::array()},
+        {"fallback_reason", nullptr}, {"inference_ms", 0.0}};
+    try {
+      const auto logs = timing_policy_->predict(local_E.pos - local_A.pos, local_A.vel,
+                                                local_A.accel, local_E.vel, local_E.accel,
+                                                initial_dt, par_.dc);
+      if (logs.size() != 3) throw std::runtime_error("timing policy returned wrong proposal count");
+      factors_.clear();
+      for (double value : logs) {
+        const double factor = std::exp(value);
+        if (!std::isfinite(factor)) throw std::runtime_error("non-finite timing factor");
+        factors_.push_back(factor);
+      }
+      std::sort(factors_.begin(), factors_.end());
+    } catch (const std::exception& error) {
+      last_timing_policy_metrics_["fallback_reason"] = error.what();
+      std::cerr << "SANDO timing policy: prediction failed: " << error.what() << "; using nominal factors\n";
+      factors_ = {1.0, std::sqrt(5.0), 5.0};
+    }
+    last_timing_policy_metrics_["inference_ms"] = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - timing_started).count();
+    last_timing_policy_metrics_["proposals"] = factors_;
+    num_dynamic_factors_ = static_cast<int>(factors_.size());
+  }
+#ifdef SANDO_USE_AMPL
+  last_replan_factors_ = factors_;
+#endif
 
   // Compute sub goal vector once
   std::vector<double> sub_goal;
@@ -1330,7 +1382,7 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
     }
 
     // update the factors_ vector
-    if (par_.use_dynamic_factor) {
+  if (par_.use_dynamic_factor && !timing_policy_enabled_) {
       // Save the successful factor BEFORE clearing
       double successful_factor = factors_[successful_index];
 
@@ -1350,7 +1402,7 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
     }
   } else {
     // if the optimization failed, we increase the factors_ for next replanning
-    if (par_.use_dynamic_factor) {
+    if (par_.use_dynamic_factor && !timing_policy_enabled_) {
       // compute current mean of the factor window
       double current_mean = 0.0;
       for (size_t i = 0; i < factors_.size(); i++) current_mean += factors_[i];
@@ -1751,6 +1803,7 @@ void SANDO::addTraj(std::shared_ptr<DynTraj> new_traj, double current_time) {
 // ----------------------------------------------------------------------------
 
 void SANDO::updateState(RobotState data) {
+  std::lock_guard<std::mutex> state_goal_lock(mtx_state_goal_);
   // If we are doing hardware and provide goal in global frame (e.g. vicon), we need to transform
   // the goal to the local frame
 
@@ -1812,6 +1865,12 @@ void SANDO::updateState(RobotState data) {
 
     // Update the flag
     state_initialized_ = true;
+  }
+
+  if (pending_terminal_goal_) {
+    const RobotState goal = *pending_terminal_goal_;
+    pending_terminal_goal_.reset();
+    applyTerminalGoal(goal);
   }
 }
 
@@ -2043,6 +2102,15 @@ void SANDO::logGoalEvent(
 }
 
 void SANDO::setTerminalGoal(const RobotState& term_goal) {
+  std::lock_guard<std::mutex> state_goal_lock(mtx_state_goal_);
+  if (!state_initialized_) {
+    pending_terminal_goal_ = term_goal;
+    return;
+  }
+  applyTerminalGoal(term_goal);
+}
+
+void SANDO::applyTerminalGoal(const RobotState& term_goal) {
   // Ignore duplicate goals — the goal_sender re-publishes every 2s for reliability,
   // but re-triggering YAWING clears the plan and stops the drone mid-flight.
   if (terminal_goal_initialized_) {
