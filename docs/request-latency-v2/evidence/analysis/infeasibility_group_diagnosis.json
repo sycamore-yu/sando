@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "observation": "docker/dev-workspace/results/joint-time-v2/stage-jia/static_forest-easy-seed0/request_observation/2.json",
+  "factor": 2.0,
+  "ablations": [
+    {
+      "name": "full",
+      "status": "infeasible"
+    },
+    {
+      "name": "remove_dynamics",
+      "status": "infeasible"
+    },
+    {
+      "name": "remove_corridor_indicator",
+      "status": "optimal"
+    },
+    {
+      "name": "remove_map_bounds",
+      "status": "infeasible"
+    }
+  ],
+  "verdict": "corridor/indicator constraints are necessary and sufficient to explain infeasibility on this frozen observation; do not relax dynamics or map bounds in production",
+  "online_ab_link": "request-latency-v3/online_ab seed210 also all MIQP status=3 after corridor ok \u2014 same failure class suspected"
+}

@@ -345,6 +345,14 @@ if(SANDO_USE_AMPL)
   add_test(NAME reconstruct_planning_request COMMAND reconstruct_request_probe)
   set_tests_properties(reconstruct_planning_request PROPERTIES TIMEOUT 180)
 
+  add_executable(infeasibility_group_probe tests/ampls/infeasibility_group_probe.cpp)
+  target_link_libraries(infeasibility_group_probe sando_planner)
+  target_compile_options(infeasibility_group_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(infeasibility_group_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME infeasibility_group_probe COMMAND infeasibility_group_probe
+           "${CMAKE_CURRENT_SOURCE_DIR}/docker/dev-workspace/results/joint-time-v2/stage-jia/static_forest-easy-seed0/request_observation/2.json")
+  set_tests_properties(infeasibility_group_probe PROPERTIES TIMEOUT 600)
+
   add_executable(null_class_decomp_probe tests/ampls/null_class_decomp_probe.cpp)
   target_link_libraries(null_class_decomp_probe sando_planner)
   target_compile_options(null_class_decomp_probe PRIVATE -UNDEBUG -fno-fast-math)
