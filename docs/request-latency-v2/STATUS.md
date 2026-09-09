@@ -10,7 +10,7 @@ Evidence corpus (gitignored): `docker/dev-workspace/results/request-latency-v2/`
 | Stage | Status | Notes |
 |-------|--------|-------|
 | 6 timing + 12 replay + compile-skip | **done** | usable/reclaim/publish fields; update-path skip unused AMPL compile |
-| 6 expand ≥60 | **done** | `selection/selected60_manifest.json` (results tree) |
+| 6 expand ≥60 | **done** | selected60 formal: bc/cost p95 ~72–77ms vs original ~131ms (limit=1) |
 | 6 hypotheses §3.5 | **done** | `docs/request-latency-v2/stage6-hypotheses.md` |
 | 6 geometry §3.6 | **partial** | AABB cases documented; cylinder recompute blocked |
 | 7 same-budget 4 arms | **partial** | fixed_time + assign_only; time_only/joint blocked without multi-T rebuild |
