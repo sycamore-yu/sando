@@ -522,6 +522,7 @@ class SANDO {
   double last_cancel_drain_ms_{0.0};
   double last_usable_ms_{0.0};
   double last_reclaim_ms_{0.0};
+  nlohmann::json last_classification_ms_{nullptr};
   std::chrono::steady_clock::time_point last_replan_started_{};
   std::vector<double> last_replan_factors_;
   std::vector<nlohmann::json> last_factor_policy_metrics_;
