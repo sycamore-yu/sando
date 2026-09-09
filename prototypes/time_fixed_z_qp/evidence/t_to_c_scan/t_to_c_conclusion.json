@@ -1,0 +1,259 @@
+{
+  "empty_all_optimal": true,
+  "empty_dt_scales_with_f": true,
+  "forest_plane_counts": [
+    [
+      1.0,
+      240,
+      243
+    ],
+    [
+      1.25,
+      240,
+      243
+    ],
+    [
+      1.37,
+      240,
+      243
+    ],
+    [
+      1.5,
+      240,
+      243
+    ],
+    [
+      1.75,
+      240,
+      243
+    ],
+    [
+      2.0,
+      240,
+      243
+    ],
+    [
+      2.25,
+      240,
+      243
+    ],
+    [
+      2.5,
+      240,
+      243
+    ]
+  ],
+  "forest_all_infeasible": true,
+  "rows": [
+    {
+      "file": "forest2_f1.0.json",
+      "factor": 1.0,
+      "status": "infeasible",
+      "segment_dt": 0.11399998515844345,
+      "T": 0.5699999257922173,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "forest2_f1.25.json",
+      "factor": 1.25,
+      "status": "infeasible",
+      "segment_dt": 0.1424999814480543,
+      "T": 0.7124999072402716,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "forest2_f1.37.json",
+      "factor": 1.37,
+      "status": "infeasible",
+      "segment_dt": 0.15617997966706754,
+      "T": 0.7808998983353377,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "forest2_f1.5.json",
+      "factor": 1.5,
+      "status": "infeasible",
+      "segment_dt": 0.17099997773766518,
+      "T": 0.8549998886883259,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "forest2_f1.75.json",
+      "factor": 1.75,
+      "status": "infeasible",
+      "segment_dt": 0.19949997402727604,
+      "T": 0.9974998701363802,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "forest2_f2.0.json",
+      "factor": 2.0,
+      "status": "infeasible",
+      "segment_dt": 0.2279999703168869,
+      "T": 1.1399998515844345,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "forest2_f2.25.json",
+      "factor": 2.25,
+      "status": "infeasible",
+      "segment_dt": 0.25649996660649776,
+      "T": 1.2824998330324888,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "forest2_f2.5.json",
+      "factor": 2.5,
+      "status": "infeasible",
+      "segment_dt": 0.2849999628961086,
+      "T": 1.4249998144805431,
+      "N": 5,
+      "P": 3,
+      "plane_count": 240,
+      "valid_assignment_count": 243,
+      "objective": null,
+      "residuals_valid": null
+    },
+    {
+      "file": "empty_f1.0.json",
+      "factor": 1.0,
+      "status": "optimal",
+      "segment_dt": 2.0,
+      "T": 10.0,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.04910714285714268,
+      "residuals_valid": true
+    },
+    {
+      "file": "empty_f1.25.json",
+      "factor": 1.25,
+      "status": "optimal",
+      "segment_dt": 2.5,
+      "T": 12.5,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.01287314285740146,
+      "residuals_valid": true
+    },
+    {
+      "file": "empty_f1.37.json",
+      "factor": 1.37,
+      "status": "optimal",
+      "segment_dt": 2.74,
+      "T": 13.700000000000001,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.007427134075024072,
+      "residuals_valid": true
+    },
+    {
+      "file": "empty_f1.5.json",
+      "factor": 1.5,
+      "status": "optimal",
+      "segment_dt": 3.0,
+      "T": 15.0,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.004311189496455092,
+      "residuals_valid": true
+    },
+    {
+      "file": "empty_f1.75.json",
+      "factor": 1.75,
+      "status": "optimal",
+      "segment_dt": 3.5,
+      "T": 17.5,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.001709686075891885,
+      "residuals_valid": true
+    },
+    {
+      "file": "empty_f2.0.json",
+      "factor": 2.0,
+      "status": "optimal",
+      "segment_dt": 4.0,
+      "T": 20.0,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.0007672991071428735,
+      "residuals_valid": true
+    },
+    {
+      "file": "empty_f2.25.json",
+      "factor": 2.25,
+      "status": "optimal",
+      "segment_dt": 4.5,
+      "T": 22.5,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.00037848577197250374,
+      "residuals_valid": true
+    },
+    {
+      "file": "empty_f2.5.json",
+      "factor": 2.5,
+      "status": "optimal",
+      "segment_dt": 5.0,
+      "T": 25.0,
+      "N": 5,
+      "P": 1,
+      "plane_count": 40,
+      "valid_assignment_count": 1,
+      "objective": 0.00020114285714689824,
+      "residuals_valid": true
+    }
+  ],
+  "gate5_note": "T\u2192C(T) rebuild pipeline works (segment_dt=d0*f). Empty-map solves all scanned f. Forest request_observation/2.json rebuilds corridors but MIQP infeasible at all f \u2014 topology/feasibility discrete; continuous gradient only claimed on fixed-C stage.",
+  "status": "passed_with_scope"
+}

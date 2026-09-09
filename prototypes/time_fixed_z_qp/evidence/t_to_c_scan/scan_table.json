@@ -1,0 +1,322 @@
+[
+  {
+    "file": "empty_f1.0.json",
+    "factor": 1.0,
+    "status": "optimal",
+    "objective": 0.04910714285714268,
+    "segment_dt": 2.0,
+    "T": 10.0,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0
+    ]
+  },
+  {
+    "file": "empty_f1.25.json",
+    "factor": 1.25,
+    "status": "optimal",
+    "objective": 0.01287314285740146,
+    "segment_dt": 2.5,
+    "T": 12.5,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      2.5,
+      5.0,
+      7.5,
+      10.0,
+      12.5
+    ]
+  },
+  {
+    "file": "empty_f1.37.json",
+    "factor": 1.37,
+    "status": "optimal",
+    "objective": 0.007427134075024072,
+    "segment_dt": 2.74,
+    "T": 13.700000000000001,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      2.74,
+      5.48,
+      8.22,
+      10.96,
+      13.700000000000001
+    ]
+  },
+  {
+    "file": "empty_f1.5.json",
+    "factor": 1.5,
+    "status": "optimal",
+    "objective": 0.004311189496455092,
+    "segment_dt": 3.0,
+    "T": 15.0,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      3.0,
+      6.0,
+      9.0,
+      12.0,
+      15.0
+    ]
+  },
+  {
+    "file": "empty_f1.75.json",
+    "factor": 1.75,
+    "status": "optimal",
+    "objective": 0.001709686075891885,
+    "segment_dt": 3.5,
+    "T": 17.5,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      3.5,
+      7.0,
+      10.5,
+      14.0,
+      17.5
+    ]
+  },
+  {
+    "file": "empty_f2.0.json",
+    "factor": 2.0,
+    "status": "optimal",
+    "objective": 0.0007672991071428735,
+    "segment_dt": 4.0,
+    "T": 20.0,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      4.0,
+      8.0,
+      12.0,
+      16.0,
+      20.0
+    ]
+  },
+  {
+    "file": "empty_f2.25.json",
+    "factor": 2.25,
+    "status": "optimal",
+    "objective": 0.00037848577197250374,
+    "segment_dt": 4.5,
+    "T": 22.5,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      4.5,
+      9.0,
+      13.5,
+      18.0,
+      22.5
+    ]
+  },
+  {
+    "file": "empty_f2.5.json",
+    "factor": 2.5,
+    "status": "optimal",
+    "objective": 0.00020114285714689824,
+    "segment_dt": 5.0,
+    "T": 25.0,
+    "d0": 2.0,
+    "solver_kind": "miqp",
+    "residuals_valid": true,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      5.0,
+      10.0,
+      15.0,
+      20.0,
+      25.0
+    ]
+  },
+  {
+    "file": "forest2_f1.0.json",
+    "factor": 1.0,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.11399998515844345,
+    "T": 0.5699999257922173,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.11399998515844345,
+      0.2279999703168869,
+      0.34199995547533035,
+      0.4559999406337738,
+      0.5699999257922173
+    ]
+  },
+  {
+    "file": "forest2_f1.25.json",
+    "factor": 1.25,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.1424999814480543,
+    "T": 0.7124999072402716,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.1424999814480543,
+      0.2849999628961086,
+      0.42749994434416294,
+      0.5699999257922173,
+      0.7124999072402716
+    ]
+  },
+  {
+    "file": "forest2_f1.37.json",
+    "factor": 1.37,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.15617997966706754,
+    "T": 0.7808998983353377,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.15617997966706754,
+      0.3123599593341351,
+      0.4685399390012026,
+      0.6247199186682701,
+      0.7808998983353377
+    ]
+  },
+  {
+    "file": "forest2_f1.5.json",
+    "factor": 1.5,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.17099997773766518,
+    "T": 0.8549998886883259,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.17099997773766518,
+      0.34199995547533035,
+      0.5129999332129955,
+      0.6839999109506607,
+      0.8549998886883259
+    ]
+  },
+  {
+    "file": "forest2_f1.75.json",
+    "factor": 1.75,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.19949997402727604,
+    "T": 0.9974998701363802,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.19949997402727604,
+      0.3989999480545521,
+      0.5984999220818281,
+      0.7979998961091042,
+      0.9974998701363802
+    ]
+  },
+  {
+    "file": "forest2_f2.0.json",
+    "factor": 2.0,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.2279999703168869,
+    "T": 1.1399998515844345,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.2279999703168869,
+      0.4559999406337738,
+      0.6839999109506607,
+      0.9119998812675476,
+      1.1399998515844345
+    ]
+  },
+  {
+    "file": "forest2_f2.25.json",
+    "factor": 2.25,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.25649996660649776,
+    "T": 1.2824998330324888,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.25649996660649776,
+      0.5129999332129955,
+      0.7694998998194933,
+      1.025999866425991,
+      1.2824998330324888
+    ]
+  },
+  {
+    "file": "forest2_f2.5.json",
+    "factor": 2.5,
+    "status": "infeasible",
+    "objective": null,
+    "segment_dt": 0.2849999628961086,
+    "T": 1.4249998144805431,
+    "d0": 0.11399998515844345,
+    "solver_kind": "miqp",
+    "residuals_valid": null,
+    "corridor_ok": null,
+    "corridor_error": null,
+    "layer_end_times": [
+      0.2849999628961086,
+      0.5699999257922173,
+      0.8549998886883259,
+      1.1399998515844345,
+      1.4249998144805431
+    ]
+  }
+]

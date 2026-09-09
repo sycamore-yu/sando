@@ -18,7 +18,7 @@ HEAD（近期）：`f9fee5d`
 | 2 | fixed-C/fixed-Z 时间可微 QP 前向一致 | **通过**（Python↔Gurobi rel≤4e-6） |
 | 3 | 时间梯度有限差分通过或明确失败结论 | **通过**（dJ/df 三尺度稳定） |
 | 4 | 时间网络经 QP trajectory gradient 更新 | **通过（机制）**：16×100 MLP；seed0 0.279→0.190；seed1 0.340→0.190；seed2 运行中 |
-| 5 | 真实 T→C(T) 重建 | 进行中 |
+| 5 | 真实 T→C(T) 重建 | **通过（有范围）**：空图全 f 最优；forest obs 走廊重建 plane_count 稳定但 MIQP 全不可行 |
 | 6 | 单 T + 单 Z + 单 QP 离线链 | 未正式验收 |
 | 7 | 在线 baseline 不可行关闭 | 阻塞（全 MIQP status=3；不挡离线） |
 | 8 | ≥10 条 one-shot 轨迹被控制端使用 | 未开始 |
@@ -48,7 +48,7 @@ HEAD（近期）：`f9fee5d`
 → 6 ≥10 控制端 one-shot；三组正式比较；最终表
 ```
 
-**当前活动项：3（T→C(T)）。**
+**当前活动项：4（one-shot 离线链）+ 5（在线约束组诊断）。**
 
 ---
 
