@@ -1,0 +1,253 @@
+{
+  "f0": 2.0,
+  "steps": 8,
+  "lr": 1e-07,
+  "lambda_T": 0.0,
+  "arms": {
+    "frozen_f": {
+      "name": "frozen_f",
+      "history": [
+        {
+          "step": 0,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 1,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 2,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 3,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 4,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 5,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 6,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 7,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        }
+      ],
+      "final_f": 2.0,
+      "final_jerk": 212014.22759899945
+    },
+    "stop_grad": {
+      "name": "stop_grad",
+      "history": [
+        {
+          "step": 0,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 1,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 2,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 3,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 4,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 5,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 6,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        },
+        {
+          "step": 7,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": 0.0,
+          "updated": false
+        }
+      ],
+      "final_f": 2.0,
+      "final_jerk": 212014.22759899945
+    },
+    "full_qp": {
+      "name": "full_qp",
+      "history": [
+        {
+          "step": 0,
+          "f": 2.0,
+          "T": 0.4418933764100075,
+          "jerk": 212014.22759899945,
+          "status": "optimal",
+          "dJ_df": -636042.7039573551,
+          "updated": true
+        },
+        {
+          "step": 1,
+          "f": 2.0636042703957354,
+          "T": 0.45594652930964075,
+          "jerk": 175705.95145912684,
+          "status": "optimal",
+          "dJ_df": -510871.07584884507,
+          "updated": true
+        },
+        {
+          "step": 2,
+          "f": 2.11469137798062,
+          "T": 0.4672340565404937,
+          "jerk": 151727.04931297444,
+          "status": "optimal",
+          "dJ_df": -430494.17227026424,
+          "updated": true
+        },
+        {
+          "step": 3,
+          "f": 2.1577407952076464,
+          "T": 0.4767456827059607,
+          "jerk": 134446.4514182341,
+          "status": "optimal",
+          "dJ_df": -373853.39567117626,
+          "updated": true
+        },
+        {
+          "step": 4,
+          "f": 2.195126134774764,
+          "T": 0.4850058496707348,
+          "jerk": 121279.6953073846,
+          "status": "optimal",
+          "dJ_df": -331497.2077120183,
+          "updated": true
+        },
+        {
+          "step": 5,
+          "f": 2.2282758555459656,
+          "T": 0.4923301706900524,
+          "jerk": 110848.86552872712,
+          "status": "optimal",
+          "dJ_df": -298478.84505936236,
+          "updated": true
+        },
+        {
+          "step": 6,
+          "f": 2.258123740051902,
+          "T": 0.49892496192156444,
+          "jerk": 102343.09825957082,
+          "status": "optimal",
+          "dJ_df": -271933.10447335534,
+          "updated": true
+        },
+        {
+          "step": 7,
+          "f": 2.2853170504992373,
+          "T": 0.5049332338062338,
+          "jerk": 95250.27117770049,
+          "status": "optimal",
+          "dJ_df": -250075.42627201474,
+          "updated": true
+        }
+      ],
+      "final_f": 2.3103245931264387,
+      "final_jerk": 95250.27117770049
+    }
+  },
+  "gates": {
+    "frozen_unchanged": true,
+    "stop_unchanged": true,
+    "full_moved": true,
+    "full_jerk_improved": true,
+    "same_init_jerk": true
+  },
+  "status": "passed"
+}

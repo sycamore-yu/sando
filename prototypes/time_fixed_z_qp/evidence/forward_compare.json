@@ -1,0 +1,57 @@
+{
+  "compare_rows": [
+    {
+      "factor": 2.3000000000000034,
+      "gurobi_obj": 91659.81265801191,
+      "python_jerk": 91659.60132442326,
+      "rel_err": 2.305629725012186e-06,
+      "ok": true
+    },
+    {
+      "factor": 1.0,
+      "gurobi_ok": false,
+      "python_status": "infeasible",
+      "agree_infeasible": true
+    },
+    {
+      "factor": 1.25,
+      "gurobi_ok": false,
+      "python_status": "infeasible",
+      "agree_infeasible": true
+    },
+    {
+      "factor": 1.5,
+      "gurobi_ok": false,
+      "python_status": "infeasible",
+      "agree_infeasible": true
+    },
+    {
+      "factor": 1.75,
+      "gurobi_ok": false,
+      "python_status": "infeasible",
+      "agree_infeasible": true
+    },
+    {
+      "factor": 2.0,
+      "gurobi_obj": 212015.07981038094,
+      "python_jerk": 212014.22759899945,
+      "rel_err": 4.019579089589034e-06,
+      "ok": true
+    },
+    {
+      "factor": 2.25,
+      "gurobi_obj": 104580.18314319849,
+      "python_jerk": 104580.29708310627,
+      "rel_err": 1.0894968838117368e-06,
+      "ok": true
+    },
+    {
+      "factor": 2.5,
+      "gurobi_obj": 55578.0294419229,
+      "python_jerk": 55578.257836201985,
+      "rel_err": 4.109417746683506e-06,
+      "ok": true
+    }
+  ],
+  "all_ok": true
+}

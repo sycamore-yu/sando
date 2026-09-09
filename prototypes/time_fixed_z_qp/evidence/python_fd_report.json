@@ -1,0 +1,82 @@
+{
+  "fixture": "tests/ampls/fixtures/translated_trajectory.json",
+  "native_factor": 2.3000000000000034,
+  "native_dt": 0.10163547657430187,
+  "native_status": "optimal",
+  "native_jerk": 91659.60132442326,
+  "native_objective_with_ridge": 91659.6013244322,
+  "assignment": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "sweep": [
+    {
+      "factor": 1.0,
+      "status": "infeasible",
+      "jerk": null,
+      "dt": 0.04418933764100075
+    },
+    {
+      "factor": 1.25,
+      "status": "infeasible",
+      "jerk": null,
+      "dt": 0.055236672051250935
+    },
+    {
+      "factor": 1.5,
+      "status": "infeasible",
+      "jerk": null,
+      "dt": 0.06628400646150112
+    },
+    {
+      "factor": 2.3000000000000034,
+      "status": "optimal",
+      "jerk": 91659.60132442326,
+      "dt": 0.10163547657430187
+    },
+    {
+      "factor": 2.0,
+      "status": "optimal",
+      "jerk": 212014.22759899945,
+      "dt": 0.0883786752820015
+    },
+    {
+      "factor": 2.5,
+      "status": "optimal",
+      "jerk": 55578.257836201985,
+      "dt": 0.11047334410250187
+    }
+  ],
+  "fd_jerk_wrt_f": {
+    "grads": {
+      "0.001": -239112.42459513596,
+      "0.0001": -239112.00694295985,
+      "1e-05": -239112.00261791234
+    },
+    "pairs": [
+      {
+        "eps_a": 0.001,
+        "eps_b": 0.0001,
+        "ga": -239112.42459513596,
+        "gb": -239112.00694295985,
+        "rel": 1.746677015291748e-06,
+        "ok": true
+      },
+      {
+        "eps_a": 0.0001,
+        "eps_b": 1e-05,
+        "ga": -239112.00694295985,
+        "gb": -239112.00261791234,
+        "rel": 1.808795622184972e-08,
+        "ok": true
+      }
+    ],
+    "stable": true
+  },
+  "gate_forward_native_solved": true,
+  "gate_fd_stable": true,
+  "status": "passed"
+}
