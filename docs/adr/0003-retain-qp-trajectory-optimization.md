@@ -1,7 +1,9 @@
 ---
-status: accepted
+status: superseded by ADR-0006
 ---
 
 # 保留 QP 连续轨迹优化，不引入 RAYEN
 
 用户于 2026-09-07 确认研究以学习时间和整数、QP 优化连续轨迹为主线，为保持路线纯净，不引入 RAYEN 方法或对照。可行映射与最优轨迹求解承担不同职责；保留 QP 使当前研究集中于时间/整数决策，RAYEN 核查仅作为已调研证据保存。
+
+2026-09-08 用户明确取消“不引入 RAYEN”的限制，允许实际评估直接原目标训练与 RAYEN 的适用性。当前决策见 [ADR-0006](0006-objective-learning-and-rayen-evaluation.md)；上文仅保留历史背景，不再作为拒绝该方向的依据。
