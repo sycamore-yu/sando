@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "kind": "phase_f_train_summary",
+  "steps": 100,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "lambdas": [
+    0.0,
+    0.1
+  ],
+  "rows": [
+    {
+      "file": "history_kkt_lam0.0_seed0.json",
+      "grad_mode": "kkt",
+      "lambda_T": 0.0,
+      "seed": 0,
+      "steps": 100,
+      "first_mean_loss": 0.4539771200197941,
+      "final_mean_loss": 0.3097020973008208,
+      "final_n_fail": 2,
+      "failures_retained": true
+    },
+    {
+      "file": "history_kkt_lam0.0_seed1.json",
+      "grad_mode": "kkt",
+      "lambda_T": 0.0,
+      "seed": 1,
+      "steps": 100,
+      "first_mean_loss": 0.5532213845271009,
+      "final_mean_loss": 0.3097295365405923,
+      "final_n_fail": 2,
+      "failures_retained": true
+    },
+    {
+      "file": "history_kkt_lam0.0_seed2.json",
+      "grad_mode": "kkt",
+      "lambda_T": 0.0,
+      "seed": 2,
+      "steps": 100,
+      "first_mean_loss": 0.4890605760711746,
+      "final_mean_loss": 0.30970209730082077,
+      "final_n_fail": 2,
+      "failures_retained": true
+    },
+    {
+      "file": "history_kkt_lam0.1_seed0.json",
+      "grad_mode": "kkt",
+      "lambda_T": 0.1,
+      "seed": 0,
+      "steps": 100,
+      "first_mean_loss": 0.5878717987959599,
+      "final_mean_loss": 0.4502733534193047,
+      "final_n_fail": 2,
+      "failures_retained": true
+    },
+    {
+      "file": "history_kkt_lam0.1_seed1.json",
+      "grad_mode": "kkt",
+      "lambda_T": 0.1,
+      "seed": 1,
+      "steps": 100,
+      "first_mean_loss": 0.6834377784606566,
+      "final_mean_loss": 0.45027335341930375,
+      "final_n_fail": 2,
+      "failures_retained": true
+    },
+    {
+      "file": "history_kkt_lam0.1_seed2.json",
+      "grad_mode": "kkt",
+      "lambda_T": 0.1,
+      "seed": 2,
+      "steps": 100,
+      "first_mean_loss": 0.599467451529336,
+      "final_mean_loss": 0.4502733534193034,
+      "final_n_fail": 2,
+      "failures_retained": true
+    }
+  ],
+  "selected_primary_model": "timing_kkt_lam0.1_seed0.json",
+  "note": "100 updates; loss plateaus early (~20\u201330 steps) near Phase E finals"
+}

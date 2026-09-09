@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "phase_f_verdict",
+  "pass": true,
+  "steps": 100,
+  "seeds": [0, 1, 2],
+  "lambdas": [0.0, 0.1],
+  "selected_primary_model": "timing_kkt_lam0.1_seed0.json",
+  "findings": [
+    "100-step trains plateau by ~step 20–30 to the same loss floor as Phase E 20-step runs.",
+    "Offline oneshot accept 14/16 and mean jerk ~19k match Phase E; extra steps do not recover the 15/16 supervised accept rate.",
+    "Keep Phase F λ=0.1 seed0 as deployment timing model for Phase K."
+  ],
+  "evidence": {
+    "train_summary": "phase_f_train_summary.json",
+    "offline_oneshot": "offline_oneshot_compare.json"
+  },
+  "next_phase": "K"
+}

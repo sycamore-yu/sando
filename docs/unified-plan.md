@@ -19,7 +19,7 @@ Stop and report “All done” **only** when `docs/fromchat/plan.md` §3 is full
 
 ## Current Milestone
 
-**Phase F — Expand timing training (100 updates, 3 seeds) → then Phase K pilots 200–205**
+**Phase K — Pilot generalization seeds 200–205 (fair method compare)**
 
 ---
 
@@ -49,6 +49,11 @@ Containment + forest MIQP regressions；`engineering_baseline_103faa1.json`。
 - Offline oneshot + verdict under `prototypes/time_fixed_z_qp/evidence/phase_e_train/`  
 - Primary model：`timing_kkt_lam0.1_seed0.json`
 
+### Phase F PASS
+- 100 updates × 3 seeds × λ∈{0,0.1} KKT；losses plateau ≈ Phase E  
+- Evidence：`prototypes/time_fixed_z_qp/evidence/phase_f_train/`  
+- Primary deploy model：`timing_kkt_lam0.1_seed0.json`
+
 ### Phase G probe PASS（seed200）
 - Script：`scripts/run_phase_g_oneshot.sh`  
 - Run：`docker/dev-workspace/results/request-latency-v3/online/phase_g_probe_seed200_c`  
@@ -70,15 +75,15 @@ True Diff-QP timing (λ=0.1) + frozen Z one-shot is online-viable on seed200; mu
 
 ## Current Bottleneck
 
-Phase F 100-step trains still running; then fair multi-seed pilots (Phase K).
+Phase F complete; running Phase K fair pilots (supervised vs true-diff, seeds 200–205).
 
 ---
 
 ## Next Automatic Action
 
-1. Finish Phase F 100×3seed KKT λ∈{0,0.1} → offline oneshot compare vs Phase E  
-2. Phase K：seeds 200–205 fair compare Original / supervised / FD / true-diff  
-3. Apply Phase L decision rules; write `docs/final-study/` when §3 met  
+1. Phase K：`scripts/run_phase_k_pilots.sh` methods supervised + true_diff, seeds 200–205  
+2. Add Original / FD arms if time; apply Phase L decision rules  
+3. Write `docs/final-study/` when plan §3 evidenced  
 
 ---
 
