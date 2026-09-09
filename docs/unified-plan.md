@@ -13,56 +13,58 @@ Learning proposes structured T/Z; hard QP keeps feasibility and executable motio
 optimizer-derived trajectory/task loss trains the learned decisions.
 Deployed path is exactly **1T → real C(T) → 1Z → 1 hard QP** (fallback counted separately).
 
-Stop and report “All done” **only** when `docs/fromchat/plan.md` §3 Ultimate Definition of Done is fully evidenced.
+Stop and report “All done” **only** when `docs/fromchat/plan.md` §3 is fully evidenced.
 
 ---
 
 ## Current Milestone
 
-**Phase C — True differentiable time-QP**（Phase A/B PASS）
+**Phase E — Task-aligned timing objective（jerk + λT）+ fair supervised/FD/true-diff training**
 
 ---
 
-## Completed Evidence（Milestone 0 / Phase I engineering baseline）
+## Completed Evidence
 
-旧 Gate 1–12 保留为已完成工程基线（不是 Ultimate Done）：
+### Milestone 0 / Phase I engineering baseline
+旧 Gate 1–12 证据保留（seed200 pilot）。FD-proxy 训练**降级为 ablation**，不是最终可微层。
 
-| 旧 Gate | 结论 | 证据 |
-| ---: | --- | --- |
-| 1 | Z 耗时归因冻结 | `docs/request-latency-v2/evidence/analysis/Z分配路线耗时归因结论.md` |
-| 2–4 | fixed-C/Z 前向 + FD + FD-proxy NN 更新 | `prototypes/time_fixed_z_qp/` |
-| 5 | T→C(T) 重建（有范围） | `prototypes/time_fixed_z_qp/evidence/t_to_c_scan/` |
-| 6 | 离线 one-shot 部分 | oneshot_offline_*（失败在分母） |
-| 7 | endpoint snap 关闭在线全不可行 | corridor_* / online_smoke_seed200_* |
-| 8–12 | seed200 pilot 表与身份 | `final_latency_task_table_seed200.json`, `IDENTITY.md` |
+### Phase A PASS
+Containment + forest MIQP regressions；`engineering_baseline_103faa1.json`。
 
-**明确降级：** 当前 timing 训练是 **FD trajectory-sensitivity prototype**，不算 true differentiable optimizer training（plan §4.5 / §3.1）。
+### Phase B PASS
+`docs/diff-time-qp-mapping.md`。
+
+### Phase C PASS（方法选定）
+- True Diff-QP：`prototypes/time_fixed_z_qp/diff_time_qp_kkt.py`（active-set KKT）  
+- CvxpyLayer 全矩阵 Parameter 路径否证：`evidence/diff_time_qp_probe0.json`
+
+### Phase D PASS（梯度验证）
+- pack16：15/16 同时通过 jerk + solution FD oracle（失败保留）  
+- `evidence/phase_d_grad_validation_pack16.json`  
+- `evidence/diff_time_qp_kkt_probe0.json`
 
 ---
 
 ## Active Hypothesis
 
-True Diff-QP（CVXPYLayers DPP 或 KKT implicit diff）相对 supervised / FD-proxy，能提供更干净、可复现的 timing 梯度，并在多 seed 上改善或持平 task/latency trade-off。
+True Diff-QP（KKT）+ λT time term 相对 supervised / FD-proxy 给出更干净梯度，并在 validation 上不劣于 supervised。
 
 ---
 
 ## Current Bottleneck
 
-1. FD 被误当作最终可微层 → 需 Phase B 映射 + Phase C 真可微实现。  
-2. 泛化仍停在 seed200 pilot。  
-3. `publish_seen` / controller-first-use 事件链不完整（plan §3.5 / Phase J）。
+尚未完成 λ 搜索与三路公平训练；未进入 200–205 pilot / controller-first-use。
 
 ---
 
 ## Next Automatic Action
 
-1. 固化 endpoint containment regression（断言 start/goal 在走廊内）。  
-2. 最小 planning regression：snap 后冻结森林观测须 MIQP optimal。  
-3. 冻结 baseline identity（103faa1 + models + solver/benchmark）。  
-4. PASS → Phase B：`docs/diff-time-qp-mapping.md`。
+1. 实现 `L = J/J_scale + λ T/T_scale`（scale 仅来自 train）。  
+2. 三路：supervised / FD-proxy / true-diff（jerk-only 与 jerk+time）。  
+3. 3 seeds small validation → 选模型进 one-shot（仍用 corridor-cost Z）。
 
 ---
 
 ## Blocked Only If External
 
-仅 plan §7 所列硬阻塞可停；当前无外部阻塞。
+无外部阻塞。

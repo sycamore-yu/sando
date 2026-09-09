@@ -93,18 +93,18 @@ f_\theta=\mathrm{NN}(x)\;\xrightarrow{\;}\; d(f)\;\xrightarrow{\;}\; (P(f),q(f),
 
 ## 8. Phase C 实施优先级（锁定）
 
-1. **优先**：在固定-Z、固定-C 下，把 Python QP 的基/界/权重改到与 Gurobi PlanningInstance 比特级一致，再尝试 **CVXPYLayers + DPP**（`f` 进入仿射参数化）。  
-2. 若 DPP 无法容纳真实 \(d(f)\) 多项式依赖且不改规划问题：改用 **KKT implicit differentiation** custom autograd。  
+1. ~~CVXPYLayers + 全矩阵 Parameter~~：**已否证** — 对 `f→矩阵→CvxpyLayer` 测得 jerk 梯度相对误差 ~6%、`v·x*` ~79%（同层 FD 稳定）。证据：`prototypes/time_fixed_z_qp/evidence/diff_time_qp_probe0.json`。  
+2. **采用：active-set KKT implicit differentiation**（`diff_time_qp_kkt.py`）：前向 Clarabel hard QP；反向解活跃 KKT。jerk / solution probe 相对 FD ~1e-7。pack16：**15/16** 双探针通过（失败保留）。  
 3. 禁止为 DPP 改写硬约束语义。
 
 ---
 
-## 9. 开放缺口（进入 Phase C 前必须关）
+## 9. 开放缺口
 
-- [ ] Python 节点采样 vs C++ Minvo CP：数值等价证明或改实现  
-- [ ] `limits` / `jerk_weight` 从真实 instance 读取  
-- [ ] fixed-Z 约束写入路径与 `fixAssignment` 一致（无 stale Big-M）  
-- [ ] 选 DPP 或 KKT 并写清参数对 `f` 的仿射/多项式形式  
+- [x] limits/weight：与 `config/sando.yaml` 默认对齐（pack 未存字段）  
+- [x] fixed-Z：硬约束直接写入，无 Big-M  
+- [ ] Python 节点采样 vs C++ Minvo CP：仍待比特级/数值审计  
+- [x] 选 KKT implicit（CvxpyLayer 全矩阵路径否证）  
 
 ---
 
@@ -114,8 +114,9 @@ f_\theta=\mathrm{NN}(x)\;\xrightarrow{\;}\; d(f)\;\xrightarrow{\;}\; (P(f),q(f),
 # C++ forward vs frozen translated trajectory
 # (install-dev) time_fixed_z_forward_probe <fixture> <expected_obj>
 
-# Python Clarabel fixed-Z
-python prototypes/time_fixed_z_qp/run_time_qp.py --help
+# KKT true Diff-QP vs FD oracle
+cd prototypes/time_fixed_z_qp
+python diff_time_qp_kkt.py --index 0
 ```
 
 证据目录：`prototypes/time_fixed_z_qp/evidence/`。

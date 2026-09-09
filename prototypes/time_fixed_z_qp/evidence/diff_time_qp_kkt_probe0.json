@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "factor": 1.6000000000000028,
+  "jerk": 4210.112641462536,
+  "autograd_dJ_df": -18194.62228906178,
+  "fd_dJ_df": {
+    "0.001": -18194.78399691252,
+    "0.0001": -18194.62405718241,
+    "1e-05": -18194.62284893234
+  },
+  "autograd_vs_fd_rel": 9.717818980194889e-08,
+  "autograd_vs_fd_ok": true,
+  "solution_probe_autograd": 29.85694041684587,
+  "solution_probe_fd": {
+    "0.001": 29.857006990802404,
+    "0.0001": 29.856940675117016,
+    "1e-05": 29.856938955319375
+  },
+  "solution_probe_rel": 8.650288370189862e-09,
+  "solution_probe_ok": true,
+  "training_path": "active_set_kkt_implicit_diff",
+  "fd_role": "oracle_only",
+  "scene_id": "unknown_dynamic-n50-d0.65-seed100",
+  "request_id": "40"
+}

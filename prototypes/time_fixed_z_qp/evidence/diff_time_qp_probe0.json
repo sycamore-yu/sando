@@ -1,0 +1,21 @@
+{
+  "factor": 1.6000000000000028,
+  "autograd_dJ_df": -16993.40025296233,
+  "fd": {
+    "0.001": -18194.78399691252,
+    "0.0001": -18194.62405718241,
+    "1e-05": -18194.62284893234
+  },
+  "fd_stable": true,
+  "autograd_vs_fd_rel": 0.06602080924809722,
+  "autograd_vs_fd_ok": false,
+  "loss": 4210.112771765281,
+  "forward_matches_hard": null,
+  "hard_status": "optimal",
+  "hard_jerk": 4210.112641462536,
+  "scene_id": "unknown_dynamic-n50-d0.65-seed100",
+  "request_id": "40",
+  "kind": "true_diff_time_qp_probe",
+  "training_path": "cvxpylayers_parameters_from_torch_f",
+  "fd_role": "oracle_only"
+}
