@@ -1,0 +1,300 @@
+{
+  "n": 16,
+  "main_qp_accept": 14,
+  "main_qp_accept_rate": 0.875,
+  "fallback_calls": 0,
+  "one_shot_definition": "exactly one T, one Z, one hard QP; fallback counted separately",
+  "timing_model": "prototypes/time_fixed_z_qp/evidence/train16_run/timing_qp_seed0.json",
+  "pack": "prototypes/time_fixed_z_qp/evidence/train16_pack_geometry.json",
+  "rows": [
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed100:40",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 1320.005520370478,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed100:43",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 10067.886113341829,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed100:47",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 1983.6258682290525,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed105:19",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 44061.83325987665,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed106:10",
+      "assignment": [
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "f": 2.179008115833527,
+      "status": "infeasible",
+      "jerk": null,
+      "main_qp_ok": false,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed107:11",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 26666.51156572734,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed100:24",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 2439.974928810206,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed101:38",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 2551.45702792837,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n50-d0.65-seed109:12",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 43625.775899796914,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n100-d0.65-seed100:35",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 3577.5601385380883,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n100-d0.65-seed100:4",
+      "assignment": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "f": 2.5,
+      "status": "infeasible",
+      "jerk": null,
+      "main_qp_ok": false,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n100-d0.65-seed100:13",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 11980.109475070483,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n100-d0.65-seed103:351",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 12032.78508153341,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n100-d0.65-seed106:8",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 43732.68096942356,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n100-d0.65-seed100:30",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 10400.219584884153,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    },
+    {
+      "id": "unknown_dynamic-n100-d0.65-seed104:375",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "f": 2.5,
+      "status": "optimal",
+      "jerk": 52087.818739305614,
+      "main_qp_ok": true,
+      "fallback_used": false,
+      "main_t_count": 1,
+      "main_z_count": 1,
+      "main_qp_count": 1
+    }
+  ],
+  "status": "partial"
+}

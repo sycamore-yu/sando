@@ -19,7 +19,7 @@ HEAD（近期）：`f9fee5d`
 | 3 | 时间梯度有限差分通过或明确失败结论 | **通过**（dJ/df 三尺度稳定） |
 | 4 | 时间网络经 QP trajectory gradient 更新 | **通过（机制）**：16×100 MLP；seed0 0.279→0.190；seed1 0.340→0.190；seed2 运行中 |
 | 5 | 真实 T→C(T) 重建 | **通过（有范围）**：空图全 f 最优；forest obs 走廊重建 plane_count 稳定但 MIQP 全不可行 |
-| 6 | 单 T + 单 Z + 单 QP 离线链 | 未正式验收 |
+| 6 | 单 T + 单 Z + 单 QP 离线链 | **部分**：16例 pack，QP-train 14/16、监督 15/16 主QP接受；失败保留分母；无回退 |
 | 7 | 在线 baseline 不可行关闭 | 阻塞（全 MIQP status=3；不挡离线） |
 | 8 | ≥10 条 one-shot 轨迹被控制端使用 | 未开始 |
 | 9 | supervised vs differentiable 对照 | 未开始 |
