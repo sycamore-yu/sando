@@ -1,0 +1,8 @@
+{
+  "model": "prototypes/time_fixed_z_qp/evidence/train16_run/timing_qp_seed1.json",
+  "model_sha256": "2e52a6d9f416e29360b7f2e8349d3048cd75bbe782822c6d469b36734cb3006f",
+  "history": "prototypes/time_fixed_z_qp/evidence/train16_run/train_history_seed1.json",
+  "final_mean_jerk_over_scale": 0.1903941844716133,
+  "first_mean_jerk_over_scale": 0.340071341203697,
+  "status": "passed"
+}
