@@ -9,14 +9,16 @@ AMPL_UUID_FILE="${AMPL_UUID_FILE:-${HOME}/.config/ampl/uuid}"
 HOST_WORKSPACE="${SANDO_DEV_WORKSPACE:-${ROOT_DIR}/docker/dev-workspace}"
 BUILD_JOBS="${BUILD_JOBS:-2}"
 ROS_DOMAIN_ID="${SANDO_DEV_ROS_DOMAIN_ID:-91}"
+NUMPY_VERSION="${SANDO_NUMPY_VERSION:-1.21.5}"
+TORCH_VERSION="${SANDO_TORCH_VERSION:-2.14.0+cpu}"
 HOST_UID="$(id -u)"
 HOST_GID="$(id -g)"
 ENV_FILE="/root/sando_ws/src/sando/docker/dev_env.sh"
-LOCK_FILE="/root/sando_ws/build-dev/.dev-build.lock"
+LOCK_FILE="${HOST_WORKSPACE}/.dev-workflow.lock"
 
 usage() {
   cat <<'EOF'
-usage: docker/dev.sh up|build|test|shell|status|down|exec|freeze|smoke
+usage: docker/dev.sh up|build|test|shell|status|down|exec|freeze|release|smoke
 EOF
 }
 
@@ -49,6 +51,54 @@ container_running() {
   docker inspect -f '{{.State.Running}}' "${NAME}" 2>/dev/null | grep -qx true
 }
 
+image_id() { docker image inspect "${IMAGE}" --format '{{.Id}}' 2>/dev/null || true; }
+
+validate_container() {
+  local expected actual mount
+  expected="$(image_id)"
+  [[ -n "${expected}" ]] || { echo "requested development image is unavailable: ${IMAGE}" >&2; exit 67; }
+  actual="$(docker inspect "${NAME}" --format '{{.Image}}' 2>/dev/null || true)"
+  [[ "${actual}" == "${expected}" ]] || {
+    echo "development container ${NAME} uses image ${actual:-<unknown>}, requested ${IMAGE} (${expected}); choose another SANDO_DEV_CONTAINER or explicitly remove the stopped container before reuse" >&2
+    exit 68
+  }
+  while IFS='|' read -r mount; do
+    [[ -z "${mount}" ]] && continue
+    if ! docker inspect "${NAME}" --format '{{range .Mounts}}{{.Source}}|{{.Destination}}|{{.RW}}{{println}}{{end}}' | grep -Fqx "${mount}"; then
+      echo "development container ${NAME} has an unexpected or missing mount: ${mount}" >&2
+      exit 69
+    fi
+  done <<EOF
+${AMPL_UUID_FILE}|/run/secrets/ampl_uuid|false
+${ROOT_DIR}|/root/sando_ws/src/sando|true
+${HOST_WORKSPACE}/build|/root/sando_ws/build-dev|true
+${HOST_WORKSPACE}/install|/root/sando_ws/install-dev|true
+${HOST_WORKSPACE}/log|/root/sando_ws/log-dev|true
+${HOST_WORKSPACE}/python|/root/sando_ws/dev-python|true
+${HOST_WORKSPACE}/results|/root/sando_ws/dev-results|true
+EOF
+}
+
+with_lock() {
+  mkdir -p "${HOST_WORKSPACE}"
+  exec 9>"${LOCK_FILE}"
+  flock -x 9
+  "$@"
+}
+
+source_fingerprint() {
+  python3 "${SCRIPT_DIR}/dev_identity.py" "${ROOT_DIR}"
+}
+
+write_build_identity() {
+  printf '%s %s\n' "${1}" "$(docker inspect "${NAME}" --format '{{.Image}}')" > "${HOST_WORKSPACE}/.dev-build-identity"
+}
+
+build_identity_matches() {
+  [[ -r "${HOST_WORKSPACE}/.dev-build-identity" ]] || return 1
+  [[ "$(cat "${HOST_WORKSPACE}/.dev-build-identity")" == "$(source_fingerprint) $(image_id)" ]]
+}
+
 exec_in() {
   docker exec "${NAME}" bash -lc "source '${ENV_FILE}' && $(printf '%q ' "$@")"
 }
@@ -63,6 +113,7 @@ up() {
   check_source
   prepare_workspace
   if docker inspect "${NAME}" >/dev/null 2>&1; then
+    validate_container
     if container_running; then
       echo "development container ${NAME} is already running"
     else
@@ -133,32 +184,37 @@ if [[ \"\${need_venv}\" -eq 1 ]]; then
   /usr/bin/python3 -m venv --system-site-packages /root/sando_ws/dev-python
 fi
 /root/sando_ws/dev-python/bin/python -c 'import torch,numpy' 2>/dev/null || \
-  /root/sando_ws/dev-python/bin/pip install numpy torch --index-url https://download.pytorch.org/whl/cpu
+  /root/sando_ws/dev-python/bin/pip install "numpy==${NUMPY_VERSION}" "torch==${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/cpu
 "
 }
 
-build() {
-  if ! container_running; then
-    up
-  fi
+build_unlocked() {
+  if ! container_running; then up; else validate_container; fi
+  local before
+  before="$(source_fingerprint)"
+  rm -f "${HOST_WORKSPACE}/.dev-build-identity"
   docker exec "${NAME}" bash -lc "mkdir -p /root/sando_ws/build-dev /root/sando_ws/install-dev /root/sando_ws/log-dev"
-  docker exec "${NAME}" bash -lc "source '${ENV_FILE}' && flock '${LOCK_FILE}' colcon build --packages-select sando --build-base /root/sando_ws/build-dev --install-base /root/sando_ws/install-dev --parallel-workers ${BUILD_JOBS} --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSANDO_USE_AMPL=ON -DAMPLS_ROOT=/opt/ampls-api"
+  docker exec "${NAME}" bash -lc "source '${ENV_FILE}' && CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS} MAKEFLAGS=-j${BUILD_JOBS} colcon build --paths /root/sando_ws/src/sando --packages-select sando --build-base /root/sando_ws/build-dev --install-base /root/sando_ws/install-dev --parallel-workers 1 --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSANDO_USE_AMPL=ON -DAMPLS_ROOT=/opt/ampls-api"
   ensure_python
+  [[ "${before}" == "$(source_fingerprint)" ]] || { echo "source changed during build; rebuild before testing or freezing" >&2; exit 71; }
+  write_build_identity "${before}"
   fix_owner
 }
 
-test_cmd() {
-  if ! container_running; then
-    up
-  fi
-  if [[ ! -x "${HOST_WORKSPACE}/install/sando/lib/sando/sando" ]]; then
-    build
+build() { with_lock build_unlocked; }
+
+test_unlocked() {
+  if ! container_running; then up; else validate_container; fi
+  if [[ ! -x "${HOST_WORKSPACE}/install/sando/lib/sando/sando" ]] || ! build_identity_matches; then
+    build_unlocked
   fi
   ensure_python
   docker exec "${NAME}" bash -lc "source '${ENV_FILE}' && python3 /root/sando_ws/src/sando/tests/ampl_model/test_integer_set_loss.py && python3 /root/sando_ws/src/sando/tests/ampl_model/test_integer_expert_labels.py && python3 /root/sando_ws/src/sando/tests/ampl_model/test_integer_label_queue.py && python3 /root/sando_ws/src/sando/tests/ampl_model/test_integer_instance_sampler.py && python3 /root/sando_ws/src/sando/tests/ampl_model/test_integer_dagger_aggregate.py && python3 /root/sando_ws/src/sando/tests/ampl_model/test_capture_campaign.py && python3 /root/sando_ws/src/sando/tests/ampl_model/test_baseline_sim.py"
-  docker exec "${NAME}" bash -lc "source '${ENV_FILE}' && ctest --test-dir /root/sando_ws/build-dev/sando --output-on-failure -R '^(segment_time_consistency|planning_instance_roundtrip|instance_reservoir_sampling|ampl_adapter_real_model|ampl_objective_centering|integer_capture_campaign|baseline_arrival_checks|urdf_mesh_resources|integer_set_loss|integer_expert_labels|integer_label_queue|integer_instance_sampler|integer_dagger_aggregate)$'"
+  docker exec "${NAME}" bash -lc "source '${ENV_FILE}' && ctest --test-dir /root/sando_ws/build-dev/sando --output-on-failure -R '^(segment_time_consistency|planning_instance_roundtrip|instance_reservoir_sampling|ampl_adapter_real_model|ampl_objective_centering|integer_capture_campaign|baseline_arrival_checks|urdf_mesh_resources|integer_set_loss|integer_expert_labels|integer_label_queue|integer_queue_recovery|integer_post_capture_identity|integer_throughput|integer_instance_sampler|integer_dagger_aggregate)$'"
   docker exec "${NAME}" bash -lc "source '${ENV_FILE}' && python3 /root/sando_ws/src/sando/docker/dev_status.py"
 }
+
+test_cmd() { with_lock test_unlocked; }
 
 status() {
   echo "host_root ${ROOT_DIR}"
@@ -192,16 +248,19 @@ down() {
 }
 
 shell() {
-  if ! container_running; then
-    up
-  fi
+  if ! container_running; then up; else validate_container; fi
   docker exec -it "${NAME}" bash -lc "source '${ENV_FILE}' && exec bash"
 }
 
-freeze() {
+freeze_unlocked() {
+  validate_container
   prepare_workspace
+  if ! build_identity_matches; then
+    echo "development build identity is missing or stale; run dev-build before freezing" >&2
+    exit 70
+  fi
   python3 - "${ROOT_DIR}" "${HOST_WORKSPACE}" "${IMAGE}" <<'PY'
-import hashlib, json, subprocess, sys
+import hashlib, json, shutil, subprocess, sys
 from pathlib import Path
 root, ws_path, image = map(Path, sys.argv[1:4])
 ws = ws_path
@@ -213,6 +272,9 @@ def sha(path):
 image_id = subprocess.check_output(["docker", "image", "inspect", str(image), "--format", "{{.Id}}"], text=True).strip()
 config = json.loads((root / "scripts/process_improvement_v1.json").read_text())
 payload = {
+    "schema_version": 2,
+    "build_identity": (ws / ".dev-build-identity").read_text().strip(),
+    "record_kind": "development-freeze-record",
     "git_head": run(["git", "rev-parse", "HEAD"]),
     "git_branch": run(["git", "rev-parse", "--abbrev-ref", "HEAD"]),
     "git_status": run(["git", "status", "--porcelain"]),
@@ -223,15 +285,45 @@ payload = {
     "config": config,
     "config_sha256": hashlib.sha256((root / "scripts/process_improvement_v1.json").read_bytes()).hexdigest(),
 }
-(ws / "freeze/latest.json").write_text(json.dumps(payload, indent=2) + "\n")
-print((ws / "freeze/latest.json").read_text())
+binary = ws / "install/sando/lib/sando/sando"
+if not binary.is_file():
+    raise SystemExit("development executable missing; run dev-build first")
+record_id = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+artifact_dir = ws / "freeze" / "artifacts" / record_id
+artifact_dir.mkdir(parents=True, exist_ok=True)
+artifact = artifact_dir / "sando"
+if not artifact.exists():
+    temporary = artifact.with_suffix(".tmp")
+    shutil.copy2(binary, temporary)
+    if sha(temporary) != payload["dev_sando"]:
+        raise SystemExit("binary changed while freezing")
+    temporary.chmod(0o555)
+    temporary.replace(artifact)
+if sha(artifact) != payload["dev_sando"]:
+    raise SystemExit("frozen artifact hash mismatch")
+payload["record_id"] = record_id
+payload["artifact"] = str(artifact.relative_to(ws))
+record = ws / "freeze" / "records" / f"{record_id}.json"
+record.parent.mkdir(parents=True, exist_ok=True)
+if record.exists() and json.loads(record.read_text()) != payload:
+    raise SystemExit("frozen record identity conflict")
+if not record.exists():
+    record.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+(ws / "freeze/latest.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+print(record)
 PY
 }
 
+freeze() { with_lock freeze_unlocked; }
+
+release_unlocked() {
+  validate_container
+  python3 "${SCRIPT_DIR}/freeze_release.py" --root "${ROOT_DIR}" --workspace "${HOST_WORKSPACE}" --base "${IMAGE}" --jobs "${BUILD_JOBS}"
+}
+release() { with_lock release_unlocked; }
+
 smoke() {
-  if ! container_running; then
-    up
-  fi
+  if ! container_running; then up; else validate_container; fi
   local marker="${ROOT_DIR}/.sando_dev_mount_check"
   echo "host-visible" > "${marker}"
   docker exec "${NAME}" bash -lc "test -f /root/sando_ws/src/sando/.sando_dev_mount_check && echo container-visible >> /root/sando_ws/src/sando/.sando_dev_mount_check"
@@ -250,13 +342,14 @@ case "${cmd}" in
   status) status ;;
   down) down ;;
   exec)
-    if ! container_running; then up; fi
+    if ! container_running; then up; else validate_container; fi
     exec_in "$@"
     ;;
   freeze) freeze ;;
+  release) release ;;
   smoke) smoke ;;
   probe)
-    if ! container_running; then up; fi
+    if ! container_running; then up; else validate_container; fi
     probe
     ;;
   *) usage; exit 64 ;;
