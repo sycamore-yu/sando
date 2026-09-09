@@ -45,6 +45,7 @@ import sys
 import tempfile
 import time
 import yaml
+import shlex
 from pathlib import Path
 
 
@@ -84,6 +85,7 @@ def workspace_source_commands(ros_domain_id: int) -> list:
         'unset AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH 2>/dev/null',
         'source /opt/ros/humble/setup.bash',
         '. "$SETUP_BASH"',
+        'if [ -f /usr/share/gazebo/setup.sh ]; then . /usr/share/gazebo/setup.sh; fi',
         f"export ROS_DOMAIN_ID={ros_domain_id}",
     ]
 
@@ -845,6 +847,7 @@ def generate_gazebo_yaml(
     send_goal: bool = True,
     environment_assumption: str = "",
     depth_topic: str = "mid360_PointCloud2",
+    world_file: str = None,
 ) -> str:
     """Generate YAML for single-agent Gazebo simulation."""
     goal_x, goal_y, goal_z = goal
@@ -862,6 +865,7 @@ def generate_gazebo_yaml(
                 f"ros2 launch sando base_sando.launch.py use_dyn_obs:={str(use_dyn_obs).lower()} "
                 f"use_gazebo_gui:={str(use_gazebo_gui).lower()} use_rviz:={str(use_rviz).lower()} env:={env} "
                 f"rviz_config:={RVIZ_CONFIG}"
+                + (f" world_file:={shlex.quote(str(world_file))}" if world_file else "")
             ]
         }
     ]
@@ -893,8 +897,9 @@ def generate_gazebo_yaml(
                     else ""
                 )
                 + (
-                    f"use_benchmark:=true data_file:={data_file} global_planner:={global_planner} "
-                    if use_benchmark and data_file
+                    f"use_benchmark:=true global_planner:={global_planner} "
+                    + (f"data_file:={shlex.quote(str(data_file))} " if data_file else "")
+                    if use_benchmark
                     else ""
                 ),
             ]

@@ -3,7 +3,10 @@
 
 import importlib.util
 import json
+import multiprocessing
+import os
 import tempfile
+import time
 from argparse import Namespace
 from pathlib import Path
 
@@ -12,6 +15,146 @@ SCRIPT = ROOT / "scripts/capture_integer_learning_campaign.py"
 spec = importlib.util.spec_from_file_location("campaign", SCRIPT)
 campaign = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(campaign)
+campaign._runtime_identity = lambda args: {"test_runtime": True}
+
+
+def _locked_probe(args):
+    return campaign._acquire_lock(args.output)
+
+
+def _hold_lock(path, ready):
+    handle = campaign._acquire_lock(path)
+    ready.set()
+    time.sleep(1)
+    handle.close()
+
+
+def test_campaign_lock_releases_after_exception_and_blocks_concurrently():
+    with tempfile.TemporaryDirectory() as directory:
+        output = Path(directory) / "campaign"
+        decorated = campaign._with_campaign_lock(lambda args: (_ for _ in ()).throw(RuntimeError("boom")))
+        try:
+            decorated(Namespace(output=output, resume=False))
+        except RuntimeError as error:
+            assert str(error) == "boom"
+        else:
+            raise AssertionError("exception did not propagate")
+        handle = campaign._acquire_lock(output); handle.close()
+        ctx = multiprocessing.get_context("fork")
+        ready = ctx.Event(); holder = ctx.Process(target=_hold_lock, args=(output, ready)); holder.start()
+        assert ready.wait(5)
+        try:
+            try:
+                campaign._acquire_lock(output)
+            except ValueError as error:
+                assert "locked" in str(error)
+            else:
+                raise AssertionError("concurrent campaign lock acquisition succeeded")
+        finally:
+            holder.join(5)
+            assert not holder.is_alive()
+
+
+def test_manifest_rejects_missing_aggregate_instances():
+    with tempfile.TemporaryDirectory() as directory:
+        output = Path(directory) / "campaign"; output.mkdir()
+        manifest = {"completed": True, "required_capture_invalid": False, "runs": [], "artifact_hash": {}}
+        (output / "output.json").write_text(json.dumps(manifest))
+        assert campaign._manifest_valid(manifest, output) is False
+
+
+def _direct_config():
+    return {"scene_id": "scene", "seed": 0, "num_obstacles": 50,
+            "dynamic_ratio": 0.65, "split": "train", "method": "original",
+            "policy": None, "family": "unknown_dynamic", "protocol_id": "legacy",
+            "start_randomization": "none"}
+
+
+def _write_fake_capture(run_dir, success=False, health=None):
+    row = {"schema_version": 1, "scene_id": "scene", "episode_id": "ep",
+           "request_id": "0", "factor_id": "0", "source_id": "src", "config_id": "cfg",
+           "outcome": {"capture": {"split": "train", "capture_round": 0}}}
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "instances.jsonl").write_text(json.dumps(row) + "\n")
+    (run_dir / "instances.jsonl.summary.json").write_text(json.dumps({"total_eligible": 1, "invalid_reasons": {}, "metadata": {"scene_id": "scene", "source_id": "src", "config_id": "cfg"}}))
+    result = {"success": success, "error": "flight failed", "capture": {"source_id": "src", "config_id": "cfg"}}
+    if health is not None: result["simulation_health"] = health
+    (run_dir / "result.json").write_text(json.dumps(result))
+
+
+def test_failed_flight_with_valid_rows_is_terminal_and_reused():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory); setup = root / "setup"; setup.write_text("# test\n")
+        calls = []
+        class Completed: returncode = 0
+        def fake_run(command, check=False, **kwargs):
+            calls.append(command); _write_fake_capture(Path(command[command.index("--output") + 1]), success=False); return Completed()
+        old = campaign.subprocess.run; campaign.subprocess.run = fake_run
+        try:
+            config = _direct_config(); identity = {"runtime": "test"}
+            first = campaign._run_config(config, root / "out", setup, 0, identity=identity)
+            assert first["retained"] == 1 and first["excluded_reason"] is None
+            second = campaign._run_config(config, root / "out", setup, 0, identity=identity, resume=True)
+            assert second["retained"] == 1 and len(calls) == 1
+        finally:
+            campaign.subprocess.run = old
+
+
+def test_partial_run_is_quarantined_and_retried_and_corruption_rejected():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory); setup = root / "setup"; setup.write_text("# test\n"); output = root / "out"
+        config = _direct_config(); run_dir = output / "runs" / "scene"; run_dir.mkdir(parents=True); (run_dir / "partial").write_text("x")
+        class Completed: returncode = 0
+        old = campaign.subprocess.run
+        campaign.subprocess.run = lambda command, check=False, **kwargs: (_write_fake_capture(Path(command[command.index("--output") + 1]), success=True), Completed())[1]
+        try:
+            entry = campaign._run_config(config, output, setup, 0, identity={"runtime": "test"}, resume=True)
+            assert entry["retained"] == 1 and list((output / "attempts").iterdir())
+            (run_dir / "instances.jsonl").write_text("corrupt\n")
+            try:
+                campaign._run_config(config, output, setup, 0, identity={"runtime": "test"}, resume=True)
+            except ValueError as error:
+                assert "corrupted" in str(error) or "invalid" in str(error)
+            else:
+                raise AssertionError("corrupted completed run was accepted")
+        finally:
+            campaign.subprocess.run = old
+
+
+def test_started_identity_time_survives_interrupted_resume():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory); setup = root / "setup"; setup.write_text("# test\n")
+        output = root / "out"
+        args = Namespace(output=output, setup_bash=setup, split="train", round=0,
+                         counts=[50], ratios=[0.65], seeds=[0], pilot=False, resume=False)
+        old = campaign.subprocess.run
+        campaign.subprocess.run = lambda command, check=False, **kwargs: (_ for _ in ()).throw(KeyboardInterrupt())
+        try:
+            try:
+                campaign.run_campaign(args)
+            except KeyboardInterrupt:
+                pass
+            else:
+                raise AssertionError("interrupted campaign did not propagate")
+            started = json.loads((output / "started.json").read_text())
+            args.resume = True
+            campaign.subprocess.run = lambda command, check=False, **kwargs: (_write_fake_capture(Path(command[command.index("--output") + 1]), success=True), type("Completed", (), {"returncode": 0})())[1]
+            campaign.run_campaign(args)
+            assert json.loads((output / "started.json").read_text())["created_utc"] == started["created_utc"]
+        finally:
+            campaign.subprocess.run = old
+
+
+def test_invalid_simulation_health_excludes_retained_rows():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory); setup = root / "setup"; setup.write_text("# test\n")
+        old = campaign.subprocess.run
+        campaign.subprocess.run = lambda command, check=False, **kwargs: (_write_fake_capture(Path(command[command.index("--output") + 1]), health={"valid": False, "reason": "gazebo crash"}), type("Completed", (), {"returncode": 0})())[1]
+        try:
+            entry = campaign._run_config(_direct_config(), root / "out", setup, 0, identity={"runtime": "test"})
+            assert entry["retained"] == 1 and entry["excluded_reason"] == "invalid_capture: simulation health failed"
+        finally:
+            campaign.subprocess.run = old
 
 
 assert set(campaign.SEEDS["train"]).isdisjoint(campaign.SEEDS["validation"])
@@ -43,7 +186,7 @@ with tempfile.TemporaryDirectory() as temporary:
     class Completed:
         returncode = 0
 
-    def fake_run(command, check=False):
+    def fake_run(command, check=False, **kwargs):
         calls.append(command)
         run_dir = Path(command[command.index("--output") + 1])
         seed = int(command[command.index("--seed") + 1])
@@ -78,21 +221,21 @@ with tempfile.TemporaryDirectory() as temporary:
     failed_args = Namespace(output=root / "failed", setup_bash=setup, split="validation", round=0,
                             counts=[50], ratios=[0.0], pilot=False)
 
-    def failed_run(command, check=False):
+    def failed_run(command, check=False, **kwargs):
         run_dir = Path(command[command.index("--output") + 1])
         run_dir.mkdir(parents=True, exist_ok=True)
         (run_dir / "result.json").write_text(json.dumps({"success": False, "error": "launch failed"}))
         return Completed()
 
     campaign.subprocess.run = failed_run
-    assert campaign.run_campaign(failed_args) == 0
+    assert campaign.run_campaign(failed_args) == 2
     failed_manifest = json.loads((failed_args.output / "output.json").read_text())
     assert failed_manifest["retained"] == 0
     assert all(run["excluded_reason"] for run in failed_manifest["runs"])
 
     subset_args = Namespace(output=root / "subset", setup_bash=setup, split="train", round=0,
                             counts=[50], ratios=[0.65], seeds=[3, 1], pilot=False)
-    assert campaign.run_campaign(subset_args) == 0
+    assert campaign.run_campaign(subset_args) == 2
     subset_manifest = json.loads((subset_args.output / "output.json").read_text())
     assert subset_manifest["requested"]["seeds"] == [3, 1]
     assert [item["seed"] for item in subset_manifest["all_scene_configs"]] == [3, 1]
@@ -124,7 +267,7 @@ with tempfile.TemporaryDirectory() as temporary:
 
     aligned_calls = []
 
-    def aligned_run(command, check=False):
+    def aligned_run(command, check=False, **kwargs):
         aligned_calls.append(command)
         run_dir = Path(command[command.index("--output") + 1])
         family = command[command.index("--scene-family") + 1]
@@ -158,7 +301,7 @@ with tempfile.TemporaryDirectory() as temporary:
 
     capacity_calls = []
 
-    def capacity_run(command, check=False):
+    def capacity_run(command, check=False, **kwargs):
         # Legacy capacity path is not train_box_v1; do not reuse aligned_run asserts.
         capacity_calls.append(command)
         run_dir = Path(command[command.index("--output") + 1])
@@ -186,3 +329,59 @@ with tempfile.TemporaryDirectory() as temporary:
                for command in capacity_calls)
 
 print("PASS: campaign split/round validation, deterministic pilot subset, duplicate-safe manifest, failure accounting")
+test_campaign_lock_releases_after_exception_and_blocks_concurrently()
+test_manifest_rejects_missing_aggregate_instances()
+test_failed_flight_with_valid_rows_is_terminal_and_reused()
+test_partial_run_is_quarantined_and_retried_and_corruption_rejected()
+test_started_identity_time_survives_interrupted_resume()
+test_invalid_simulation_health_excludes_retained_rows()
+
+
+def _role_args(output, setup, role=None, resume=False):
+    values = dict(output=output, setup_bash=setup, split="train", round=1,
+                  counts=[50], ratios=[0.65], seeds=[0], pilot=False,
+                  protocol="legacy", capture_capacity=5, sampling_protocol="uniform_reservoir_v1",
+                  method="original", policy=None, resume=resume)
+    if role is not None:
+        values["collection_role"] = role
+    return Namespace(**values)
+
+
+def test_collection_roles_round_one_contract():
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary); setup = root / "setup.bash"; setup.write_text("# test\n")
+        for args in (_role_args(root / "implicit", setup), _role_args(root / "initial", setup, "initial"),
+                     _role_args(root / "student", setup, "student_dagger")):
+            try:
+                campaign.run_campaign(args)
+            except ValueError as error:
+                assert "expert_control" in str(error) or "initial" in str(error) or "student_dagger" in str(error)
+            else:
+                raise AssertionError("inconsistent round-one collection role accepted")
+
+        def successful_run(command, check=False, **kwargs):
+            run_dir = Path(command[command.index("--output") + 1]); run_dir.mkdir(parents=True, exist_ok=True)
+            row = {"schema_version": 1, "scene_id": "n50-d0.65-seed0", "episode_id": "ep",
+                   "request_id": "r", "factor_id": "f", "source_id": "src", "config_id": "cfg",
+                   "outcome": {"capture": {"split": "train", "capture_round": 1}}}
+            (run_dir / "instances.jsonl").write_text(json.dumps(row) + "\n")
+            (run_dir / "instances.jsonl.summary.json").write_text(json.dumps({"total_eligible": 1, "invalid_reasons": {}, "metadata": {"scene_id": "n50-d0.65-seed0", "source_id": "src", "config_id": "cfg"}}))
+            (run_dir / "result.json").write_text(json.dumps({"success": True, "capture": {"source_id": "src", "config_id": "cfg"}}))
+            return Namespace(returncode=0)
+        campaign.subprocess.run = successful_run
+        control = _role_args(root / "control", setup, "expert_control")
+        assert campaign.run_campaign(control) == 0
+        manifest = json.loads((control.output / "output.json").read_text())
+        assert manifest["identity"]["collection_role"] == "expert_control"
+        try:
+            started = json.loads((control.output / "started.json").read_text())
+            started["identity"]["collection_role"] = "student_dagger"
+            (control.output / "started.json").write_text(json.dumps(started))
+            campaign.run_campaign(_role_args(control.output, setup, "expert_control", resume=True))
+        except ValueError as error:
+            assert "student_dagger" in str(error) or "identity" in str(error)
+        else:
+            raise AssertionError("resume with changed collection role accepted")
+
+
+test_collection_roles_round_one_contract()

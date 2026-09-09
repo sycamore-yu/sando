@@ -80,6 +80,8 @@ CandidateEvaluation evaluateCandidate(const PlanningInstance& instance, const As
             if (original_residuals.valid) {
               candidate.classification = "feasible";
               candidate.raw_objective = result.objective;
+              candidate.trajectory_coefficients = recoverCoefficients(instance, lifted);
+              candidate.segment_dt = instance.segment_dt;
             } else {
               attempt.residuals = original_residuals;
               attempt.error = "lifted solution violates original model: " + original_residuals.reason;
@@ -114,6 +116,8 @@ nlohmann::json candidateToJson(const CandidateEvaluation& candidate) {
               {"model_conversion_time", candidate.model_conversion_time},
               {"raw_objective", optional_number(candidate.raw_objective)},
               {"cost", optional_number(candidate.cost)},
+              {"trajectory_coefficients", candidate.trajectory_coefficients.has_value() ? json(*candidate.trajectory_coefficients) : json(nullptr)},
+              {"segment_dt", optional_number(candidate.segment_dt)},
               {"attempts", json::array()}};
   for (const auto& attempt : candidate.attempts) result["attempts"].push_back(attempt_to_json(attempt));
   return result;
@@ -186,7 +190,42 @@ nlohmann::json evaluateInstanceJson(const PlanningInstance& instance, sando_ampl
 namespace {
 
 void usage() {
-  throw std::invalid_argument("usage: label_planning_instances --input FILE --output FILE [--limit N]");
+  throw std::invalid_argument("usage: label_planning_instances --input FILE --output FILE [--limit N] [--assignments FILE]");
+}
+
+nlohmann::json evaluateSampledCandidateJson(const sando_learning::PlanningInstance& instance,
+                                            const sando_learning::Assignment& assignment,
+                                            sando_ampl::Runtime& runtime) {
+  const auto candidate = sando_learning::evaluateCandidate(instance, assignment, runtime);
+  nlohmann::json result{{"schema_version", 1},
+                        {"instance", sando_learning::toJson(instance)},
+                        {"record_purpose", "sampled_candidate"},
+                        {"costs_complete", false},
+                        {"total_valid_assignments", sando_learning::enumerateAssignments(instance).size()},
+                        {"candidates", nlohmann::json::array({sando_learning::candidateToJson(candidate)})}};
+  result["accepted"] = candidate.classification == "feasible";
+  result["raw_objective"] = candidate.raw_objective.has_value() ? nlohmann::json(*candidate.raw_objective) : nlohmann::json(nullptr);
+  result["residuals"] = candidate.attempts.empty() ? nlohmann::json(nullptr) : sando_learning::residualsToJson(candidate.attempts.back().residuals);
+  return result;
+}
+
+sando_learning::Assignment assignment_from_json(const nlohmann::json& value,
+                                                 const sando_learning::PlanningInstance& instance) {
+  if (!value.is_object() || !value.contains("identity") || !value.at("identity").is_object())
+    throw std::invalid_argument("assignment requires complete instance identity");
+  const auto& record = value.at("assignment");
+  const auto& identity = value.at("identity");
+  const auto original = sando_learning::toJson(instance);
+  for (const auto& key : {"scene_id", "episode_id", "request_id", "factor_id", "source_id", "config_id"})
+    if (!identity.contains(key) || identity.at(key) != original.at(key))
+      throw std::invalid_argument("assignment identity does not match input instance");
+  if (!record.is_array() || record.size() != static_cast<std::size_t>(instance.n))
+    throw std::invalid_argument("assignment must contain one integer per segment");
+  for (const auto& item : record)
+    if (!item.is_number_integer()) throw std::invalid_argument("assignment must contain integer indices");
+  auto assignment = record.get<sando_learning::Assignment>();
+  sando_learning::validateAssignment(instance, assignment);
+  return assignment;
 }
 
 }  // namespace
@@ -195,19 +234,26 @@ void usage() {
 int main(int argc, char** argv) {
   try {
     std::string input_path, output_path;
+    std::string assignments_path;
     std::optional<std::size_t> limit;
     for (int i = 1; i < argc; ++i) {
       const std::string option = argv[i];
-      if ((option == "--input" || option == "--output" || option == "--limit") && i + 1 < argc) {
+      if ((option == "--input" || option == "--output" || option == "--limit" || option == "--assignments") && i + 1 < argc) {
         const std::string value = argv[++i];
         if (option == "--input") input_path = value;
         else if (option == "--output") output_path = value;
+        else if (option == "--assignments") assignments_path = value;
         else limit = std::stoull(value);
       } else usage();
     }
     if (input_path.empty() || output_path.empty()) usage();
     std::ifstream input(input_path);
     if (!input) throw std::runtime_error("cannot open input JSONL");
+    std::ifstream assignments_input;
+    if (!assignments_path.empty()) {
+      assignments_input.open(assignments_path);
+      if (!assignments_input) throw std::runtime_error("cannot open assignments JSONL");
+    }
     const int output_fd = ::open(output_path.c_str(), O_WRONLY | O_CREAT | O_EXCL, 0644);
     if (output_fd < 0) throw std::runtime_error("cannot create exclusive output JSONL: " + std::string(std::strerror(errno)));
     FILE* output_stream = ::fdopen(output_fd, "w");
@@ -220,11 +266,25 @@ int main(int argc, char** argv) {
     while (std::getline(input, line) && (!limit || processed < *limit)) {
       if (line.empty()) continue;
       const auto instance = sando_learning::fromJson(nlohmann::json::parse(line));
-      const std::string serialized = sando_learning::evaluateInstanceJson(instance, *runtime).dump() + "\n";
+      nlohmann::json result;
+      if (assignments_input.is_open()) {
+        std::string assignment_line;
+        if (!std::getline(assignments_input, assignment_line) || assignment_line.empty())
+          throw std::invalid_argument("assignments JSONL has fewer records than input JSONL");
+        result = evaluateSampledCandidateJson(instance, assignment_from_json(nlohmann::json::parse(assignment_line), instance), *runtime);
+      } else {
+        result = sando_learning::evaluateInstanceJson(instance, *runtime);
+      }
+      const std::string serialized = result.dump() + "\n";
       if (std::fwrite(serialized.data(), 1, serialized.size(), output.get()) != serialized.size() || std::fflush(output.get()) != 0)
         throw std::runtime_error("cannot write output JSONL");
       ++processed;
       std::cerr << "label_planning_instances: processed=" << processed << '\n' << std::flush;
+    }
+    if (assignments_input.is_open() && !limit) {
+      std::string extra;
+      while (std::getline(assignments_input, extra))
+        if (!extra.empty()) throw std::invalid_argument("assignments JSONL has more records than input JSONL");
     }
     if (std::fclose(output.release()) != 0) throw std::runtime_error("cannot close output JSONL");
     return 0;
