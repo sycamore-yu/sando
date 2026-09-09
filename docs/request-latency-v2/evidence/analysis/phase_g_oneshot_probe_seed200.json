@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "kind": "phase_g_oneshot_probe",
+  "pass": true,
+  "run_root": "docker/dev-workspace/results/request-latency-v3/online/phase_g_probe_seed200_c",
+  "timing_policy": "prototypes/time_fixed_z_qp/evidence/phase_e_train/timing_kkt_lam0.1_seed0.json",
+  "corridor_policy": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json",
+  "seed": 200,
+  "scene_family": "static_forest",
+  "result": {
+    "success": true,
+    "goal_reached": true,
+    "goal_distance_m": 0.22953672023606028,
+    "n_attempted": 1048,
+    "append_ok": 956,
+    "oneshot_append_no_fallback": 956,
+    "fallback_append": 0,
+    "publish_events": 957,
+    "controller_first_use_events": 956,
+    "failure_stage": {
+      "corridor_decomposition": 78,
+      "None": 956,
+      "optimization": 14
+    }
+  },
+  "identity_chain_verified": true,
+  "notes": [
+    "Deploy path: Observation → learned T (proposal_count=1) → real C(T) → corridor-cost top-1 Z → 1 hard QP.",
+    "Install caveat: ROS loads install-dev/sando/lib/sando/sando (package layout); flat install-dev/lib/sando must be synced there after rebuild.",
+    "Online predicted_T often saturated at 2.5 (F_MAX) on this seed; offline pack mean_T was lower — feature/domain gap to watch in Phase K.",
+    "Prior probe_b used stale binary (no controller_first_use); probe_c uses rebuilt instrumented binary."
+  ],
+  "script": "scripts/run_phase_g_oneshot.sh"
+}
