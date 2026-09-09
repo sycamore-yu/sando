@@ -1,6 +1,13 @@
 {
   "schema_version": 1,
-  "kind": "gates_9_10_11_partial_table",
+  "kind": "final_latency_task_table_seed200",
+  "head": "361063b+",
+  "scene": {
+    "family": "static_forest",
+    "seed": 200,
+    "num_obstacles": 50,
+    "protocol": "benchmark_aligned_v1"
+  },
   "online": [
     {
       "label": "original_multi_factor_seed200",
@@ -70,5 +77,22 @@
       "fallback_calls": 0
     }
   ],
-  "note": "superseded by final_latency_task_table_seed200.json"
+  "conclusions": [
+    "Gate7: endpoint snap closed online MIQP-all-infeasible class on this seed.",
+    "Gate8: QP-timing+cost one-shot produced 1195 controller-used QP appends and reached goal.",
+    "Gate9: online supervised vs QP-timing both goal_reached; offline accept 15/16 vs 14/16; online oneshot_qp_append 971 vs 1195; latency p50 similar (~24\u201325ms).",
+    "Gate10: original multi-factor vs oneshot both goal_reached; oneshot lower request total_ms p50 (25 vs 41).",
+    "Failures retained in denominators; no constraint relaxation."
+  ],
+  "identities": {
+    "branch": "feat/ampl-gurobi -> personal/feat/ampl-gurobi",
+    "timing_qp_seed0": "prototypes/time_fixed_z_qp/evidence/train16_run/timing_qp_seed0.json",
+    "timing_supervised": "docker/dev-workspace/results/joint-time-v2/models/timing-schema2-regression.json",
+    "corridor_cost": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json",
+    "runs": {
+      "original_post_snap": "docker/dev-workspace/results/request-latency-v3/online/smoke_seed200_post_snap_20260909_124216",
+      "oneshot_qp": "docker/dev-workspace/results/request-latency-v3/online/oneshot_gate8_20260909_124440/seed200",
+      "oneshot_supervised": "docker/dev-workspace/results/request-latency-v3/online/oneshot_supervised_seed200_20260909_124805"
+    }
+  }
 }

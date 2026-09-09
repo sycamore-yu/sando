@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "oneshot_supervised_seed200",
+  "timing_policy": "docker/dev-workspace/results/joint-time-v2/models/timing-schema2-regression.json",
+  "n_attempted": 1076,
+  "append_ok": 977,
+  "oneshot_qp_append": 971,
+  "miqp_fallback_append": 6,
+  "goal_reached": true,
+  "success": true,
+  "goal_distance_m": 0.24520116506538256,
+  "elapsed_sec": 28.11418649298139,
+  "oneshot_total_ms": {
+    "n": 971,
+    "p50": 24.423371,
+    "p90": 30.312248,
+    "mean": 25.041338134912458
+  }
+}
