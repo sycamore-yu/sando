@@ -57,6 +57,10 @@ True Diff-QP（KKT）+ λT time term 相对 supervised / FD-proxy 给出更干�
 
 ---
 
+### Phase E in progress
+- true-diff KKT train λ=0 seed0 (20 steps): mean loss 0.454→0.310; fails retained (2/16/step)
+- model: `prototypes/time_fixed_z_qp/evidence/phase_e_train/timing_kkt_lam0.0_seed0.json`
+
 ## Next Automatic Action
 
 1. 实现 `L = J/J_scale + λ T/T_scale`（scale 仅来自 train）。  

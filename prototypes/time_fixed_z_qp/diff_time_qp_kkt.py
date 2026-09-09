@@ -208,7 +208,8 @@ class DiffTimeQP(Function):
             g += float(np.asarray(grad_x.detach().cpu(), dtype=float) @ dxdf)
         if grad_jerk is not None:
             g += float(grad_jerk.detach().cpu().item()) * dj_df
-        return torch.tensor(g, dtype=factor.dtype), None, None
+        grad_f = torch.tensor(g, dtype=factor.dtype, device=factor.device).reshape_as(factor)
+        return grad_f, None, None
 
 
 def diff_solve(instance, assignment, factor_tensor):
