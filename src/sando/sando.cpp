@@ -691,6 +691,7 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   last_usable_ms_ = 0.0;
   last_reclaim_ms_ = 0.0;
   last_classification_ms_ = nullptr;
+  last_replan_stage_ = {};
   last_replan_factors_.clear();
   last_factor_policy_metrics_.clear();
   last_timing_policy_metrics_ = nlohmann::json::object();
@@ -711,6 +712,16 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
                                       std::chrono::steady_clock::now() - replan_started).count()},
                            {"planning_attempted", planning_attempted},
                            {"success", success}, {"append_success", append_success},
+                           {"global_path_success", last_replan_stage_.global_path_success},
+                           {"local_geometry_success", last_replan_stage_.local_geometry_success},
+                           {"optimizer_entered", last_replan_stage_.optimizer_entered},
+                           {"optimizer_status", last_replan_stage_.optimizer_status},
+                           {"winner_found", last_replan_stage_.winner_found},
+                           {"publish_seen", false},
+                           {"failure_stage", last_replan_stage_.failure_stage},
+                           {"base_map_size", last_replan_stage_.base_map_size},
+                           {"global_path_size", last_replan_stage_.global_path_size},
+                           {"spatial_poly_count", last_replan_stage_.spatial_poly_count},
                            {"selected_factor_index", last_replan_chosen_factor_ >= 0
                                 ? nlohmann::json(last_replan_chosen_factor_) : nlohmann::json(nullptr)},
                            {"parallel_ms", last_parallel_opt_ms_},
@@ -797,10 +808,16 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
       std::cout << "Global Planning: " << timer_global.getElapsedMicros() / 1000.0 << " ms"
                 << std::endl;
 #ifdef SANDO_USE_AMPL
+    last_replan_stage_.global_path_success = false;
+    last_replan_stage_.failure_stage = "global_path";
     emit_replan_metrics(false, false, true);
 #endif
     return std::make_tuple(false, false);
   }
+#ifdef SANDO_USE_AMPL
+  last_replan_stage_.global_path_success = true;
+  last_replan_stage_.global_path_size = static_cast<int>(global_path.size());
+#endif
   if (par_.debug_verbose)
     std::cout << "Global Planning: " << timer_global.getElapsedMicros() / 1000.0 << " ms"
               << std::endl;
@@ -829,6 +846,7 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
       std::cout << "Append to Plan: " << timer_append.getElapsedMicros() / 1000.0 << " ms"
                 << std::endl;
 #ifdef SANDO_USE_AMPL
+    last_replan_stage_.failure_stage = "append";
     emit_replan_metrics(false, false, true);
 #endif
     return std::make_tuple(false, true);
@@ -1043,6 +1061,11 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
   // If the global path's size is still < 3, we cannot proceed
   if (global_path.empty() || global_path.size() < 3) {
     replanning_failure_count_++;
+#ifdef SANDO_USE_AMPL
+    last_replan_stage_.local_geometry_success = false;
+    last_replan_stage_.global_path_size = static_cast<int>(global_path.size());
+    last_replan_stage_.failure_stage = "corridor_decomposition";
+#endif
     return false;
   }
 
@@ -1106,6 +1129,10 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
       std::cout << "[replan] Filtered " << (before - base_map.size())
                 << " floor voxels (z<=" << z_floor_thresh << ") from base_map" << std::endl;
   }
+#ifdef SANDO_USE_AMPL
+  last_replan_stage_.base_map_size = static_cast<int>(base_map.size());
+  last_replan_stage_.global_path_size = static_cast<int>(global_path.size());
+#endif
 
   // Get obst_pos and obst_bbox
   vec_Vecf<3> obst_pos;
@@ -1195,11 +1222,18 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
       std::cout << bold << red
                 << "Precomputed spatial convex decomposition failed for static environment" << reset
                 << std::endl;
+#ifdef SANDO_USE_AMPL
+      last_replan_stage_.local_geometry_success = false;
+      last_replan_stage_.failure_stage = "corridor_decomposition";
+#endif
       return false;
     }
 
     // Save the whole polytopes for visualization (available even if local traj optimization fails)
     poly_out_whole_ = shared_spatial_poly_out;
+#ifdef SANDO_USE_AMPL
+    last_replan_stage_.spatial_poly_count = static_cast<int>(shared_spatial_poly_out.size());
+#endif
   }
 
   // Shared flag: when one thread succeeds, all others abort early
@@ -1601,6 +1635,19 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
     }
   }
 
+#ifdef SANDO_USE_AMPL
+  last_replan_stage_.local_geometry_success = true;
+  last_replan_stage_.optimizer_entered = true;
+  if (optimization_succeeded) {
+    last_replan_stage_.winner_found = true;
+    last_replan_stage_.optimizer_status = "ok";
+    last_replan_stage_.failure_stage = nullptr;
+  } else {
+    last_replan_stage_.winner_found = false;
+    last_replan_stage_.optimizer_status = "no_winner";
+    last_replan_stage_.failure_stage = "optimization";
+  }
+#endif
   return optimization_succeeded;
 }
 

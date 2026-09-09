@@ -523,6 +523,19 @@ class SANDO {
   double last_usable_ms_{0.0};
   double last_reclaim_ms_{0.0};
   nlohmann::json last_classification_ms_{nullptr};
+  // Per-replan stage flags for replan_metrics (planning_attempted rows).
+  struct LastReplanStage {
+    bool global_path_success{false};
+    bool local_geometry_success{false};
+    bool optimizer_entered{false};
+    nlohmann::json optimizer_status{nullptr};
+    bool winner_found{false};
+    nlohmann::json failure_stage{nullptr};
+    int base_map_size{-1};
+    int global_path_size{-1};
+    int spatial_poly_count{-1};
+  };
+  LastReplanStage last_replan_stage_{};
   std::chrono::steady_clock::time_point last_replan_started_{};
   std::vector<double> last_replan_factors_;
   std::vector<nlohmann::json> last_factor_policy_metrics_;
