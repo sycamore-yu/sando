@@ -200,6 +200,70 @@ int main() {
     require(one_metrics.at("fallback_used").get<bool>(),
             "limit 1 did not record MIQP fallback");
 
+    // Previous path: previous at first / middle / last of enum, limit 1 and 3.
+    const auto all = sando_learning::enumerateAssignments(
+        Fixture().solver.getPlanningGeometry(1.0));
+    require(all.size() == 32, "expected 2^5 previous-path assignments");
+    const Assignment positions[] = {all.front(), all[all.size() / 2], all.back()};
+    for (const auto& previous_assignment : positions) {
+      for (int limit : {1, 3}) {
+        Fixture previous_limit;
+        previous_limit.solver.setCorridorCandidateLimit(limit);
+        previous_limit.solver.setCorridorPolicy(nullptr, SolverGurobi::CorridorMethod::Previous,
+                                               previous_assignment);
+        error = false;
+        require(previous_limit.solver.generateWithCorridorPolicy(error, backend_ms, 1.0) && !error,
+                "previous-path candidate limit request failed");
+        const auto metrics = previous_limit.solver.getPolicyMetrics();
+        require(metrics.at("candidate_limit") == limit, "previous path lost candidate limit");
+        require(metrics.at("proposed_assignments").size() == static_cast<std::size_t>(limit),
+                "previous path exceeded or underfilled candidate limit");
+        require(metrics.at("proposed_assignments").at(0) == previous_assignment,
+                "previous assignment was not first under the limit");
+        for (std::size_t i = 0; i < metrics.at("proposed_assignments").size(); ++i)
+          for (std::size_t j = i + 1; j < metrics.at("proposed_assignments").size(); ++j)
+            require(metrics.at("proposed_assignments").at(i) !=
+                        metrics.at("proposed_assignments").at(j),
+                    "previous path duplicated a candidate");
+      }
+    }
+
+    Fixture missing_previous;
+    missing_previous.solver.setCorridorCandidateLimit(1);
+    missing_previous.solver.setCorridorPolicy(nullptr, SolverGurobi::CorridorMethod::Previous);
+    error = false;
+    require(missing_previous.solver.generateWithCorridorPolicy(error, backend_ms, 1.0) && !error,
+            "missing previous with limit 1 failed");
+    require(missing_previous.solver.getPolicyMetrics().at("proposed_assignments").size() == 1,
+            "missing previous did not keep limit 1");
+
+    Fixture invalid_previous;
+    invalid_previous.solver.setCorridorCandidateLimit(1);
+    invalid_previous.solver.setCorridorPolicy(nullptr, SolverGurobi::CorridorMethod::Previous,
+                                              Assignment{9, 9, 9, 9, 9});
+    error = false;
+    require(invalid_previous.solver.generateWithCorridorPolicy(error, backend_ms, 1.0) && !error,
+            "invalid previous with limit 1 failed");
+    const auto invalid_metrics = invalid_previous.solver.getPolicyMetrics();
+    require(invalid_metrics.at("fallback_reason") == "previous_assignment_invalid",
+            "invalid previous reason was not recorded");
+    require(invalid_metrics.at("proposed_assignments").size() == 1,
+            "invalid previous did not keep limit 1");
+
+    // Solver-error recreate contract (sando.cpp): re-apply candidate limit on the new instance.
+    Fixture recreate_source;
+    recreate_source.solver.setCorridorCandidateLimit(1);
+    auto replacement = std::make_shared<SolverGurobi>();
+    replacement->initializeSolver(parameters());
+    require(replacement->corridorCandidateLimit() == 3,
+            "fresh replacement did not start at the default limit");
+    // Mirror sando.cpp recreate: copy the live candidate limit onto the new solver.
+    replacement->setCorridorCandidateLimit(recreate_source.solver.corridorCandidateLimit());
+    replacement->setCorridorPolicy(nullptr, SolverGurobi::CorridorMethod::Previous,
+                                   Assignment{1, 1, 1, 1, 1});
+    require(replacement->corridorCandidateLimit() == 1,
+            "recreate path must keep candidate limit 1");
+
     Fixture invalid_limit;
     bool threw_zero = false;
     try {

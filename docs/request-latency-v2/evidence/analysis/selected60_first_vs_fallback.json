@@ -1,0 +1,1145 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-09-09T05:57:57.089604+00:00",
+  "goal": "Split formal replay accepts into first fixed-assignment pass vs fallback/MIQP; do not call blended accept publish success.",
+  "inputs": {
+    "replays": "docker/dev-workspace/results/request-latency-v2/stage6/replays/selected60/run{1..5}_seed{301..305}.jsonl",
+    "warmup_excluded": "run0_seed300.jsonl",
+    "selection_manifest": "docker/dev-workspace/results/request-latency-v2/selection/selected60_manifest.json",
+    "selected12_diagnostic_replays": "docker/dev-workspace/results/request-latency-v2/stage6/replays/formal/run{1..5}_seed{101..105}.jsonl"
+  },
+  "classification": {
+    "main_qp_accepted": "First non-fallback attempt accepted (original single attempt, or learned/previous first proposed QP before MIQP).",
+    "fallback_then_accepted": "Main/non-fallback attempts failed; later fallback/MIQP attempt accepted.",
+    "final_fail": "No accepted attempt.",
+    "infra_unsupported": "model_missing / unsupported_formulation / cannot execute AMPL / equivalent; closed_loop with missing model counted here even if bare MIQP later accepts."
+  },
+  "naming": {
+    "first_fixed_assignment_pass_rate": "Share of inputs whose first fixed-assignment QP (or original single attempt) was accepted. Offline metric name.",
+    "final_accept_rate": "Share with any accepted attempt (first-pass OR fallback). Not publish success.",
+    "do_not_call": "publish success"
+  },
+  "selected60": {
+    "corpus": {
+      "label": "selected60_formal",
+      "n_inputs_per_method": 300,
+      "n_unique_requests": 60,
+      "n_maps": 32,
+      "n_strata": 6,
+      "n_formal_runs": 5,
+      "n_excluded_rows": 0,
+      "n_ref_feasible_offline_original": 45,
+      "n_ref_feasible_capture_status2": 35,
+      "candidate_limit_note": {
+        "observed_candidate_limit_counts": {
+          "1": 300
+        },
+        "note": "selected60 formal replay used --candidate-limit 1 (k=1 main QP proposals before MIQP fallback)."
+      },
+      "ref_feasible_definition": "offline_original: unique (scene_id,request_id) where original attempt accepted in formal replay. capture_status2: selection manifest outcome_status==2 (online capture success tag)."
+    },
+    "methods": {
+      "original": {
+        "n_inputs": 300,
+        "n_supported": 300,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 225,
+          "fallback_then_accepted": 0,
+          "final_fail": 75,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.75,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.75,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25
+        },
+        "counts": {
+          "first_accept": 225,
+          "fallback_accept": 0,
+          "final_accept": 225,
+          "final_fail": 75
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 1.0,
+          "median_n_main_attempts": 1.0,
+          "median_n_fallback_attempts": 0.0,
+          "sum_n_attempts": 300,
+          "sum_n_main_attempts": 300,
+          "sum_n_fallback_attempts": 0,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 225,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "final_fail": {
+              "n": 75,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 73.92845249999999,
+            "p95": 130.71289710000002
+          },
+          "supported": {
+            "median": 73.92845249999999,
+            "p95": 130.71289710000002
+          },
+          "final_accept": {
+            "median": 78.24853599999999,
+            "p95": 148.93331059999997
+          },
+          "first_accept": {
+            "median": 78.24853599999999,
+            "p95": 148.93331059999997
+          },
+          "fallback_accept": {
+            "median": null,
+            "p95": null
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 225,
+              "median_ms": 78.24853599999999,
+              "p95_ms": 148.93331059999997
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "final_fail": {
+              "n": 75,
+              "median_ms": 68.128966,
+              "p95_ms": 87.3970202
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {},
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "bc": {
+        "n_inputs": 300,
+        "n_supported": 300,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 200,
+          "fallback_then_accepted": 25,
+          "final_fail": 75,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.08333333333333333,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.08333333333333333,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25
+        },
+        "counts": {
+          "first_accept": 200,
+          "fallback_accept": 25,
+          "final_accept": 225,
+          "final_fail": 75
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 1.3333333333333333,
+          "median_n_main_attempts": 1.0,
+          "median_n_fallback_attempts": 0.0,
+          "sum_n_attempts": 400,
+          "sum_n_main_attempts": 300,
+          "sum_n_fallback_attempts": 100,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 200,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "fallback_then_accepted": {
+              "n": 25,
+              "median_attempts": 2.0,
+              "mean_attempts": 2.0
+            },
+            "final_fail": {
+              "n": 75,
+              "median_attempts": 2.0,
+              "mean_attempts": 2.0
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 53.2765525,
+            "p95": 76.80789580000001
+          },
+          "supported": {
+            "median": 53.2765525,
+            "p95": 76.80789580000001
+          },
+          "final_accept": {
+            "median": 53.241591,
+            "p95": 77.5232036
+          },
+          "first_accept": {
+            "median": 52.40557,
+            "p95": 62.798201499999955
+          },
+          "fallback_accept": {
+            "median": 76.775154,
+            "p95": 85.68235539999999
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 200,
+              "median_ms": 52.40557,
+              "p95_ms": 62.798201499999955
+            },
+            "fallback_then_accepted": {
+              "n": 25,
+              "median_ms": 76.775154,
+              "p95_ms": 85.68235539999999
+            },
+            "final_fail": {
+              "n": 75,
+              "median_ms": 53.989903999999996,
+              "p95_ms": 65.03250460000001
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {
+          "candidate_exhausted": 100
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "cost": {
+        "n_inputs": 300,
+        "n_supported": 300,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 210,
+          "fallback_then_accepted": 15,
+          "final_fail": 75,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.7,
+          "fallback_accept_rate": 0.05,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.7,
+          "fallback_accept_rate": 0.05,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25
+        },
+        "counts": {
+          "first_accept": 210,
+          "fallback_accept": 15,
+          "final_accept": 225,
+          "final_fail": 75
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 1.3,
+          "median_n_main_attempts": 1.0,
+          "median_n_fallback_attempts": 0.0,
+          "sum_n_attempts": 390,
+          "sum_n_main_attempts": 300,
+          "sum_n_fallback_attempts": 90,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 210,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "fallback_then_accepted": {
+              "n": 15,
+              "median_attempts": 2.0,
+              "mean_attempts": 2.0
+            },
+            "final_fail": {
+              "n": 75,
+              "median_attempts": 2.0,
+              "mean_attempts": 2.0
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 52.3513755,
+            "p95": 72.01031810000005
+          },
+          "supported": {
+            "median": 52.3513755,
+            "p95": 72.01031810000005
+          },
+          "final_accept": {
+            "median": 51.656216,
+            "p95": 77.45520439999994
+          },
+          "first_accept": {
+            "median": 51.389121,
+            "p95": 62.16599954999999
+          },
+          "fallback_accept": {
+            "median": 79.061566,
+            "p95": 87.4369223
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 210,
+              "median_ms": 51.389121,
+              "p95_ms": 62.16599954999999
+            },
+            "fallback_then_accepted": {
+              "n": 15,
+              "median_ms": 79.061566,
+              "p95_ms": 87.4369223
+            },
+            "final_fail": {
+              "n": 75,
+              "median_ms": 54.525842999999995,
+              "p95_ms": 63.857915799999994
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {
+          "candidate_exhausted": 90
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "previous": {
+        "n_inputs": 300,
+        "n_supported": 300,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 210,
+          "fallback_then_accepted": 15,
+          "final_fail": 75,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.7,
+          "fallback_accept_rate": 0.05,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.7,
+          "fallback_accept_rate": 0.05,
+          "final_accept_rate": 0.75,
+          "final_fail_rate": 0.25
+        },
+        "counts": {
+          "first_accept": 210,
+          "fallback_accept": 15,
+          "final_accept": 225,
+          "final_fail": 75
+        },
+        "attempts": {
+          "median_n_attempts": 2.0,
+          "mean_n_attempts": 27.066666666666666,
+          "median_n_main_attempts": 1.0,
+          "median_n_fallback_attempts": 0.0,
+          "sum_n_attempts": 8120,
+          "sum_n_main_attempts": 8030,
+          "sum_n_fallback_attempts": 90,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 210,
+              "median_attempts": 1.0,
+              "mean_attempts": 3.238095238095238
+            },
+            "fallback_then_accepted": {
+              "n": 15,
+              "median_attempts": 2.0,
+              "mean_attempts": 2.0
+            },
+            "final_fail": {
+              "n": 75,
+              "median_attempts": 2.0,
+              "mean_attempts": 98.8
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 52.9344855,
+            "p95": 508.3760429000001
+          },
+          "supported": {
+            "median": 52.9344855,
+            "p95": 508.3760429000001
+          },
+          "final_accept": {
+            "median": 51.655767999999995,
+            "p95": 87.82856299999999
+          },
+          "first_accept": {
+            "median": 51.3165405,
+            "p95": 88.20282164999999
+          },
+          "fallback_accept": {
+            "median": 64.461281,
+            "p95": 82.6843296
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 210,
+              "median_ms": 51.3165405,
+              "p95_ms": 88.20282164999999
+            },
+            "fallback_then_accepted": {
+              "n": 15,
+              "median_ms": 64.461281,
+              "p95_ms": 82.6843296
+            },
+            "final_fail": {
+              "n": 75,
+              "median_ms": 55.649294000000005,
+              "p95_ms": 589.3489039
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {
+          "candidate_exhausted": 45,
+          "previous_assignment_invalid": 50
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "closed_loop": {
+        "n_inputs": 300,
+        "n_supported": 0,
+        "n_infra_unsupported": 300,
+        "class_counts": {
+          "main_qp_accepted": 0,
+          "fallback_then_accepted": 0,
+          "final_fail": 0,
+          "infra_unsupported": 300
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.0,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.0,
+          "final_fail_rate": 0.0,
+          "infra_unsupported_rate": 1.0
+        },
+        "rates_over_supported": null,
+        "counts": {
+          "first_accept": 0,
+          "fallback_accept": 0,
+          "final_accept": 0,
+          "final_fail": 0
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 1.0,
+          "median_n_main_attempts": 0.0,
+          "median_n_fallback_attempts": 1.0,
+          "sum_n_attempts": 300,
+          "sum_n_main_attempts": 0,
+          "sum_n_fallback_attempts": 300,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "final_fail": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "infra_unsupported": {
+              "n": 300,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 73.5665465,
+            "p95": 126.6841888
+          },
+          "supported": {
+            "median": null,
+            "p95": null
+          },
+          "final_accept": {
+            "median": null,
+            "p95": null
+          },
+          "first_accept": {
+            "median": null,
+            "p95": null
+          },
+          "fallback_accept": {
+            "median": null,
+            "p95": null
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "final_fail": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "infra_unsupported": {
+              "n": 300,
+              "median_ms": 73.5665465,
+              "p95_ms": 126.6841888
+            }
+          }
+        },
+        "fallback_reasons": {
+          "model_missing": 300
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      }
+    }
+  },
+  "selected12_diagnostic_k3": {
+    "corpus": {
+      "label": "selected12_formal_diagnostic",
+      "n_inputs_per_method": 60,
+      "n_unique_requests": 12,
+      "n_maps": 12,
+      "n_strata": null,
+      "n_formal_runs": 5,
+      "n_excluded_rows": 0,
+      "n_ref_feasible_offline_original": 8,
+      "n_ref_feasible_capture_status2": null,
+      "candidate_limit_note": {
+        "observed_candidate_limit_counts": {
+          "None": 60
+        },
+        "note": "selected12 formal diagnostic used default k=3 proposed assignments (candidate_limit unset/null in JSONL). Keep separate from selected60 k=1."
+      },
+      "ref_feasible_definition": "offline_original: unique (scene_id,request_id) where original attempt accepted in formal replay. capture_status2: selection manifest outcome_status==2 (online capture success tag)."
+    },
+    "methods": {
+      "original": {
+        "n_inputs": 60,
+        "n_supported": 60,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 40,
+          "fallback_then_accepted": 0,
+          "final_fail": 20,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333
+        },
+        "counts": {
+          "first_accept": 40,
+          "fallback_accept": 0,
+          "final_accept": 40,
+          "final_fail": 20
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 1.0,
+          "median_n_main_attempts": 1.0,
+          "median_n_fallback_attempts": 0.0,
+          "sum_n_attempts": 60,
+          "sum_n_main_attempts": 60,
+          "sum_n_fallback_attempts": 0,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 40,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "final_fail": {
+              "n": 20,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 83.0956855,
+            "p95": 108.78852279999995
+          },
+          "supported": {
+            "median": 83.0956855,
+            "p95": 108.78852279999995
+          },
+          "final_accept": {
+            "median": 89.3242875,
+            "p95": 122.09981644999999
+          },
+          "first_accept": {
+            "median": 89.3242875,
+            "p95": 122.09981644999999
+          },
+          "fallback_accept": {
+            "median": null,
+            "p95": null
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 40,
+              "median_ms": 89.3242875,
+              "p95_ms": 122.09981644999999
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "final_fail": {
+              "n": 20,
+              "median_ms": 68.09065050000001,
+              "p95_ms": 90.65141040000002
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {},
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "bc": {
+        "n_inputs": 60,
+        "n_supported": 60,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 40,
+          "fallback_then_accepted": 0,
+          "final_fail": 20,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333
+        },
+        "counts": {
+          "first_accept": 40,
+          "fallback_accept": 0,
+          "final_accept": 40,
+          "final_fail": 20
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 2.0,
+          "median_n_main_attempts": 1.0,
+          "median_n_fallback_attempts": 0.0,
+          "sum_n_attempts": 120,
+          "sum_n_main_attempts": 100,
+          "sum_n_fallback_attempts": 20,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 40,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "final_fail": {
+              "n": 20,
+              "median_attempts": 4.0,
+              "mean_attempts": 4.0
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 53.5872575,
+            "p95": 182.70697499999997
+          },
+          "supported": {
+            "median": 53.5872575,
+            "p95": 182.70697499999997
+          },
+          "final_accept": {
+            "median": 50.046341,
+            "p95": 59.367310999999994
+          },
+          "first_accept": {
+            "median": 50.046341,
+            "p95": 59.367310999999994
+          },
+          "fallback_accept": {
+            "median": null,
+            "p95": null
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 40,
+              "median_ms": 50.046341,
+              "p95_ms": 59.367310999999994
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "final_fail": {
+              "n": 20,
+              "median_ms": 155.9357405,
+              "p95_ms": 213.3998851500003
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {
+          "candidate_exhausted": 20
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "cost": {
+        "n_inputs": 60,
+        "n_supported": 60,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 40,
+          "fallback_then_accepted": 0,
+          "final_fail": 20,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.6666666666666666,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333
+        },
+        "counts": {
+          "first_accept": 40,
+          "fallback_accept": 0,
+          "final_accept": 40,
+          "final_fail": 20
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 2.0,
+          "median_n_main_attempts": 1.0,
+          "median_n_fallback_attempts": 0.0,
+          "sum_n_attempts": 120,
+          "sum_n_main_attempts": 100,
+          "sum_n_fallback_attempts": 20,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 40,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "final_fail": {
+              "n": 20,
+              "median_attempts": 4.0,
+              "mean_attempts": 4.0
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 54.039626,
+            "p95": 184.6473041
+          },
+          "supported": {
+            "median": 54.039626,
+            "p95": 184.6473041
+          },
+          "final_accept": {
+            "median": 49.1439685,
+            "p95": 57.64782009999999
+          },
+          "first_accept": {
+            "median": 49.1439685,
+            "p95": 57.64782009999999
+          },
+          "fallback_accept": {
+            "median": null,
+            "p95": null
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 40,
+              "median_ms": 49.1439685,
+              "p95_ms": 57.64782009999999
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "final_fail": {
+              "n": 20,
+              "median_ms": 157.370967,
+              "p95_ms": 188.02796015000004
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {
+          "candidate_exhausted": 20
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "previous": {
+        "n_inputs": 60,
+        "n_supported": 60,
+        "n_infra_unsupported": 0,
+        "class_counts": {
+          "main_qp_accepted": 15,
+          "fallback_then_accepted": 25,
+          "final_fail": 20,
+          "infra_unsupported": 0
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.25,
+          "fallback_accept_rate": 0.4166666666666667,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333,
+          "infra_unsupported_rate": 0.0
+        },
+        "rates_over_supported": {
+          "first_fixed_assignment_pass_rate": 0.25,
+          "fallback_accept_rate": 0.4166666666666667,
+          "final_accept_rate": 0.6666666666666666,
+          "final_fail_rate": 0.3333333333333333
+        },
+        "counts": {
+          "first_accept": 15,
+          "fallback_accept": 25,
+          "final_accept": 40,
+          "final_fail": 20
+        },
+        "attempts": {
+          "median_n_attempts": 4.0,
+          "mean_n_attempts": 3.25,
+          "median_n_main_attempts": 3.0,
+          "median_n_fallback_attempts": 1.0,
+          "sum_n_attempts": 195,
+          "sum_n_main_attempts": 150,
+          "sum_n_fallback_attempts": 45,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 15,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            },
+            "fallback_then_accepted": {
+              "n": 25,
+              "median_attempts": 4.0,
+              "mean_attempts": 4.0
+            },
+            "final_fail": {
+              "n": 20,
+              "median_attempts": 4.0,
+              "mean_attempts": 4.0
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 151.7951575,
+            "p95": 206.64269474999998
+          },
+          "supported": {
+            "median": 151.7951575,
+            "p95": 206.64269474999998
+          },
+          "final_accept": {
+            "median": 155.009853,
+            "p95": 198.06926789999997
+          },
+          "first_accept": {
+            "median": 50.454641,
+            "p95": 62.85006409999999
+          },
+          "fallback_accept": {
+            "median": 166.41178200000002,
+            "p95": 204.69008639999998
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 15,
+              "median_ms": 50.454641,
+              "p95_ms": 62.85006409999999
+            },
+            "fallback_then_accepted": {
+              "n": 25,
+              "median_ms": 166.41178200000002,
+              "p95_ms": 204.69008639999998
+            },
+            "final_fail": {
+              "n": 20,
+              "median_ms": 146.4358855,
+              "p95_ms": 225.7890122000002
+            },
+            "infra_unsupported": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            }
+          }
+        },
+        "fallback_reasons": {
+          "candidate_exhausted": 30,
+          "previous_assignment_invalid": 15
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      },
+      "closed_loop": {
+        "n_inputs": 60,
+        "n_supported": 0,
+        "n_infra_unsupported": 60,
+        "class_counts": {
+          "main_qp_accepted": 0,
+          "fallback_then_accepted": 0,
+          "final_fail": 0,
+          "infra_unsupported": 60
+        },
+        "rates_over_inputs": {
+          "first_fixed_assignment_pass_rate": 0.0,
+          "fallback_accept_rate": 0.0,
+          "final_accept_rate": 0.0,
+          "final_fail_rate": 0.0,
+          "infra_unsupported_rate": 1.0
+        },
+        "rates_over_supported": null,
+        "counts": {
+          "first_accept": 0,
+          "fallback_accept": 0,
+          "final_accept": 0,
+          "final_fail": 0
+        },
+        "attempts": {
+          "median_n_attempts": 1.0,
+          "mean_n_attempts": 1.0,
+          "median_n_main_attempts": 0.0,
+          "median_n_fallback_attempts": 1.0,
+          "sum_n_attempts": 60,
+          "sum_n_main_attempts": 0,
+          "sum_n_fallback_attempts": 60,
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "final_fail": {
+              "n": 0,
+              "median_attempts": null,
+              "mean_attempts": null
+            },
+            "infra_unsupported": {
+              "n": 60,
+              "median_attempts": 1.0,
+              "mean_attempts": 1.0
+            }
+          }
+        },
+        "latency_ms": {
+          "all": {
+            "median": 83.11560349999999,
+            "p95": 110.46599235
+          },
+          "supported": {
+            "median": null,
+            "p95": null
+          },
+          "final_accept": {
+            "median": null,
+            "p95": null
+          },
+          "first_accept": {
+            "median": null,
+            "p95": null
+          },
+          "fallback_accept": {
+            "median": null,
+            "p95": null
+          },
+          "by_class": {
+            "main_qp_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "fallback_then_accepted": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "final_fail": {
+              "n": 0,
+              "median_ms": null,
+              "p95_ms": null
+            },
+            "infra_unsupported": {
+              "n": 60,
+              "median_ms": 83.11560349999999,
+              "p95_ms": 110.46599235
+            }
+          }
+        },
+        "fallback_reasons": {
+          "model_missing": 60
+        },
+        "note_naming": "first_fixed_assignment_pass_rate = main_qp_accepted / n_inputs. This is NOT publish success. final_accept_rate mixes first-pass and MIQP/fallback accepts."
+      }
+    },
+    "note": "Primary stage6 diagnostic set; k=3 proposals. Not the selected60 expansion campaign."
+  }
+}

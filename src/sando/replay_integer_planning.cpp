@@ -35,6 +35,8 @@ using sando_ampl::GRB_NUMERIC;
 constexpr const char* kSchema = "sando_integer_replay";
 constexpr std::size_t kDefaultCandidateLimit = 3;
 
+enum class RuntimeReuseMode { Fresh, Persistent };
+
 struct Options {
   std::string input;
   std::string output;
@@ -45,6 +47,9 @@ struct Options {
   bool seed_given{false};
   std::optional<std::size_t> limit;
   std::size_t candidate_limit{kDefaultCandidateLimit};
+  // fresh: createRuntime() per method per instance (import baseline).
+  // persistent: one Runtime per method across instances; needs AMPL persistent mode.
+  RuntimeReuseMode runtime_reuse{RuntimeReuseMode::Fresh};
 };
 
 struct PolicySlot {
@@ -91,7 +96,17 @@ struct MethodResult {
   throw std::invalid_argument(
       "usage: replay_integer_planning --input FILE --output FILE "
       "[--bc FILE] [--cost FILE] [--closed-loop FILE] --seed N [--limit N] "
-      "[--candidate-limit N]");
+      "[--candidate-limit N] [--runtime-reuse fresh|persistent]");
+}
+
+const char* runtime_reuse_label(RuntimeReuseMode mode) {
+  return mode == RuntimeReuseMode::Persistent ? "persistent" : "fresh";
+}
+
+RuntimeReuseMode parse_runtime_reuse(const std::string& value) {
+  if (value == "fresh") return RuntimeReuseMode::Fresh;
+  if (value == "persistent") return RuntimeReuseMode::Persistent;
+  throw std::invalid_argument("--runtime-reuse must be fresh or persistent");
 }
 
 std::uint32_t parse_seed(const std::string& value) {
@@ -111,18 +126,36 @@ std::size_t parse_size(const std::string& value, const char* option) {
   return static_cast<std::size_t>(parsed);
 }
 
+// Reject 0, negatives, trailing junk, and overflow with a clear option-tagged error.
+std::size_t parse_positive_size(const std::string& value, const char* option) {
+  if (value.empty() || value[0] == '-' || value[0] == '+')
+    throw std::invalid_argument(std::string(option) + " must be a positive integer");
+  std::size_t consumed = 0;
+  unsigned long long parsed = 0;
+  try {
+    parsed = std::stoull(value, &consumed);
+  } catch (const std::exception&) {
+    throw std::invalid_argument(std::string(option) + " must be a positive integer");
+  }
+  if (consumed != value.size())
+    throw std::invalid_argument(std::string(option) + " must be a positive integer");
+  if (parsed < 1)
+    throw std::invalid_argument(std::string(option) + " must be >= 1");
+  if (parsed > static_cast<unsigned long long>(std::numeric_limits<std::size_t>::max()))
+    throw std::invalid_argument(std::string(option) + " is too large");
+  return static_cast<std::size_t>(parsed);
+}
+
 Options parse_options(int argc, char** argv) {
   Options result;
-  if (const char* raw = std::getenv("SANDO_CORRIDOR_CANDIDATE_LIMIT")) {
-    result.candidate_limit = parse_size(raw, "SANDO_CORRIDOR_CANDIDATE_LIMIT");
-    if (result.candidate_limit < 1)
-      throw std::invalid_argument("SANDO_CORRIDOR_CANDIDATE_LIMIT must be >= 1");
-  }
+  // Env is the default; --candidate-limit below overrides when both are set.
+  if (const char* raw = std::getenv("SANDO_CORRIDOR_CANDIDATE_LIMIT"))
+    result.candidate_limit = parse_positive_size(raw, "SANDO_CORRIDOR_CANDIDATE_LIMIT");
   for (int i = 1; i < argc; ++i) {
     const std::string option = argv[i];
     if (option == "--input" || option == "--output" || option == "--bc" ||
         option == "--cost" || option == "--closed-loop" || option == "--seed" || option == "--limit" ||
-        option == "--candidate-limit") {
+        option == "--candidate-limit" || option == "--runtime-reuse") {
       if (i + 1 >= argc) usage();
       const std::string value = argv[++i];
       if (value.empty()) throw std::invalid_argument(option + " cannot be empty");
@@ -132,11 +165,11 @@ Options parse_options(int argc, char** argv) {
       else if (option == "--cost") result.cost = value;
       else if (option == "--closed-loop") result.closed_loop = value;
       else if (option == "--seed") { result.seed = parse_seed(value); result.seed_given = true; }
-      else if (option == "--candidate-limit") {
-        result.candidate_limit = parse_size(value, "--candidate-limit");
-        if (result.candidate_limit < 1)
-          throw std::invalid_argument("--candidate-limit must be >= 1");
-      } else result.limit = parse_size(value, "--limit");
+      else if (option == "--candidate-limit")
+        result.candidate_limit = parse_positive_size(value, "--candidate-limit");
+      else if (option == "--runtime-reuse")
+        result.runtime_reuse = parse_runtime_reuse(value);
+      else result.limit = parse_size(value, "--limit");
     } else usage();
   }
   if (result.input.empty() || result.output.empty() || !result.seed_given) usage();
@@ -319,13 +352,13 @@ std::vector<Assignment> first_candidates(const PlanningInstance& instance, const
     bool present = false;
     const auto prior = previous_assignment(instance, present);
     result.history_available = present;
-    if (prior) candidates.push_back(*prior);
+    if (prior && candidate_limit >= 1) candidates.push_back(*prior);
     if (!present) result.fallback_reason = "history_unavailable";
     else if (!prior) result.fallback_reason = "previous_assignment_invalid";
     for (const auto& assignment : all) {
+      if (candidates.size() >= candidate_limit) break;
       if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
         candidates.push_back(assignment);
-      if (candidates.size() == candidate_limit) break;
     }
   } else {
     if (!policy || !policy->policy) return {};
@@ -333,9 +366,9 @@ std::vector<Assignment> first_candidates(const PlanningInstance& instance, const
     const auto ranked = policy->policy->rank(instance);
     result.ranking_seconds = std::chrono::duration<double>(Clock::now() - started).count();
     for (const auto& assignment : ranked) {
+      if (candidates.size() >= candidate_limit) break;
       if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
         candidates.push_back(assignment);
-      if (candidates.size() == candidate_limit) break;
     }
   }
   return candidates;
@@ -445,7 +478,8 @@ json replay_record(const PlanningInstance& instance, const Options& options,
           {"factor", instance.factor}, {"metadata", std::move(metadata)},
           {"seed", options.seed}, {"candidate_limit", options.candidate_limit},
           {"method_order", order},
-          {"runtime_reuse", "one_fresh_runtime_per_method"}, {"methods", std::move(method_jsons)}};
+          {"runtime_reuse", runtime_reuse_label(options.runtime_reuse)},
+          {"methods", std::move(method_jsons)}};
 }
 
 int open_exclusive(const std::string& path) {
@@ -472,6 +506,10 @@ int main(int argc, char** argv) {
     policies.emplace("cost", load_policy(options.cost));
     policies.emplace("closed_loop", load_policy(options.closed_loop));
     const std::vector<std::string> names{"original", "previous", "bc", "cost", "closed_loop"};
+    // Across-instance reuse only helps when AmplsRuntime keeps the native model.
+    if (options.runtime_reuse == RuntimeReuseMode::Persistent)
+      ::setenv("SANDO_AMPL_MODE", "persistent", 1);
+    std::map<std::string, std::shared_ptr<sando_ampl::Runtime>> reused_runtimes;
     std::mt19937 rng(options.seed);
     std::string line;
     std::size_t line_number = 0, processed = 0;
@@ -486,7 +524,14 @@ int main(int argc, char** argv) {
         std::shuffle(order.begin(), order.end(), rng);
         std::map<std::string, MethodResult> methods;
         for (const auto& name : order) {
-          auto runtime = sando_ampl::createRuntime();
+          std::shared_ptr<sando_ampl::Runtime> runtime;
+          if (options.runtime_reuse == RuntimeReuseMode::Persistent) {
+            auto& slot = reused_runtimes[name];
+            if (!slot) slot = sando_ampl::createRuntime();
+            runtime = slot;
+          } else {
+            runtime = sando_ampl::createRuntime();
+          }
           if (!runtime) throw std::runtime_error("cannot create AMPL runtime");
           PolicySlot* policy = nullptr;
           if (name == "bc") policy = &policies.at("bc");

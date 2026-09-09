@@ -1,0 +1,9 @@
+{
+  "created_utc": "2026-09-09T05:54:15.502032+00:00",
+  "git_head": "3a13bf9b628eb81514b0aba55115a5c36b18d152",
+  "expected_base": "3a13bf9b628eb81514b0aba55115a5c36b18d152",
+  "base_match": true,
+  "branch": "feat/ampl-gurobi",
+  "parent_results": "docker/dev-workspace/results/request-latency-v2",
+  "goal": "one time, one full assignment, one main QP; fallback counted separately"
+}

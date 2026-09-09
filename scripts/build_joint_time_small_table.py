@@ -257,6 +257,14 @@ def _load_sidecars(run_dir: Path) -> dict[str, Any]:
         if path.is_file():
             sidecars[name] = json.loads(path.read_text())
             sidecars[name.removesuffix(".json")] = sidecars[name]
+    observations: dict[str, Any] = {}
+    obs_dir = run_dir / "request_observation"
+    if obs_dir.is_dir():
+        for path in sorted(obs_dir.glob("*.json")):
+            observations[path.stem] = json.loads(path.read_text())
+    if observations:
+        sidecars["observations"] = observations
+        sidecars["request_observation"] = observations
     return sidecars
 
 
@@ -292,8 +300,25 @@ def _validate_table(table: dict[str, Any], selected: list[dict[str, Any]]) -> No
         if "same_factor_reference" not in classifications.values():
             raise SystemExit("each request must have a same_factor_reference query")
         off = [record for record in row["factors"] if abs(record["factor"] - 1.37) <= FACTOR_REL_TOL * max(1.0, 1.37)]
-        if len(off) != 1 or off[0]["classification"] != "blocked_missing_observation":
-            raise SystemExit("off-grid 1.37 must be blocked_missing_observation")
+        if len(off) != 1:
+            raise SystemExit("off-grid 1.37 must appear once")
+        missing = missing_observation_fields(from_planning_instance(item["instance"], item["sidecars"]))
+        if missing:
+            if off[0]["classification"] != "blocked_missing_observation":
+                raise SystemExit("old snapshots missing observation must block 1.37")
+        else:
+            if off[0]["classification"] == "blocked_missing_observation":
+                raise SystemExit("complete snapshots must not block 1.37 as missing observation")
+            allowed = {
+                "computed_times",
+                "optimal",
+                "infeasible",
+                "timeout_or_unknown",
+                "numerical_error",
+                "rebuild_error",
+            }
+            if off[0]["classification"] not in allowed:
+                raise SystemExit(f"complete snapshot 1.37 has unexpected status {off[0]['classification']}")
         if not times["segment_dt"]:
             raise SystemExit("invalid original segment duration")
 

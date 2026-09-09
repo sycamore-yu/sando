@@ -1,0 +1,17 @@
+{
+  "experiment": "fresh_vs_persistent",
+  "input": "request-latency-v2/stage6/inputs/selected12.jsonl",
+  "models": {
+    "bc": "learning-stages-v2/selected-models/bc.json",
+    "cost": "learning-stages-v2/selected-models/cost.json"
+  },
+  "candidate_limit": 1,
+  "seeds": {
+    "warmup": 400,
+    "formal": [
+      401,
+      402
+    ]
+  },
+  "flag": "--runtime-reuse"
+}

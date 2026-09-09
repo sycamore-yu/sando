@@ -55,14 +55,38 @@ void InstanceReservoir::recordInvalid(const std::string& reason) {
 void InstanceReservoir::reject(const std::string& reason) { recordInvalid(reason); }
 
 void InstanceReservoir::ingest(const PlanningInstance& instance) {
+  ingest(instance, nlohmann::json());
+}
+
+void InstanceReservoir::ingest(const PlanningInstance& instance, nlohmann::json observation) {
   try {
     validate(instance);
   } catch (const std::exception& error) {
     recordInvalid(error.what());
     return;
   }
+  if (!observation.is_null() && !observation.empty()) {
+    if (!observation.is_object()) throw std::invalid_argument("observation must be an object");
+    observations_[instance.request_id] = std::move(observation);
+  }
   const auto slot = chooseSlot();
   if (slot) put(*slot, instance);
+}
+
+std::filesystem::path InstanceReservoir::observationDir() const {
+  const auto parent = output_.parent_path();
+  return parent.empty() ? std::filesystem::path("request_observation")
+                        : parent / "request_observation";
+}
+
+std::string observationFileName(const std::string& request_id) {
+  if (request_id.empty()) throw std::invalid_argument("observation request_id is empty");
+  for (char ch : request_id) {
+    const bool ok = (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
+                    (ch >= 'a' && ch <= 'z') || ch == '_' || ch == '-' || ch == '.';
+    if (!ok) throw std::invalid_argument("observation request_id contains unsafe characters");
+  }
+  return request_id + ".json";
 }
 
 std::optional<std::size_t> InstanceReservoir::chooseSlot() {
@@ -133,6 +157,39 @@ void InstanceReservoir::flush() {
     throw;
   }
   output_owned_ = true;
+
+  const auto obs_dir = observationDir();
+  std::error_code ignored;
+  if (std::filesystem::exists(obs_dir)) {
+    for (const auto& entry : std::filesystem::directory_iterator(obs_dir)) {
+      if (entry.is_regular_file()) std::filesystem::remove(entry.path(), ignored);
+    }
+  }
+  std::map<std::string, bool> retained_requests;
+  for (const auto& instance : samples_) retained_requests[instance.request_id] = true;
+  std::size_t observation_count = 0;
+  for (const auto& [request_id, _] : retained_requests) {
+    const auto found = observations_.find(request_id);
+    if (found == observations_.end()) continue;
+    std::filesystem::create_directories(obs_dir);
+    const auto path = obs_dir / observationFileName(request_id);
+    const auto tmp = path.string() + suffix;
+    {
+      std::ofstream stream(tmp, std::ios::binary | std::ios::trunc);
+      if (!stream) throw std::runtime_error("cannot create observation file: " + tmp);
+      stream << found->second.dump() << '\n';
+      stream.flush();
+      if (!stream) throw std::runtime_error("cannot write observation file: " + tmp);
+    }
+    std::filesystem::rename(tmp, path);
+    ++observation_count;
+  }
+  summary_json["observation_count"] = observation_count;
+  {
+    std::ofstream stream(summary, std::ios::binary | std::ios::trunc);
+    if (!stream) throw std::runtime_error("cannot update reservoir summary: " + summary.string());
+    stream << summary_json.dump(2) << '\n';
+  }
 }
 
 }  // namespace sando_learning

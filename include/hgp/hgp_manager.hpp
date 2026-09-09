@@ -25,6 +25,7 @@
 #include <hgp/utils.hpp>
 
 // Other includes
+#include <cstdint>
 #include <mutex>
 #include <Eigen/Dense>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -211,7 +212,9 @@ class HGPManager {
       const vec_Vecf<3>& obst_bbox,
       const std::vector<double>& seg_end_times,
       std::vector<LinearConstraint3D>& l_constraints,
-      vec_E<Polyhedron<3>>& poly_out);
+      vec_E<Polyhedron<3>>& poly_out,
+      const std::vector<std::uint8_t>* classes = nullptr,
+      const std::vector<Veci<3>>* voxel_indices = nullptr);
 
   /** @brief Compute time-layered convex decomposition for temporal safety corridors.
    *  @param ellip Per-worker ellipsoid decomposition utility.
@@ -232,7 +235,9 @@ class HGPManager {
       const vec_Vecf<3>& obst_bbox,
       const std::vector<double>& time_end_times,
       std::vector<std::vector<LinearConstraint3D>>& l_constraints_by_time,
-      std::vector<vec_E<Polyhedron<3>>>& poly_out_by_time);
+      std::vector<vec_E<Polyhedron<3>>>& poly_out_by_time,
+      const std::vector<std::uint8_t>* classes = nullptr,
+      const std::vector<Veci<3>>* voxel_indices = nullptr);
 
   /** @brief Set predicted trajectory samples for dynamic obstacles used in heat map computation.
    *  @param pred_samples Predicted position samples per obstacle, aligned with pred_times.
@@ -252,7 +257,9 @@ class HGPManager {
       vec_Vec3f& pts,
       const vec_Vecf<3>& obst_pos,
       const vec_Vecf<3>& obst_bbox,
-      double traj_max_time);
+      double traj_max_time,
+      const std::vector<std::uint8_t>* classes = nullptr,
+      const std::vector<Veci<3>>* voxel_indices = nullptr);
 
   /** @brief Check whether a point lies in a free voxel.
    *  @param point Query position in world coordinates.
@@ -318,6 +325,17 @@ class HGPManager {
    *  @param vec_uo Output vector of unknown and occupied points.
    */
   void getVecUnknownOccupied(vec_Vec3f& vec_uo);
+
+  /** @brief Classify corridor-decomposition points as occupied (0) or unknown (1).
+   *  Uses the planning map when present.  Reconstruction must not call this.
+   */
+  void classifyCorridorPoints(
+      const vec_Vec3f& points,
+      std::vector<std::uint8_t>& classes,
+      std::vector<Veci<3>>& voxel_indices,
+      Vec3f& origin,
+      double& map_res,
+      Veci<3>& dim);
 
   /** @brief Update the internal unknown+occupied point vector (thread-safe).
    *  @param vec_uo New unknown+occupied point vector.

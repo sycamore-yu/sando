@@ -4,13 +4,18 @@ kind=sando_reconstructable_request, schema_version=1.
 
 The frozen goal is the planner local_E state (nine numbers: position,
 velocity, acceleration), not the mission terminal.  Changing factor
-requires rebuilding corridors from observation fields; this module
-never calls Gurobi and never invents voxels.
+requires rebuilding corridors from observation fields.  `query()` never
+calls Gurobi and never invents voxels.  Real solves go through
+`reconstruct_query()` and the C++ reconstruct_planning_request binary.
 """
 
 from __future__ import annotations
 
+import json
 import math
+import os
+import subprocess
+from pathlib import Path
 from typing import Any, Mapping
 
 KIND = "sando_reconstructable_request"
@@ -177,8 +182,24 @@ def from_planning_instance(
         "original_factor": _optional_finite(record.get("factor")),
         "original_segment_dt": _optional_finite(record.get("segment_dt")),
     }
-    obst_pos, obst_bbox = _obstacles_from_sidecar(obstacles)
+    observation = _load_request_observation(record, reconstructable, run_sidecars)
+    observation_map = _mapping(observation)
+    obst_pos_obs = _points3(_first_present(
+        observation_map.get("obst_pos"),
+        reconstructable.get("obst_pos"),
+        record.get("obst_pos"),
+    ))
+    obst_bbox_obs = _points3(_first_present(
+        observation_map.get("obst_bbox"),
+        reconstructable.get("obst_bbox"),
+        record.get("obst_bbox"),
+    ))
+    sidecar_pos, sidecar_bbox = _obstacles_from_sidecar(obstacles)
+    obst_pos = obst_pos_obs if obst_pos_obs is not None else sidecar_pos
+    obst_bbox = obst_bbox_obs if obst_bbox_obs is not None else sidecar_bbox
+    obs_safety = _mapping(_mapping(observation).get("safety")) if isinstance(observation, dict) else {}
     environment_assumption = _first_text(
+        obs_safety.get("environment_assumption"),
         _mapping(config).get("environment_assumption"),
         record.get("environment_assumption"),
         outcome_capture.get("environment_assumption"),
@@ -190,14 +211,15 @@ def from_planning_instance(
         _mapping(config).get("information_boundary"),
     )
     safety = {name: None for name in SAFETY_FIELDS}
+    obs_safety = _mapping(_mapping(observation).get("safety")) if isinstance(observation, dict) else {}
     safety["v_max"] = _optional_finite(
-        _first_present(record.get("v_max"), reconstructable.get("v_max"), _mapping(config).get("v_max"))
+        _first_present(record.get("v_max"), reconstructable.get("v_max"), obs_safety.get("v_max"), _mapping(config).get("v_max"))
     )
     safety["a_max"] = _optional_finite(
-        _first_present(record.get("a_max"), reconstructable.get("a_max"), _mapping(config).get("a_max"))
+        _first_present(record.get("a_max"), reconstructable.get("a_max"), obs_safety.get("a_max"), _mapping(config).get("a_max"))
     )
     safety["j_max"] = _optional_finite(
-        _first_present(record.get("j_max"), reconstructable.get("j_max"), _mapping(config).get("j_max"))
+        _first_present(record.get("j_max"), reconstructable.get("j_max"), obs_safety.get("j_max"), _mapping(config).get("j_max"))
     )
     safety["jerk_smooth_weight"] = _optional_finite(
         _first_present(
@@ -219,10 +241,25 @@ def from_planning_instance(
     )
     corridor_build["map_bounds"] = _bounds6(record.get("map_bounds"))
     corridor_build["visible_map"] = _visible_map(
-        record.get("visible_map") if record.get("visible_map") is not None else reconstructable.get("visible_map")
+        _first_present(
+            _mapping(observation).get("visible_map") if isinstance(observation, dict) else None,
+            record.get("visible_map"),
+            reconstructable.get("visible_map"),
+        )
     )
-    corridor_build["obst_pos"] = obst_pos if obst_pos is not None else _points3(record.get("obst_pos"))
-    corridor_build["obst_bbox"] = obst_bbox if obst_bbox is not None else _points3(record.get("obst_bbox"))
+    corridor_build["obst_pos"] = obst_pos
+    corridor_build["obst_bbox"] = obst_bbox
+    if isinstance(observation, dict):
+        identity["request_id"] = identity["request_id"] or _text_or_none(
+            _mapping(observation.get("identity")).get("request_id")
+        )
+        geometry = _mapping(observation.get("geometry"))
+        if corridor_build["sfc"] is None:
+            corridor_build["sfc"] = _sfc_params(geometry, config)
+        if corridor_build["map_bounds"] is None:
+            corridor_build["map_bounds"] = _bounds6(geometry.get("map_bounds"))
+        if corridor_build["global_path"] is None:
+            corridor_build["global_path"] = _points3(observation.get("global_path"))
     corridor_build["obst_max_vel"] = _optional_finite(
         _first_present(record.get("obst_max_vel"), _mapping(config).get("obst_max_vel"))
     )
@@ -331,6 +368,110 @@ def query(
         return record
     record["classification"] = "computed_times"
     return record
+
+
+
+SOLVE_STATUSES = (
+    "optimal",
+    "infeasible",
+    "timeout_or_unknown",
+    "numerical_error",
+    "rebuild_error",
+)
+
+
+def default_reconstruct_binary() -> Path | None:
+    env = os.environ.get("SANDO_RECONSTRUCT_BIN")
+    candidates = [Path(env)] if env else []
+    candidates.extend(
+        [
+            Path("/root/sando_ws/install-dev/sando/lib/sando/reconstruct_planning_request"),
+            Path("/root/sando_ws/build-dev/sando/reconstruct_planning_request"),
+        ]
+    )
+    for path in candidates:
+        if path.is_file() and os.access(path, os.X_OK):
+            return path
+    return None
+
+
+def solve_reconstructed(
+    observation_path: str | Path,
+    factor: Any,
+    binary: str | Path | None = None,
+) -> dict[str, Any]:
+    """Call the C++ reconstruct_planning_request CLI.  Does not invent voxels."""
+    factor_value = _finite_number(factor, "factor")
+    if factor_value <= 0.0:
+        raise ValueError("invalid segment time inputs")
+    exe = Path(binary) if binary is not None else default_reconstruct_binary()
+    if exe is None:
+        raise FileNotFoundError("reconstruct_planning_request binary not found")
+    completed = subprocess.run(
+        [str(exe), "--observation", str(observation_path), "--factor", f"{factor_value:.17g}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    stdout = completed.stdout
+    start = stdout.find("{")
+    if start < 0:
+        raise RuntimeError(completed.stderr.strip() or stdout.strip() or "reconstruct_planning_request produced no output")
+    payload = json.loads(stdout[start:])
+    if not isinstance(payload, dict):
+        raise RuntimeError("reconstruct_planning_request output is not an object")
+    status = payload.get("status")
+    if status not in SOLVE_STATUSES:
+        raise RuntimeError(f"unexpected reconstructed status: {status}")
+    payload["returncode"] = completed.returncode
+    return payload
+
+
+def reconstruct_query(
+    snapshot: Mapping[str, Any],
+    factor: Any,
+    *,
+    observation_path: str | Path,
+    original_instance: Mapping[str, Any] | None = None,
+    binary: str | Path | None = None,
+) -> dict[str, Any]:
+    """Rebuild corridors and solve at factor using the frozen observation file."""
+    record = query(snapshot, factor, original_instance=original_instance)
+    if record["classification"] == "blocked_missing_observation":
+        return record
+    solved = solve_reconstructed(observation_path, factor, binary=binary)
+    copied_status = record.get("status")
+    copied_objective = record.get("objective")
+    record["classification"] = solved["status"]
+    record["status"] = solved["status"]
+    record["solver_kind"] = solved.get("solver_kind")
+    record["attempt_count"] = solved.get("attempt_count")
+    record["objective"] = solved.get("objective")
+    record["residuals"] = solved.get("residuals")
+    record["assignment"] = solved.get("assignment")
+    record["coefficients"] = solved.get("coefficients")
+    record["wall_ms"] = solved.get("wall_ms")
+    record["backend_ms"] = solved.get("backend_ms")
+    record["corridor"] = solved.get("corridor")
+    record["error"] = solved.get("error")
+    original_factor = _optional_finite(_mapping(snapshot.get("time_inputs")).get("original_factor"))
+    if original_factor is not None and _relative_close(record["factor"], original_factor):
+        record["reconstruction_parity"] = _original_parity(copied_objective, solved.get("objective"))
+        record["copied_original_status"] = copied_status
+        record["copied_original_objective"] = copied_objective
+    return record
+
+
+def _original_parity(copied: Any, reconstructed: Any) -> bool | None:
+    if copied is None or reconstructed is None:
+        return None
+    if isinstance(copied, bool) or isinstance(reconstructed, bool):
+        return copied == reconstructed
+    if isinstance(copied, (int, float)) and isinstance(reconstructed, (int, float)):
+        if not math.isfinite(copied) or not math.isfinite(reconstructed):
+            return False
+        return abs(copied - reconstructed) <= 1e-8 * max(1.0, abs(copied), abs(reconstructed))
+    return copied == reconstructed
 
 
 def _positive_int(value: Any, name: str) -> int:
@@ -444,11 +585,46 @@ def _points3(value: Any) -> list[list[float]] | None:
     return points
 
 
+def _load_request_observation(
+    record: Mapping[str, Any],
+    reconstructable: Mapping[str, Any],
+    run_sidecars: dict[str, Any] | None,
+) -> Any:
+    sidecars = run_sidecars or {}
+    observations = sidecars.get("observations") or sidecars.get("request_observation") or {}
+    if not isinstance(observations, dict):
+        observations = {}
+    request_id = _text_or_none(record.get("request_id"))
+    visible = reconstructable.get("visible_map") if isinstance(reconstructable, Mapping) else None
+    observation_id = None
+    if isinstance(visible, dict):
+        observation_id = _text_or_none(visible.get("observation_id"))
+    observation_id = observation_id or _text_or_none(reconstructable.get("observation_id")) or request_id
+    if observation_id and observation_id in observations:
+        return observations[observation_id]
+    if request_id and request_id in observations:
+        return observations[request_id]
+    return None
+
+
 def _visible_map(value: Any) -> Any:
     if value is None:
         return None
     if isinstance(value, (list, dict)) and len(value) == 0:
         return None
+    if not isinstance(value, dict):
+        return None
+    if value.get("kind") == "request_observation":
+        return None
+    points = value.get("points")
+    classes = value.get("classes")
+    if not isinstance(points, list) or not isinstance(classes, list) or len(points) != len(classes):
+        return None
+    if _points3(points) is None:
+        return None
+    for label in classes:
+        if label not in (0, 1):
+            return None
     return value
 
 
@@ -573,6 +749,8 @@ def _is_missing(value: Any, name: str) -> bool:
         return _optional_positive_int(value) is None
     if name in ("visible_map",):
         return _visible_map(value) is None
+    if name in ("obst_pos", "obst_bbox") and isinstance(value, list) and len(value) == 0:
+        return False
     if name == "global_path":
         points = _points3(value)
         return points is None or len(points) == 0

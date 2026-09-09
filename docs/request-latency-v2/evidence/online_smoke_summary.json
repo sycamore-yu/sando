@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "name": "smoke_static_easy",
+      "success": false,
+      "goal_reached": false,
+      "odom_samples": 10001,
+      "goal_distance_m": 105.0,
+      "error": "observation timeout: goal_reached was not received",
+      "n_metrics": 1738,
+      "append_ok": 0,
+      "candidate_limits_seen": [
+        1
+      ],
+      "note": "install-dev smoke; robot did not progress; candidate_limit=1 observed in metrics"
+    }
+  ]
+}

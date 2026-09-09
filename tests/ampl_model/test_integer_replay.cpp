@@ -5,8 +5,10 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -110,9 +112,145 @@ void assert_timing_accounted(const MethodResult& result) {
   }
 }
 
+void require_throws_with(const char* needle, const std::function<void()>& body) {
+  try {
+    body();
+  } catch (const std::invalid_argument& error) {
+    assert(std::string(error.what()).find(needle) != std::string::npos);
+    return;
+  }
+  assert(false && "expected invalid_argument");
+}
+
+void check_previous_candidates() {
+  auto instance = make_instance(2);
+  const auto all = enumerateAssignments(instance);
+  assert(all.size() == 32);
+
+  const auto run = [&](const Assignment& previous, std::size_t limit) {
+    instance.outcome["previous_appended_assignment"] = previous;
+    MethodResult result;
+    auto candidates = first_candidates(instance, "previous", nullptr, result, limit);
+    assert(candidates.size() <= limit);
+    assert(candidates.size() == std::min(limit, all.size()));
+    assert(candidates.front() == previous);
+    for (std::size_t i = 0; i < candidates.size(); ++i)
+      for (std::size_t j = i + 1; j < candidates.size(); ++j)
+        assert(candidates[i] != candidates[j]);
+    return candidates;
+  };
+
+  // Previous at first / middle / last of the enumeration, limits 1 and 3.
+  assert(run(all.front(), 1).size() == 1);
+  assert(run(all[all.size() / 2], 1).size() == 1);
+  assert(run(all.back(), 1).size() == 1);
+  assert(run(all.back(), 1).front() == all.back());
+  assert(run(all.front(), 3).size() == 3);
+  assert(run(all[all.size() / 2], 3).size() == 3);
+  assert(run(all.back(), 3).size() == 3);
+
+  // Missing previous fills from enumeration only.
+  instance.outcome["previous_appended_assignment"] = nullptr;
+  MethodResult missing;
+  auto missing_candidates = first_candidates(instance, "previous", nullptr, missing, 1);
+  assert(!missing.history_available);
+  assert(missing.fallback_reason == "history_unavailable");
+  assert(missing_candidates.size() == 1);
+  assert(missing_candidates.front() == all.front());
+
+  // Invalid previous is skipped, then enumeration fills the limit.
+  instance.outcome["previous_appended_assignment"] = Assignment{9, 9, 9, 9, 9};
+  MethodResult invalid;
+  auto invalid_candidates = first_candidates(instance, "previous", nullptr, invalid, 1);
+  assert(invalid.history_available);
+  assert(invalid.fallback_reason == "previous_assignment_invalid");
+  assert(invalid_candidates.size() == 1);
+  assert(invalid_candidates.front() == all.front());
+}
+
+void check_candidate_limit_parsing() {
+  const char* argv_base[] = {"replay_integer_planning", "--input", "in.json", "--output",
+                             "out.json", "--seed", "1"};
+  unsetenv("SANDO_CORRIDOR_CANDIDATE_LIMIT");
+  {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--candidate-limit", "1"};
+    const auto options = parse_options(9, const_cast<char**>(argv));
+    assert(options.candidate_limit == 1);
+  }
+  // CLI overrides env when both are set.
+  setenv("SANDO_CORRIDOR_CANDIDATE_LIMIT", "3", 1);
+  {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--candidate-limit", "1"};
+    const auto options = parse_options(9, const_cast<char**>(argv));
+    assert(options.candidate_limit == 1);
+  }
+  unsetenv("SANDO_CORRIDOR_CANDIDATE_LIMIT");
+  require_throws_with("--candidate-limit", [&]() {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--candidate-limit", "0"};
+    parse_options(9, const_cast<char**>(argv));
+  });
+  require_throws_with("--candidate-limit", [&]() {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--candidate-limit", "-1"};
+    parse_options(9, const_cast<char**>(argv));
+  });
+  require_throws_with("--candidate-limit", [&]() {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--candidate-limit", "1x"};
+    parse_options(9, const_cast<char**>(argv));
+  });
+  require_throws_with("SANDO_CORRIDOR_CANDIDATE_LIMIT", [&]() {
+    setenv("SANDO_CORRIDOR_CANDIDATE_LIMIT", "999999999999999999999", 1);
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6]};
+    try {
+      parse_options(7, const_cast<char**>(argv));
+    } catch (...) {
+      unsetenv("SANDO_CORRIDOR_CANDIDATE_LIMIT");
+      throw;
+    }
+  });
+  unsetenv("SANDO_CORRIDOR_CANDIDATE_LIMIT");
+}
+
+void check_runtime_reuse_parsing() {
+  const char* argv_base[] = {"replay_integer_planning", "--input", "in.json", "--output",
+                             "out.json", "--seed", "1"};
+  {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6]};
+    const auto options = parse_options(7, const_cast<char**>(argv));
+    assert(options.runtime_reuse == RuntimeReuseMode::Fresh);
+  }
+  {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--runtime-reuse", "persistent"};
+    const auto options = parse_options(9, const_cast<char**>(argv));
+    assert(options.runtime_reuse == RuntimeReuseMode::Persistent);
+  }
+  {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--runtime-reuse", "fresh"};
+    const auto options = parse_options(9, const_cast<char**>(argv));
+    assert(options.runtime_reuse == RuntimeReuseMode::Fresh);
+  }
+  require_throws_with("--runtime-reuse", [&]() {
+    const char* argv[] = {argv_base[0], argv_base[1], argv_base[2], argv_base[3], argv_base[4],
+                          argv_base[5], argv_base[6], "--runtime-reuse", "reuse"};
+    parse_options(9, const_cast<char**>(argv));
+  });
+}
+
 }  // namespace
 
 int main() {
+  check_previous_candidates();
+  check_candidate_limit_parsing();
+  check_runtime_reuse_parsing();
+
   auto instance = make_instance();
 
   FakeRuntime previous_runtime;
@@ -126,6 +264,12 @@ int main() {
   assert(previous.attempts[0].kind == "qp" && previous.attempts[2].kind == "qp");
   assert(previous.attempts[3].kind == "miqp" && previous.fallback_used && previous.chosen.has_value());
   assert_timing_accounted(previous);
+
+  FakeRuntime limit_one_runtime;
+  limit_one_runtime.statuses = {sando_ampl::GRB_INTERRUPTED};
+  const auto limited = run_method(instance, "previous", nullptr, limit_one_runtime, 1);
+  assert(limited.proposed.size() == 1);
+  assert(limited.attempts.size() == 2);
 
   const auto policy_path = write_zero_policy();
   const auto cleanup = [&]() { std::error_code error; std::filesystem::remove(policy_path, error); };

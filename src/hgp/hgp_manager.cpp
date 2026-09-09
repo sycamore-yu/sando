@@ -365,6 +365,36 @@ void HGPManager::getVecUnknownOccupied(vec_Vec3f& vec_uo) {
   vec_uo = vec_uo_;
 }
 
+void HGPManager::classifyCorridorPoints(
+    const vec_Vec3f& points,
+    std::vector<std::uint8_t>& classes,
+    std::vector<Veci<3>>& voxel_indices,
+    Vec3f& origin,
+    double& map_res,
+    Veci<3>& dim) {
+  classes.assign(points.size(), 1);
+  voxel_indices.assign(points.size(), Veci<3>::Zero());
+  origin = Vec3f::Zero();
+  map_res = res_;
+  dim = Veci<3>::Zero();
+
+  const auto map = map_util_for_planning_ ? map_util_for_planning_ : map_util_;
+  if (!map) return;
+  origin = map->getOrigin();
+  map_res = map->getRes();
+  dim = map->getDim();
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    const Veci<3> idx = map->floatToInt(points[i]);
+    voxel_indices[i] = idx;
+    if (map->isOccupied(idx))
+      classes[i] = 0;
+    else if ((!map->isFree(idx)) && (!map->isOccupied(idx)))
+      classes[i] = 1;
+    else
+      classes[i] = 0;
+  }
+}
+
 void HGPManager::updateVecUnknownOccupied(const vec_Vec3f& vec_uo) {
   std::lock_guard<std::mutex> lock(mtx_vec_uo_);
   vec_uo_ = vec_uo;
@@ -383,7 +413,9 @@ bool HGPManager::cvxEllipsoidDecomp(
     const vec_Vecf<3>& obst_bbox,
     const std::vector<double>& seg_end_times,
     std::vector<LinearConstraint3D>& l_constraints,
-    vec_E<Polyhedron<3>>& poly_out) {
+    vec_E<Polyhedron<3>>& poly_out,
+    const std::vector<std::uint8_t>* classes,
+    const std::vector<Veci<3>>* voxel_indices) {
   if (path.size() < 2) return false;
 
   const size_t num_seg = path.size() - 1;
@@ -419,7 +451,7 @@ bool HGPManager::cvxEllipsoidDecomp(
 
     // Build per-segment obstacle set = base_uo + inflated dynamic obstacle points
     vec_Vec3f vec_uo = base_uo;  // copy snapshot
-    obstacle_to_vec(vec_uo, obst_pos, obst_bbox, traj_max_time);
+    obstacle_to_vec(vec_uo, obst_pos, obst_bbox, traj_max_time, classes, voxel_indices);
 
     ellip.set_obs(vec_uo);
 
@@ -469,8 +501,9 @@ bool HGPManager::cvxEllipsoidDecompTimeLayered(
     const vec_Vecf<3>& obst_bbox,               // dynamic obstacle bbox half-extents
     const std::vector<double>& time_end_times,  // size = N (local segment time layers)
     std::vector<std::vector<LinearConstraint3D>>& l_constraints_by_time,  // [N][P]
-    std::vector<vec_E<Polyhedron<3>>>& poly_out_by_time                   // [N][P]
-) {
+    std::vector<vec_E<Polyhedron<3>>>& poly_out_by_time,                  // [N][P]
+    const std::vector<std::uint8_t>* classes,
+    const std::vector<Veci<3>>* voxel_indices) {
   if (path.size() < 2) return false;
 
   const size_t P = path.size() - 1;        // number of spatial segments
@@ -506,7 +539,7 @@ bool HGPManager::cvxEllipsoidDecompTimeLayered(
     }
 
     uo_by_time[n] = base_uo;  // copy snapshot
-    obstacle_to_vec(uo_by_time[n], obst_pos, obst_bbox, tmax);
+    obstacle_to_vec(uo_by_time[n], obst_pos, obst_bbox, tmax, classes, voxel_indices);
   }
 
   vec_Vecf<3> seg_path;
@@ -621,7 +654,9 @@ void HGPManager::obstacle_to_vec(
     vec_Vec3f& pts,
     const vec_Vecf<3>& obst_pos,
     const vec_Vecf<3>& obst_bbox,
-    double traj_max_time) {
+    double traj_max_time,
+    const std::vector<std::uint8_t>* classes,
+    const std::vector<Veci<3>>* voxel_indices) {
   // Inflate radius around unknown boundary and dynamic obstacles.
   // Unknown boundary is extracted from the *current contents* of pts (assumed to include unknown
   // voxels). Dynamic obstacles are provided separately in obst_pos.
@@ -675,33 +710,45 @@ void HGPManager::obstacle_to_vec(
     unk_reps.reserve(base_sz / 2);
 
     bool have_map = static_cast<bool>(map_util_for_planning_);
+    const bool have_classes =
+        classes != nullptr && voxel_indices != nullptr &&
+        classes->size() == base_sz && voxel_indices->size() == base_sz;
 
     // Track AABB in voxel index space for dense-window decision
     bool aabb_init = false;
     int min_x = 0, min_y = 0, min_z = 0, max_x = 0, max_y = 0, max_z = 0;
 
-    if (have_map) {
+    auto recordUnknown = [&](const Veci<3>& idx, const Vec3f& p) {
+      unk_idxs.push_back(idx);
+      unk_reps.push_back(p);
+      if (!aabb_init) {
+        aabb_init = true;
+        min_x = max_x = idx(0);
+        min_y = max_y = idx(1);
+        min_z = max_z = idx(2);
+      } else {
+        min_x = std::min(min_x, idx(0));
+        max_x = std::max(max_x, idx(0));
+        min_y = std::min(min_y, idx(1));
+        max_y = std::max(max_y, idx(1));
+        min_z = std::min(min_z, idx(2));
+        max_z = std::max(max_z, idx(2));
+      }
+    };
+
+    if (have_classes) {
+      // Frozen request snapshot: class 1 = unknown, class 0 = occupied.
+      // Never query a live map; reconstruction must not invent voxels.
+      for (std::size_t i = 0; i < base_sz; ++i) {
+        if ((*classes)[i] != 1) continue;
+        recordUnknown((*voxel_indices)[i], pts[i]);
+      }
+    } else if (have_map) {
       for (std::size_t i = 0; i < base_sz; ++i) {
         const Vec3f& p = pts[i];
         const Veci<3> idx = map_util_for_planning_->floatToInt(p);
         if (!isUnknownVoxel(*map_util_for_planning_, idx)) continue;
-
-        unk_idxs.push_back(idx);
-        unk_reps.push_back(p);
-
-        if (!aabb_init) {
-          aabb_init = true;
-          min_x = max_x = idx(0);
-          min_y = max_y = idx(1);
-          min_z = max_z = idx(2);
-        } else {
-          min_x = std::min(min_x, idx(0));
-          max_x = std::max(max_x, idx(0));
-          min_y = std::min(min_y, idx(1));
-          max_y = std::max(max_y, idx(1));
-          min_z = std::min(min_z, idx(2));
-          max_z = std::max(max_z, idx(2));
-        }
+        recordUnknown(idx, p);
       }
     } else {
       // Fallback: treat everything in pts as "unknown" and voxelize by rounding in res-sized grid.
@@ -712,23 +759,7 @@ void HGPManager::obstacle_to_vec(
         idx << static_cast<int>(std::llround(p.x() / res)),
             static_cast<int>(std::llround(p.y() / res)),
             static_cast<int>(std::llround(p.z() / res));
-
-        unk_idxs.push_back(idx);
-        unk_reps.push_back(p);
-
-        if (!aabb_init) {
-          aabb_init = true;
-          min_x = max_x = idx(0);
-          min_y = max_y = idx(1);
-          min_z = max_z = idx(2);
-        } else {
-          min_x = std::min(min_x, idx(0));
-          max_x = std::max(max_x, idx(0));
-          min_y = std::min(min_y, idx(1));
-          max_y = std::max(max_y, idx(1));
-          min_z = std::min(min_z, idx(2));
-          max_z = std::max(max_z, idx(2));
-        }
+        recordUnknown(idx, p);
       }
     }
 

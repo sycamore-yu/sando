@@ -22,8 +22,10 @@ class InstanceReservoir {
                     std::uint64_t seed, nlohmann::json metadata);
 
   void ingest(const PlanningInstance& instance);
+  void ingest(const PlanningInstance& instance, nlohmann::json observation);
   void reject(const std::string& reason);
   void flush();
+  std::filesystem::path observationDir() const;
 
   std::size_t capacity() const noexcept { return capacity_; }
   std::size_t totalEligible() const noexcept { return total_eligible_; }
@@ -51,6 +53,7 @@ class InstanceReservoir {
   std::size_t invalid_count_{0};
   std::map<std::string, std::size_t> invalid_reasons_;
   std::vector<PlanningInstance> samples_;
+  std::map<std::string, nlohmann::json> observations_;
   bool output_owned_{false};
 };
 

@@ -59,7 +59,7 @@ if(SANDO_USE_AMPL)
   find_package(Threads REQUIRED)
   add_library(sando_ampl_backend STATIC
     src/sando/ampl_model.cpp src/sando/ampl_centering.cpp src/sando/ampls_runtime.cpp src/sando/planning_instance.cpp
-    src/sando/instance_reservoir.cpp src/sando/corridor_policy.cpp
+    src/sando/instance_reservoir.cpp src/sando/frozen_planning_observation.cpp src/sando/corridor_policy.cpp
     "${AMPLS_ROOT}/cpp/ampls/src/ampls.cpp"
     "${AMPLS_ROOT}/cpp/ampls/src/csvReader.cpp"
     "${AMPLS_ROOT}/cpp/gurobi/src/gurobi_interface.cpp"
@@ -120,6 +120,14 @@ add_library(sando_planner STATIC src/sando/sando.cpp src/hgp/hgp_manager.cpp src
 target_compile_options(sando_planner PRIVATE -fno-fast-math)
 target_link_libraries(sando_planner ${GUROBI_LIBRARIES} ${PCL_LIBRARIES})
 ament_target_dependencies(sando_planner rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
+if(SANDO_USE_AMPL)
+  target_sources(sando_planner PRIVATE src/sando/reconstruct_planning_request.cpp)
+  add_executable(reconstruct_planning_request src/sando/reconstruct_planning_request_main.cpp)
+  target_link_libraries(reconstruct_planning_request sando_planner)
+  target_compile_options(reconstruct_planning_request PRIVATE -fno-fast-math)
+  ament_target_dependencies(reconstruct_planning_request rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  install(TARGETS reconstruct_planning_request DESTINATION lib/${PROJECT_NAME})
+endif()
 add_executable(sando src/sando/sando_node.cpp)
 target_link_libraries(sando sando_planner)
 ament_target_dependencies(sando rclcpp example_interfaces dynus_interfaces visualization_msgs Eigen3 decomp_ros_msgs sensor_msgs std_msgs decomp_rviz_plugins decomp_test_node tf2_geometry_msgs tf2 tf2_ros tf2_eigen std_srvs pcl_ros)
@@ -289,6 +297,11 @@ if(SANDO_USE_AMPL)
   target_compile_options(instance_reservoir_test PRIVATE -UNDEBUG -fno-fast-math)
   add_test(NAME instance_reservoir_sampling COMMAND instance_reservoir_test)
 
+  add_executable(frozen_observation_test tests/ampl_model/test_frozen_planning_observation.cpp)
+  target_link_libraries(frozen_observation_test sando_ampl_backend)
+  target_compile_options(frozen_observation_test PRIVATE -UNDEBUG -fno-fast-math)
+  add_test(NAME frozen_planning_observation COMMAND frozen_observation_test)
+
   add_executable(candidate_costs_test tests/ampl_model/test_candidate_costs.cpp src/sando/label_planning_instances.cpp)
   target_compile_definitions(candidate_costs_test PRIVATE SANDO_LABEL_PLANNING_INSTANCES_NO_MAIN=1)
   target_link_libraries(candidate_costs_test sando_ampl_backend)
@@ -324,6 +337,13 @@ if(SANDO_USE_AMPL)
   ament_target_dependencies(online_corridor_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
   add_test(NAME online_corridor_candidates COMMAND online_corridor_probe)
   set_tests_properties(online_corridor_candidates PROPERTIES TIMEOUT 180)
+
+  add_executable(reconstruct_request_probe tests/ampls/reconstruct_request_probe.cpp)
+  target_link_libraries(reconstruct_request_probe sando_planner)
+  target_compile_options(reconstruct_request_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(reconstruct_request_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME reconstruct_planning_request COMMAND reconstruct_request_probe)
+  set_tests_properties(reconstruct_planning_request PROPERTIES TIMEOUT 180)
 
   add_test(NAME baseline_capture_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_capture.py")
   add_test(NAME baseline_arrival_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_sim.py")

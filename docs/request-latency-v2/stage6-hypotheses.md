@@ -3,7 +3,7 @@
 Assumptions: you know stage6 selected12 offline replay vs online capture clocks, and that AMPL TRACE lines split export/compile/prepare/solve.
 
 Versioned summary of `docker/dev-workspace/results/request-latency-v2/stage6/analysis/hypotheses.json`.  
-Primary diagnostic set remains **selected12**; **selected60** is an expansion input set (not yet formally replayed).
+Primary diagnostic set remains **selected12** (default **k=3** proposals). **selected60** is the expansion set and **has been formally replayed** with **`--candidate-limit 1`** (`run{1..5}_seed{301..305}`); first-pass vs fallback split is in `docs/request-latency-v2/stage6-first-vs-fallback.md` (results under `request-latency-v3/analysis/`). Keep k=3 and k=1 numbers separate.
 
 | ID | Claim | Evidence status |
 | ---: | --- | --- |
@@ -17,7 +17,8 @@ Primary diagnostic set remains **selected12**; **selected60** is an expansion in
 
 ## 1. Late correct candidate → extra solves
 
-- **Observed fact:** bc/cost median `n_attempts` = 1 on `success_slow`, = 4 on `failure`; failure fallback share 0.67 with `fallback_ms` median ~37–39 ms. `ranking_ms` ~2.5 ms on both tags.
+- **Observed fact (selected12, k=3):** bc/cost median `n_attempts` = 1 on `success_slow`, = 4 on `failure`; failure fallback share 0.67 with `fallback_ms` median ~37–39 ms. `ranking_ms` ~2.5 ms on both tags.
+- **Observed fact (selected60, k=1):** first fixed-assignment pass rate bc **0.667** / cost **0.700**; fallback-then-accept **0.083** / **0.050**; blended final accept **0.750** (same as original). See `stage6-first-vs-fallback.md`.
 - **Possible explanation:** Several fixed-assignment QPs run before accept/fallback; early ranks may be infeasible. No oracle of “first correct rank” in this corpus.
 - **Verification experiment:** Log per-attempt feasibility vs offline oracle assignments on the frozen corridor; measure how often first feasible is rank>1.
 - **Status:** partial
@@ -38,7 +39,8 @@ Primary diagnostic set remains **selected12**; **selected60** is an expansion in
 
 ## 4. Failure stacks original search → long tail
 
-- **Observed fact:** bc/cost failures ~133–185 ms with 4 attempts + fallback; success_slow ~45–59 ms / 1 attempt. Capture `parallel_optimization_ms` ~391–2805 ms ≫ offline totals.
+- **Observed fact (selected12, k=3):** bc/cost failures ~133–185 ms with 4 attempts + fallback; success_slow ~45–59 ms / 1 attempt. Capture `parallel_optimization_ms` ~391–2805 ms ≫ offline totals.
+- **Observed fact (selected60, k=1):** when first QP fails but MIQP accepts, bc/cost fallback-accept latency median ~77–79 ms vs first-accept ~51–52 ms; final_fail still ~54–55 ms median (no long stacked QP chain under k=1).
 - **Possible explanation:** Failed proposals add QP attempts and MIQP fallback; online also pays multi-factor parallel and drain.
 - **Verification experiment:** Phase-split walls on a full-metrics recapture of the same IDs.
 - **Status:** partial
@@ -66,8 +68,11 @@ Primary diagnostic set remains **selected12**; **selected60** is an expansion in
 
 ## Source artifacts
 
-- `stage6/analysis/formal_replay_summary.json`
-- `stage6/analysis/formal_replay_rows.jsonl`
+- `stage6/analysis/formal_replay_summary.json` (selected12)
+- `stage6/analysis/formal_replay_rows.jsonl` (selected12)
+- `stage6/analysis/selected60_summary.json` (blended accept/latency only)
+- `../request-latency-v3/analysis/selected60_first_vs_fallback.json` (first vs fallback split)
+- `docs/request-latency-v2/stage6-first-vs-fallback.md`
 - `stage6/analysis/before_after_skip_compile.json`
 - `stage6/analysis/online_critical_path_selected12.json`
 - `stage6/analysis/trace_overhead.json`

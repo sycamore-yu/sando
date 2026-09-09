@@ -1,0 +1,426 @@
+{
+  "task": "static_forest_cylinder_proxy_vs_aabb",
+  "doc_ref": "docs/fromchat/SANDO_3a13bf9_\u8017\u65f6\u5f52\u56e0\u7eed\u4f5c\u4e0e\u4e00\u6b21\u6027\u89c4\u5212\u9a8c\u6536.md \u00a74.4",
+  "disclaimer": {
+    "per_sample_discrete_only": true,
+    "continuous_time_collision": false,
+    "first_aabb_event_time_alignment": "blocked (sim vs wall clock; no co-sampled pose stream)",
+    "odom_vs_online_sample_set": "Online AABB used co-sampled /plug/model_states_plug after goal; this recompute uses ground_truth.odom_trace positions. Counts are comparable AABB-vs-cylinder on the same odom samples, not a replay of the exact online sample indices."
+  },
+  "robot_proxy": {
+    "source_priority": [
+      "result.json ground_truth.collision.metric_definition.robot_bbox_full_size_m",
+      "scripts/integer_learning_baseline_sim.py DRONE_BBOX",
+      "scripts/integer_scene_protocol.py ROBOT_BBOX_FULL_M",
+      "config/sando.yaml drone_bbox",
+      "src/sando/sando_node.cpp drone_radius = drone_bbox[0]/2"
+    ],
+    "robot_bbox_full_size_m": [
+      0.2,
+      0.2,
+      0.2
+    ],
+    "robot_half_sizes_m": {
+      "hx": 0.1,
+      "hy": 0.1,
+      "hz": 0.1
+    },
+    "planner_drone_radius_m": 0.1,
+    "note": "Online stage2 AABB metric uses full bbox [0.2,0.2,0.2]. Planner inflate uses drone_radius = half of bbox x."
+  },
+  "formula": {
+    "planar": "dx=max(|px-cx|-hx,0); dy=max(|py-cy|-hy,0); dx^2+dy^2 <= r^2",
+    "height": "|pz-cz| <= hz + H/2",
+    "aabb_enclosing": "|px-cx|<=hx+r AND |py-cy|<=hy+r AND |pz-cz|<=hz+H/2",
+    "axes_verified": "world +Z up; cylinder length along +Z; model pose z=cz=H/2=3m for H=6"
+  },
+  "world_verification": {
+    "easy": {
+      "job_world": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-easy-seed200-original/run/static_world.world",
+      "repo_world": "/home/tong/tongworkspace/dockerworkplace/sando/worlds/easy_forest.world",
+      "sha256_match_repo": true,
+      "n_cylinders": 41,
+      "all_vertical_roll_pitch_zero": true,
+      "no_collision_local_pose_offset": true,
+      "uniform_H_m": [
+        6.0
+      ],
+      "uniform_cz_m": [
+        3.0
+      ],
+      "radius_min_m": 1.01082,
+      "radius_max_m": 1.49139,
+      "enclosing_aabb_matches_2r_H": true,
+      "yaw_nonzero_count": 0,
+      "note": "Gazebo cylinder default axis is +Z; roll=pitch=0 => vertical trunks. Yaw irrelevant for circular section."
+    },
+    "medium": {
+      "job_world": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-medium-seed200-original/run/static_world.world",
+      "repo_world": "/home/tong/tongworkspace/dockerworkplace/sando/worlds/medium_forest.world",
+      "sha256_match_repo": true,
+      "n_cylinders": 81,
+      "all_vertical_roll_pitch_zero": true,
+      "no_collision_local_pose_offset": true,
+      "uniform_H_m": [
+        6.0
+      ],
+      "uniform_cz_m": [
+        3.0
+      ],
+      "radius_min_m": 1.01082,
+      "radius_max_m": 1.49971,
+      "enclosing_aabb_matches_2r_H": true,
+      "yaw_nonzero_count": 0,
+      "note": "Gazebo cylinder default axis is +Z; roll=pitch=0 => vertical trunks. Yaw irrelevant for circular section."
+    },
+    "hard": {
+      "job_world": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-hard-seed200-original/run/static_world.world",
+      "repo_world": "/home/tong/tongworkspace/dockerworkplace/sando/worlds/hard_forest.world",
+      "sha256_match_repo": true,
+      "n_cylinders": 162,
+      "all_vertical_roll_pitch_zero": true,
+      "no_collision_local_pose_offset": true,
+      "uniform_H_m": [
+        6.0
+      ],
+      "uniform_cz_m": [
+        3.0
+      ],
+      "radius_min_m": 1.0,
+      "radius_max_m": 1.49971,
+      "enclosing_aabb_matches_2r_H": true,
+      "yaw_nonzero_count": 0,
+      "note": "Gazebo cylinder default axis is +Z; roll=pitch=0 => vertical trunks. Yaw irrelevant for circular section."
+    }
+  },
+  "synthetic_self_check": {
+    "tree": {
+      "name": "21",
+      "cx": 64.0435,
+      "cy": -0.514004,
+      "cz": 3.0,
+      "r": 1.04119,
+      "H": 6.0,
+      "roll": 0.0,
+      "pitch": -0.0,
+      "yaw": 0.0
+    },
+    "robot_half_sizes_m": {
+      "hx": 0.1,
+      "hy": 0.1,
+      "hz": 0.1
+    },
+    "cases": [
+      {
+        "label": "tree_center",
+        "pose": [
+          64.0435,
+          -0.514004,
+          3.0
+        ],
+        "aabb": true,
+        "cylinder": true
+      },
+      {
+        "label": "inside_cylinder_offset_x_0.5",
+        "pose": [
+          64.5435,
+          -0.514004,
+          3.0
+        ],
+        "aabb": true,
+        "cylinder": true
+      },
+      {
+        "label": "aabb_corner_boundary_expected_aabb_only",
+        "pose": [
+          65.18468999999999,
+          0.627186,
+          3.0
+        ],
+        "aabb": true,
+        "cylinder": false
+      },
+      {
+        "label": "outside_both",
+        "pose": [
+          65.19469,
+          0.637186,
+          3.0
+        ],
+        "aabb": false,
+        "cylinder": false
+      },
+      {
+        "label": "above_height_gap",
+        "pose": [
+          64.0435,
+          -0.514004,
+          6.1499999999999995
+        ],
+        "aabb": false,
+        "cylinder": false
+      }
+    ]
+  },
+  "blockers": {
+    "co_sampled_robot_obstacle_poses": {
+      "status": "not_retained",
+      "searched": [
+        "run/result.json \u2192 ground_truth.collision.min_clearance_samples (sim_time, receipt_time, min_clearance_m only)",
+        "run/result.json \u2192 ground_truth.collision (boolean + first_hit_* only)"
+      ]
+    },
+    "rosbags": {
+      "status": "not_found",
+      "searched_globs": [
+        "docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest*/**/*.bag",
+        "docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest*/**/model_states*"
+      ]
+    },
+    "odom_csv_files": {
+      "status": "not_found_as_standalone_csv",
+      "available_instead": "ground_truth.odom_trace inside result.json (wall unix timestamp + position)",
+      "searched_globs": [
+        "docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest*/**/*odom*.csv"
+      ]
+    },
+    "sim_to_wall_time_map": {
+      "status": "missing",
+      "effect": "Cannot align online first_hit_time (sim) to an exact odom_trace index by time; position spot-check at first_hit_position still works"
+    }
+  },
+  "flights": [
+    {
+      "job": "static_forest-easy-seed200-original",
+      "scene": "easy_forest",
+      "online_collision_flag": true,
+      "online_samples_checked": 2704,
+      "online_first_hit_names": [
+        "21"
+      ],
+      "online_first_hit_time_sim": 92.83300000000001,
+      "online_first_hit_position": [
+        62.97863001720362,
+        -1.0993868700096718,
+        1.6060879186267394
+      ],
+      "online_min_clearance_le0_count": 166,
+      "odom_samples": 4417,
+      "odom_timestamp_kind": "wall_clock_unix",
+      "counts": {
+        "samples": 4417,
+        "aabb_positive": 285,
+        "cylinder_positive": 251,
+        "both": 251,
+        "aabb_only_conservative": 34,
+        "cylinder_only": 0
+      },
+      "first_odom_aabb": {
+        "index": 2543,
+        "names": [
+          "21"
+        ],
+        "position": [
+          62.9325652186704,
+          -1.089851288682793,
+          1.607265037462982
+        ],
+        "wall_timestamp": 1788899437.486536
+      },
+      "first_odom_cylinder": {
+        "index": 2546,
+        "names": [
+          "21"
+        ],
+        "position": [
+          63.07148067604291,
+          -1.1196255074220507,
+          1.6033553687692574
+        ],
+        "wall_timestamp": 1788899437.51145
+      },
+      "first_hit_position_spotcheck": {
+        "recorded_names": [
+          "21"
+        ],
+        "recorded_sim_time": 92.83300000000001,
+        "position": [
+          62.97863001720362,
+          -1.0993868700096718,
+          1.6060879186267394
+        ],
+        "recomputed_aabb_hits": [
+          "21"
+        ],
+        "recomputed_cylinder_hits": [],
+        "aabb_includes_recorded": true,
+        "cylinder_includes_recorded": false
+      },
+      "paths": {
+        "result_json": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-easy-seed200-original/run/result.json",
+        "static_world": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-easy-seed200-original/run/static_world.world",
+        "forest_collision_geometry": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-easy-seed200-original/run/forest_collision_geometry.json",
+        "tmux_log": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-easy-seed200-original/run/tmux.log"
+      },
+      "seed": 200,
+      "method": "original",
+      "world_file": "/results/run/static_world.world",
+      "n_trees_used": 41
+    },
+    {
+      "job": "static_forest-hard-seed200-original",
+      "scene": "hard_forest",
+      "online_collision_flag": true,
+      "online_samples_checked": 1334,
+      "online_first_hit_names": [
+        "154"
+      ],
+      "online_first_hit_time_sim": 86.808,
+      "online_first_hit_position": [
+        9.346854837550756,
+        -0.04232427825857914,
+        1.716643861156711
+      ],
+      "online_min_clearance_le0_count": 215,
+      "odom_samples": 3409,
+      "odom_timestamp_kind": "wall_clock_unix",
+      "counts": {
+        "samples": 3409,
+        "aabb_positive": 527,
+        "cylinder_positive": 449,
+        "both": 449,
+        "aabb_only_conservative": 78,
+        "cylinder_only": 0
+      },
+      "first_odom_aabb": {
+        "index": 652,
+        "names": [
+          "154"
+        ],
+        "position": [
+          9.346854837550756,
+          -0.04232427825857914,
+          1.716643861156711
+        ],
+        "wall_timestamp": 1788896068.0892425
+      },
+      "first_odom_cylinder": {
+        "index": 665,
+        "names": [
+          "154"
+        ],
+        "position": [
+          9.74651663287303,
+          -0.0435408131026843,
+          1.6995770998981647
+        ],
+        "wall_timestamp": 1788896068.2382746
+      },
+      "first_hit_position_spotcheck": {
+        "recorded_names": [
+          "154"
+        ],
+        "recorded_sim_time": 86.808,
+        "position": [
+          9.346854837550756,
+          -0.04232427825857914,
+          1.716643861156711
+        ],
+        "recomputed_aabb_hits": [
+          "154"
+        ],
+        "recomputed_cylinder_hits": [],
+        "aabb_includes_recorded": true,
+        "cylinder_includes_recorded": false
+      },
+      "paths": {
+        "result_json": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-hard-seed200-original/run/result.json",
+        "static_world": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-hard-seed200-original/run/static_world.world",
+        "forest_collision_geometry": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-hard-seed200-original/run/forest_collision_geometry.json",
+        "tmux_log": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-hard-seed200-original/run/tmux.log"
+      },
+      "seed": 200,
+      "method": "original",
+      "world_file": "/results/run/static_world.world",
+      "n_trees_used": 162
+    },
+    {
+      "job": "static_forest-medium-seed200-original",
+      "scene": "medium_forest",
+      "online_collision_flag": true,
+      "online_samples_checked": 2213,
+      "online_first_hit_names": [
+        "21"
+      ],
+      "online_first_hit_time_sim": 91.902,
+      "online_first_hit_position": [
+        62.90304312265278,
+        -1.0758426154141059,
+        4.161638288505039
+      ],
+      "online_min_clearance_le0_count": 73,
+      "odom_samples": 4173,
+      "odom_timestamp_kind": "wall_clock_unix",
+      "counts": {
+        "samples": 4173,
+        "aabb_positive": 163,
+        "cylinder_positive": 152,
+        "both": 152,
+        "aabb_only_conservative": 11,
+        "cylinder_only": 0
+      },
+      "first_odom_aabb": {
+        "index": 2493,
+        "names": [
+          "21"
+        ],
+        "position": [
+          62.90304312265278,
+          -1.0758426154141059,
+          4.161638288505039
+        ],
+        "wall_timestamp": 1788896913.4086995
+      },
+      "first_odom_cylinder": {
+        "index": 2494,
+        "names": [
+          "21"
+        ],
+        "position": [
+          63.12983297128993,
+          -1.0909680647468816,
+          4.178587327246256
+        ],
+        "wall_timestamp": 1788896913.4155827
+      },
+      "first_hit_position_spotcheck": {
+        "recorded_names": [
+          "21"
+        ],
+        "recorded_sim_time": 91.902,
+        "position": [
+          62.90304312265278,
+          -1.0758426154141059,
+          4.161638288505039
+        ],
+        "recomputed_aabb_hits": [
+          "21"
+        ],
+        "recomputed_cylinder_hits": [],
+        "aabb_includes_recorded": true,
+        "cylinder_includes_recorded": false
+      },
+      "paths": {
+        "result_json": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-medium-seed200-original/run/result.json",
+        "static_world": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-medium-seed200-original/run/static_world.world",
+        "forest_collision_geometry": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-medium-seed200-original/run/forest_collision_geometry.json",
+        "tmux_log": "/home/tong/tongworkspace/dockerworkplace/sando/docker/dev-workspace/results/learning-stages-v2/stage2-isolated/jobs/static_forest-medium-seed200-original/run/tmux.log"
+      },
+      "seed": 200,
+      "method": "original",
+      "world_file": "/results/run/static_world.world",
+      "n_trees_used": 81
+    }
+  ]
+}

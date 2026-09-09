@@ -5132,14 +5132,13 @@ bool SolverGurobi::generateWithCorridorPolicy(
         policy_metrics_["ranking_ms"] = dur(clk::now() - ranking_started).count();
         if (cancelled()) return finish(false);
         for (const auto& assignment : ranked) {
+          if (candidates.size() >= candidate_limit) break;
           sando_learning::validateAssignment(geometry, assignment);
           if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
             candidates.push_back(assignment);
-          if (candidates.size() == candidate_limit) break;
         }
-        if (candidates.size() > candidate_limit) candidates.resize(candidate_limit);
       } else if (corridor_method_ == CorridorMethod::Previous) {
-        if (!previous_assignment_.empty()) {
+        if (!previous_assignment_.empty() && candidate_limit >= 1) {
           try {
             sando_learning::validateAssignment(geometry, previous_assignment_);
             candidates.push_back(previous_assignment_);
@@ -5148,9 +5147,9 @@ bool SolverGurobi::generateWithCorridorPolicy(
           }
         }
         for (const auto& assignment : all) {
+          if (candidates.size() >= candidate_limit) break;
           if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
             candidates.push_back(assignment);
-          if (candidates.size() == candidate_limit) break;
         }
       }
     } catch (const std::exception& error) {

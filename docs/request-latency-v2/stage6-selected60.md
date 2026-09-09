@@ -2,6 +2,8 @@
 
 1 warmup + 5 formal, `--candidate-limit 1`, AMPL TRACE on.
 
+`accept` below is **final accept** (any attempt). Split into first fixed-assignment pass vs fallback: `stage6-first-vs-fallback.md`.
+
 {
   "original": {
     "n": 300,

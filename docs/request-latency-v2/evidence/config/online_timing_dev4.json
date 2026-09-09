@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "kind": "online_timing_dev4_protocol",
+  "git_expected": "3a13bf9+",
+  "candidate_limit": 1,
+  "setup_bash": "/root/sando_ws/install-dev/setup.bash",
+  "models": {
+    "cost": "docker/dev-workspace/results/learning-stages-v2/selected-models/cost.json",
+    "cost_sha256": "f0a9814720d6ee6dc975b5d3e90d6830ccbf581ac3e2542d800225acc7761ecc"
+  },
+  "fixed_time_note": "no new single-output time model yet; corridor cost at native multi-factor fallback capacity reserved but SANDO_CORRIDOR_CANDIDATE_LIMIT=1; timing policy unset",
+  "scenes": [
+    {
+      "id": "static_easy_210",
+      "scene_family": "static_forest",
+      "seed": 210,
+      "num_obstacles": 50,
+      "dynamic_ratio": 0.0,
+      "env": "easy_forest",
+      "difficulty": "easy"
+    },
+    {
+      "id": "static_medium_211",
+      "scene_family": "static_forest",
+      "seed": 211,
+      "num_obstacles": 100,
+      "dynamic_ratio": 0.0,
+      "env": "medium_forest",
+      "difficulty": "medium"
+    },
+    {
+      "id": "ud50_212",
+      "scene_family": "unknown_dynamic",
+      "seed": 212,
+      "num_obstacles": 50,
+      "dynamic_ratio": 0.65,
+      "env": "empty_wo_ground",
+      "difficulty": "easy"
+    },
+    {
+      "id": "ud100_213",
+      "scene_family": "unknown_dynamic",
+      "seed": 213,
+      "num_obstacles": 100,
+      "dynamic_ratio": 0.65,
+      "env": "empty_wo_ground",
+      "difficulty": "medium"
+    }
+  ],
+  "methods": [
+    "original",
+    "cost"
+  ],
+  "gates": {
+    "min_main_qp_append_success_trajectories": 10,
+    "record_usable_reclaim_publish": true
+  },
+  "note": "forest difficulty is selected by num_obstacles via difficulty_from_count (50=easy,100=medium,200=hard)"
+}

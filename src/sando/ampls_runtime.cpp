@@ -197,13 +197,17 @@ class AmplsRuntime final : public Runtime {
       const auto begin = std::chrono::steady_clock::now();
       const auto centered = sando_ampl::detail::centerContinuousObjective(snapshot);
       const ModelSnapshot& prepared_snapshot = centered.snapshot;
-      // ponytail: updateNative uses the snapshot only; export+compile were unused on
-      // the update path (ceiling: audit still needs files; upgrade: structure-hash skip).
+      // ponytail: updateNative uses the snapshot only; skip export+compile on the
+      // normal reuse path. Audit copies and verifyUpdate both need model.nl.
       const auto audit = environmentValue("SANDO_AMPL_AUDIT_DIR");
+      const auto verify = environmentValue("SANDO_AMPL_VERIFY_UPDATES");
+      const bool verify_updates_enabled = verify && *verify == "1";
+      const bool need_export_compile = !updating || static_cast<bool>(audit) ||
+                                       verify_updates_enabled;
       WorkDirectory directory;
       auto exported = begin;
       auto compiled = begin;
-      if (!updating || audit) {
+      if (need_export_compile) {
         exportAmplModel(prepared_snapshot, (directory.path / "model.mod").string());
         exported = std::chrono::steady_clock::now();
         compileModel(directory.path);
@@ -335,8 +339,7 @@ class AmplsRuntime final : public Runtime {
       // The callback points at a stack object.  Never leave it installed on
       // the retained model after this request returns.
       check(GRBsetcallbackfunc(native, nullptr, nullptr), native, "Clear callback");
-      const auto verify = environmentValue("SANDO_AMPL_VERIFY_UPDATES");
-      if (updating && verify && *verify == "1" &&
+      if (updating && verify_updates_enabled &&
           (result.status == GRB_OPTIMAL || result.status == GRB_INFEASIBLE ||
            result.status == GRB_UNBOUNDED || result.status == GRB_INF_OR_UNBD))
         verifyUpdate(directory.path / "model.nl", snapshot, prepared_snapshot,

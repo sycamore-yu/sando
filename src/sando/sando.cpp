@@ -8,17 +8,51 @@
 
 #include "sando/sando.hpp"
 #include "sando/segment_time.hpp"
+#ifdef SANDO_USE_AMPL
+#include "sando/frozen_planning_observation.hpp"
+#endif
 #include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <cstdlib>
 #include <cerrno>
 #include <fcntl.h>
+#include <limits>
+#include <stdexcept>
 #include <unistd.h>
 
 using namespace sando;
 using namespace termcolor;
 
 typedef timer::Timer MyTimer;
+
+namespace {
+#ifdef SANDO_USE_AMPL
+// Reject 0, negatives, trailing junk, and overflow.
+int parseCorridorCandidateLimit(const char* raw) {
+  const std::string value(raw ? raw : "");
+  if (value.empty() || value[0] == '-' || value[0] == '+')
+    throw std::invalid_argument("SANDO_CORRIDOR_CANDIDATE_LIMIT must be a positive integer");
+  std::size_t consumed = 0;
+  unsigned long long parsed = 0;
+  try {
+    parsed = std::stoull(value, &consumed);
+  } catch (const std::exception&) {
+    throw std::invalid_argument("SANDO_CORRIDOR_CANDIDATE_LIMIT must be a positive integer");
+  }
+  if (consumed != value.size() || parsed < 1 ||
+      parsed > static_cast<unsigned long long>(std::numeric_limits<int>::max()))
+    throw std::invalid_argument("SANDO_CORRIDOR_CANDIDATE_LIMIT must be a positive integer");
+  return static_cast<int>(parsed);
+}
+
+int resolveCorridorCandidateLimit(bool timing_single_proposal) {
+  if (const char* raw = std::getenv("SANDO_CORRIDOR_CANDIDATE_LIMIT"))
+    return parseCorridorCandidateLimit(raw);
+  return timing_single_proposal ? 1 : 3;
+}
+#endif
+}  // namespace
 
 // ----------------------------------------------------------------------------
 
@@ -128,12 +162,8 @@ SANDO::SANDO(Parameters par) : par_(par) {
   }
 #ifdef SANDO_USE_AMPL
   {
-    int candidate_limit = 3;
-    if (const char* raw = std::getenv("SANDO_CORRIDOR_CANDIDATE_LIMIT")) {
-      candidate_limit = std::stoi(raw);
-    } else if (timing_policy_enabled_ && timing_policy_->proposalCount() == 1) {
-      candidate_limit = 1;
-    }
+    const int candidate_limit = resolveCorridorCandidateLimit(
+        timing_policy_enabled_ && timing_policy_->proposalCount() == 1);
     for (auto& solver : whole_traj_solver_ptrs_)
       solver->setCorridorCandidateLimit(candidate_limit);
   }
@@ -1075,6 +1105,16 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
                 << " floor voxels (z<=" << z_floor_thresh << ") from base_map" << std::endl;
   }
 
+#ifdef SANDO_USE_AMPL
+  std::vector<std::uint8_t> base_map_classes;
+  std::vector<Veci<3>> base_map_voxels;
+  Vec3f base_map_origin = Vec3f::Zero();
+  double base_map_res = par_.res;
+  Veci<3> base_map_dim = Veci<3>::Zero();
+  hgp_manager_.classifyCorridorPoints(
+      base_map, base_map_classes, base_map_voxels, base_map_origin, base_map_res, base_map_dim);
+#endif
+
   // Get obst_pos and obst_bbox
   vec_Vecf<3> obst_pos;
   vec_Vecf<3> obst_bbox;
@@ -1349,6 +1389,70 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
   // Full snapshots are collected only in dedicated capture runs, after every
   // factor worker has stopped. Formal timing runs leave this disabled.
   if (instance_reservoir_) {
+    nlohmann::json frozen_observation_json;
+    nlohmann::json reconstructable;
+    try {
+      sando_learning::FrozenPlanningObservation observation;
+      observation.observation_id = std::to_string(capture_request_id_);
+      observation.source_id = capture_metadata_.at("source_id").get<std::string>();
+      observation.config_id = capture_metadata_.at("config_id").get<std::string>();
+      observation.scene_id = capture_metadata_.at("scene_id").get<std::string>();
+      observation.episode_id = capture_metadata_.at("episode_id").get<std::string>();
+      observation.request_id = observation.observation_id;
+      observation.start = {local_A.pos.x(), local_A.pos.y(), local_A.pos.z(),
+                           local_A.vel.x(), local_A.vel.y(), local_A.vel.z(),
+                           local_A.accel.x(), local_A.accel.y(), local_A.accel.z()};
+      observation.goal = {local_E.pos.x(), local_E.pos.y(), local_E.pos.z(),
+                          local_E.vel.x(), local_E.vel.y(), local_E.vel.z(),
+                          local_E.accel.x(), local_E.accel.y(), local_E.accel.z()};
+      observation.A_time = A_time;
+      observation.planning_start_time = capture_request_time_;
+      observation.observation_time = capture_observation_time_;
+      observation.n = par_.num_N;
+      observation.initial_dt = initial_dt;
+      observation.dc = par_.dc;
+      observation.v_max = par_.v_max;
+      observation.a_max = par_.a_max;
+      observation.j_max = par_.j_max;
+      observation.jerk_smooth_weight = par_.jerk_smooth_weight;
+      observation.environment_assumption = par_.environment_assumption;
+      observation.sim_env = par_.sim_env;
+      observation.norm = par_.dynamic_constraint_type;
+      observation.planner = "SANDO";
+      observation.res = base_map_res;
+      observation.factor_hgp = par_.factor_hgp;
+      observation.map_origin = {base_map_origin[0], base_map_origin[1], base_map_origin[2]};
+      observation.map_dim = {base_map_dim[0], base_map_dim[1], base_map_dim[2]};
+      observation.z_min = par_.z_min;
+      observation.z_max = par_.z_max;
+      observation.drone_radius = par_.drone_radius;
+      observation.sfc_size = par_.sfc_size;
+      if (observation.sfc_size.size() != 3) observation.sfc_size = {0.0, 0.0, 0.0};
+      observation.use_shrinked_box = par_.use_shrinked_box;
+      observation.shrinked_box_size = par_.shrinked_box_size;
+      observation.obst_max_vel = par_.obst_max_vel;
+      observation.obst_position_error = par_.obst_position_error;
+      observation.inflate_unknown_boundary = par_.inflate_unknown_boundary;
+      observation.map_bounds = {par_.x_min, par_.x_max, par_.y_min, par_.y_max, par_.z_min, par_.z_max};
+      observation.global_path.reserve(global_path.size());
+      for (const auto& vertex : global_path)
+        observation.global_path.push_back({vertex[0], vertex[1], vertex[2]});
+      observation.obst_pos.reserve(obst_pos.size());
+      observation.obst_bbox.reserve(obst_bbox.size());
+      for (const auto& pos : obst_pos) observation.obst_pos.push_back({pos[0], pos[1], pos[2]});
+      for (const auto& box : obst_bbox) observation.obst_bbox.push_back({box[0], box[1], box[2]});
+      observation.visible_map.points.reserve(base_map.size());
+      observation.visible_map.classes = base_map_classes;
+      observation.visible_map.voxel_indices.reserve(base_map_voxels.size());
+      for (const auto& point : base_map)
+        observation.visible_map.points.push_back({point[0], point[1], point[2]});
+      for (const auto& idx : base_map_voxels)
+        observation.visible_map.voxel_indices.push_back({idx[0], idx[1], idx[2]});
+      frozen_observation_json = sando_learning::frozenObservationToJson(observation);
+      reconstructable = sando_learning::frozenObservationReference(observation);
+    } catch (const std::exception& error) {
+      instance_reservoir_->reject(std::string("frozen observation: ") + error.what());
+    }
     for (size_t i = 0; i < num_factors; ++i) {
       try {
         auto instance = whole_traj_solver_ptrs_[i]->captureExpertInstance(factors_[i]);
@@ -1368,18 +1472,12 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
                          [](bool successful) { return successful; });
         instance.outcome["cancel_reason"] = instance.outcome.at("cancelled").get<bool>()
             ? "another_factor_succeeded" : "";
-        nlohmann::json path = nlohmann::json::array();
-        for (const auto& vertex : global_path)
-          path.push_back({vertex[0], vertex[1], vertex[2]});
-        instance.outcome["reconstructable"] = {
-            {"v_max", par_.v_max},
-            {"a_max", par_.a_max},
-            {"j_max", par_.j_max},
-            {"jerk_smooth_weight", par_.jerk_smooth_weight},
-            {"environment_assumption", par_.environment_assumption},
-            {"global_path", path},
-            {"visible_map", nullptr}};
-        instance_reservoir_->ingest(instance);
+        if (!reconstructable.is_null()) instance.outcome["reconstructable"] = reconstructable;
+        else instance.outcome["reconstructable"] = nlohmann::json::object();
+        if (frozen_observation_json.is_object())
+          instance_reservoir_->ingest(instance, frozen_observation_json);
+        else
+          instance_reservoir_->ingest(instance);
       } catch (const std::exception& error) {
         instance_reservoir_->reject(error.what());
       }
@@ -1400,6 +1498,13 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
       const int cores = static_cast<int>(std::thread::hardware_concurrency());
       replacement->setGurobiThreads(std::max(1, cores / std::max(1, num_dynamic_factors_)));
       replacement->initializeSolver(par_);
+#ifdef SANDO_USE_AMPL
+      // Same corridor runtime config as construction; env overrides timing default.
+      replacement->setCorridorCandidateLimit(resolveCorridorCandidateLimit(
+          timing_policy_enabled_ && timing_policy_->proposalCount() == 1));
+      replacement->setCorridorPolicy(corridor_policy_, corridor_method_,
+                                     last_appended_assignment_);
+#endif
       solver = std::move(replacement);
     }
   }
