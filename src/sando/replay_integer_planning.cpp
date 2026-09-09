@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
@@ -32,7 +33,7 @@ using sando_ampl::GRB_OPTIMAL;
 using sando_ampl::GRB_NUMERIC;
 
 constexpr const char* kSchema = "sando_integer_replay";
-constexpr std::size_t kCandidateLimit = 3;
+constexpr std::size_t kDefaultCandidateLimit = 3;
 
 struct Options {
   std::string input;
@@ -43,6 +44,7 @@ struct Options {
   std::uint32_t seed{0};
   bool seed_given{false};
   std::optional<std::size_t> limit;
+  std::size_t candidate_limit{kDefaultCandidateLimit};
 };
 
 struct PolicySlot {
@@ -88,7 +90,8 @@ struct MethodResult {
 [[noreturn]] void usage() {
   throw std::invalid_argument(
       "usage: replay_integer_planning --input FILE --output FILE "
-      "[--bc FILE] [--cost FILE] [--closed-loop FILE] --seed N [--limit N]");
+      "[--bc FILE] [--cost FILE] [--closed-loop FILE] --seed N [--limit N] "
+      "[--candidate-limit N]");
 }
 
 std::uint32_t parse_seed(const std::string& value) {
@@ -110,10 +113,16 @@ std::size_t parse_size(const std::string& value, const char* option) {
 
 Options parse_options(int argc, char** argv) {
   Options result;
+  if (const char* raw = std::getenv("SANDO_CORRIDOR_CANDIDATE_LIMIT")) {
+    result.candidate_limit = parse_size(raw, "SANDO_CORRIDOR_CANDIDATE_LIMIT");
+    if (result.candidate_limit < 1)
+      throw std::invalid_argument("SANDO_CORRIDOR_CANDIDATE_LIMIT must be >= 1");
+  }
   for (int i = 1; i < argc; ++i) {
     const std::string option = argv[i];
     if (option == "--input" || option == "--output" || option == "--bc" ||
-        option == "--cost" || option == "--closed-loop" || option == "--seed" || option == "--limit") {
+        option == "--cost" || option == "--closed-loop" || option == "--seed" || option == "--limit" ||
+        option == "--candidate-limit") {
       if (i + 1 >= argc) usage();
       const std::string value = argv[++i];
       if (value.empty()) throw std::invalid_argument(option + " cannot be empty");
@@ -123,7 +132,11 @@ Options parse_options(int argc, char** argv) {
       else if (option == "--cost") result.cost = value;
       else if (option == "--closed-loop") result.closed_loop = value;
       else if (option == "--seed") { result.seed = parse_seed(value); result.seed_given = true; }
-      else result.limit = parse_size(value, "--limit");
+      else if (option == "--candidate-limit") {
+        result.candidate_limit = parse_size(value, "--candidate-limit");
+        if (result.candidate_limit < 1)
+          throw std::invalid_argument("--candidate-limit must be >= 1");
+      } else result.limit = parse_size(value, "--limit");
     } else usage();
   }
   if (result.input.empty() || result.output.empty() || !result.seed_given) usage();
@@ -298,7 +311,8 @@ std::optional<Assignment> previous_assignment(const PlanningInstance& instance, 
 }
 
 std::vector<Assignment> first_candidates(const PlanningInstance& instance, const std::string& method,
-                                         PolicySlot* policy, MethodResult& result) {
+                                         PolicySlot* policy, MethodResult& result,
+                                         std::size_t candidate_limit) {
   const auto all = sando_learning::enumerateAssignments(instance);
   std::vector<Assignment> candidates;
   if (method == "previous") {
@@ -311,7 +325,7 @@ std::vector<Assignment> first_candidates(const PlanningInstance& instance, const
     for (const auto& assignment : all) {
       if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
         candidates.push_back(assignment);
-      if (candidates.size() == kCandidateLimit) break;
+      if (candidates.size() == candidate_limit) break;
     }
   } else {
     if (!policy || !policy->policy) return {};
@@ -321,14 +335,15 @@ std::vector<Assignment> first_candidates(const PlanningInstance& instance, const
     for (const auto& assignment : ranked) {
       if (std::find(candidates.begin(), candidates.end(), assignment) == candidates.end())
         candidates.push_back(assignment);
-      if (candidates.size() == kCandidateLimit) break;
+      if (candidates.size() == candidate_limit) break;
     }
   }
   return candidates;
 }
 
 MethodResult run_method(const PlanningInstance& instance, const std::string& method,
-                        PolicySlot* policy, sando_ampl::Runtime& runtime) {
+                        PolicySlot* policy, sando_ampl::Runtime& runtime,
+                        std::size_t candidate_limit = kDefaultCandidateLimit) {
   MethodResult result;
   result.method = method;
   const auto started = Clock::now();
@@ -348,7 +363,7 @@ MethodResult run_method(const PlanningInstance& instance, const std::string& met
     result.fallback_reason = "unsupported_formulation";
   } else if (method == "previous") {
     try {
-      result.proposed = first_candidates(instance, method, nullptr, result);
+      result.proposed = first_candidates(instance, method, nullptr, result, candidate_limit);
     } catch (const std::exception& error) {
       result.fallback_reason = std::string("candidate_selection_failed: ") + error.what();
     }
@@ -357,7 +372,7 @@ MethodResult run_method(const PlanningInstance& instance, const std::string& met
     result.fallback_reason = policy ? policy->error : "model_missing";
   } else {
     try {
-      result.proposed = first_candidates(instance, method, policy, result);
+      result.proposed = first_candidates(instance, method, policy, result, candidate_limit);
     } catch (const std::exception& error) {
       result.fallback_reason = std::string("ranking_failed: ") + error.what();
       result.proposed.clear();
@@ -428,7 +443,8 @@ json replay_record(const PlanningInstance& instance, const Options& options,
           {"request_id", instance.request_id}, {"factor_id", instance.factor_id},
           {"source_id", instance.source_id}, {"config_id", instance.config_id},
           {"factor", instance.factor}, {"metadata", std::move(metadata)},
-          {"seed", options.seed}, {"method_order", order},
+          {"seed", options.seed}, {"candidate_limit", options.candidate_limit},
+          {"method_order", order},
           {"runtime_reuse", "one_fresh_runtime_per_method"}, {"methods", std::move(method_jsons)}};
 }
 
@@ -476,7 +492,7 @@ int main(int argc, char** argv) {
           if (name == "bc") policy = &policies.at("bc");
           else if (name == "cost") policy = &policies.at("cost");
           else if (name == "closed_loop") policy = &policies.at("closed_loop");
-          methods.emplace(name, run_method(instance, name, policy, *runtime));
+          methods.emplace(name, run_method(instance, name, policy, *runtime, options.candidate_limit));
         }
         record = replay_record(instance, options, order, methods);
       } catch (const std::exception& error) {
