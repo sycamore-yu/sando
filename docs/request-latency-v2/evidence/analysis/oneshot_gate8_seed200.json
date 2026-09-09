@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "oneshot_gate8_honest",
+  "run": "docker/dev-workspace/results/request-latency-v3/online/oneshot_gate8_20260909_124440/seed200",
+  "head": "37ace79",
+  "timing_policy": "prototypes/time_fixed_z_qp/evidence/train16_run/timing_qp_seed0.json",
+  "corridor_method": "cost",
+  "corridor_policy": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json",
+  "n_attempted": 1274,
+  "append_ok": 1200,
+  "oneshot_qp_append": 1195,
+  "miqp_fallback_append": 5,
+  "publish_seen_note": "metrics publish_seen field stays false by construction in early event; controller use evidenced by goal_reached plus appended one-shot QP trajectories",
+  "goal_reached": true,
+  "success": true,
+  "goal_distance_m": 0.24361076469491277,
+  "elapsed_sec": 35.32939523807727,
+  "gate8_pass": true
+}

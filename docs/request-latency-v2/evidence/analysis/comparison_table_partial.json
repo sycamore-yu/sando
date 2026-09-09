@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "kind": "gates_9_10_11_partial_table",
+  "online": [
+    {
+      "label": "original_multi_factor_seed200",
+      "n_attempted": 591,
+      "append_ok": 512,
+      "oneshot_qp_append": null,
+      "miqp_fallback_append": null,
+      "total_ms": {
+        "n": 512,
+        "p50": 41.271426,
+        "p90": 50.22255,
+        "mean": 44.04536472070315
+      },
+      "goal_reached": true,
+      "goal_distance_m": 0.3734964814763427,
+      "elapsed_sec": 24.82515249901917,
+      "success": true
+    },
+    {
+      "label": "oneshot_qp_timing_cost_seed200",
+      "n_attempted": 1274,
+      "append_ok": 1200,
+      "oneshot_qp_append": 1195,
+      "miqp_fallback_append": 5,
+      "total_ms": {
+        "n": 1195,
+        "p50": 25.309854,
+        "p90": 31.772026,
+        "mean": 25.704172895397488
+      },
+      "goal_reached": true,
+      "goal_distance_m": 0.24361076469491277,
+      "elapsed_sec": 35.32939523807727,
+      "success": true
+    }
+  ],
+  "offline_oneshot": [
+    {
+      "label": "offline_qp_seed0",
+      "main_qp_accept": 14,
+      "n": 16,
+      "rate": 0.875,
+      "fallback_calls": 0
+    },
+    {
+      "label": "offline_supervised",
+      "main_qp_accept": 15,
+      "n": 16,
+      "rate": 0.9375,
+      "fallback_calls": 0
+    }
+  ],
+  "note": "supervised online row filled after paired smoke finishes"
+}
