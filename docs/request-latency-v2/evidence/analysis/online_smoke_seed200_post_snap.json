@@ -1,0 +1,67 @@
+{
+  "out": "/root/sando_ws/src/sando/docker/dev-workspace/results/request-latency-v3/online/smoke_seed200_post_snap_20260909_124216",
+  "n_metrics": 1103,
+  "n_attempted": 591,
+  "append_ok": 512,
+  "append_success": {
+    "false": 79,
+    "true": 512
+  },
+  "failure_stage": {
+    "corridor_decomposition": 69,
+    "None": 512,
+    "optimization": 10
+  },
+  "winner_found": {
+    "false": 79,
+    "true": 512
+  },
+  "attempt_status_top": [
+    [
+      [
+        "miqp",
+        11,
+        false
+      ],
+      2530
+    ],
+    [
+      [
+        "miqp",
+        3,
+        false
+      ],
+      978
+    ],
+    [
+      [
+        "miqp",
+        2,
+        true
+      ],
+      621
+    ],
+    [
+      [
+        "miqp",
+        2,
+        false
+      ],
+      471
+    ]
+  ],
+  "goal_reached": true,
+  "success": true,
+  "goal_distance_m": 0.3734964814763427,
+  "error": null,
+  "odom_samples": 2485,
+  "last_position": [
+    104.7740740092972,
+    -0.01625538298658924,
+    1.7030272219139888
+  ],
+  "schema_version": 1,
+  "gate7": "closed_online_confirm",
+  "head": "2859980",
+  "note": "original method static_forest seed200; append_ok 512/591; goal_reached true after endpoint snap"
+}
