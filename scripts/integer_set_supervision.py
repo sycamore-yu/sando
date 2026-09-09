@@ -113,20 +113,34 @@ def recover_numeric_coefficients(instance: dict[str, Any], values: dict[str, flo
     return recovered
 
 
+_MINVO_POS_BASIS_INV = (
+    (-0.032032766697130483, -0.092730934245582403, 0.34205724556667022, 1.1023313949144338),
+    (-0.05111494245568797, -0.046272612998418769, 0.54582348721247753, 1.097980694600557),
+    (-0.074547818528122228, 0.20395194989455215, 0.79604805010544821, 1.0745478185281225),
+    (1.0, 1.0, 0.99999999999999944, 0.99999999999999889),
+)
+
+
 def segment_control_points(coefficients: Sequence[Sequence[float]], segment_dt: float) -> list[list[list[float]]]:
+    """Return the solver's four normalized MINVO position control points.
+
+    Coefficients are stored as ``a,b,c,d`` for ``a*t^3+...+d``.  SANDO first
+    converts to power coefficients in ``u=t/segment_dt`` and multiplies by
+    ``A_pos_mv_rest.inverse()``.  These points are the conservative hull used
+    by the online position constraints; time samples are insufficient.
+    """
     if segment_dt <= 0 or not math.isfinite(segment_dt):
         raise ValueError("segment_dt must be positive")
     points = []
-    times = (0.0, segment_dt / 3.0, 2.0 * segment_dt / 3.0, segment_dt)
     for segment in range(5):
-        segment_points = []
-        for tau in times:
-            point = []
-            for axis in range(3):
-                a, b, c, d = coefficients[axis][segment * 4:segment * 4 + 4]
-                point.append(((a * tau + b) * tau + c) * tau + d)
-            segment_points.append(point)
-        points.append(segment_points)
+        normalized = []
+        for axis in range(3):
+            a, b, c, d = coefficients[axis][segment * 4:segment * 4 + 4]
+            normalized.append((a * segment_dt**3, b * segment_dt**2,
+                               c * segment_dt, d))
+        points.append([[sum(normalized[axis][k] * _MINVO_POS_BASIS_INV[k][j]
+                             for k in range(4)) for axis in range(3)]
+                       for j in range(4)])
     return points
 
 
@@ -269,5 +283,7 @@ def geometric_good_set(instance: dict[str, Any], values: dict[str, float],
         "label_mask": mask,
         "good_assignments": good,
         "trajectory_id": trajectory_id,
+        "label_source": "geometric_support_only",
+        "solver_verified": False,
         "control_points": points,
     }

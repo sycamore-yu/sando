@@ -62,7 +62,8 @@ class _ModelStatesCollision:
             except (TypeError, ValueError):
                 size = ()
             self.obstacles[str(item["name"])] = size
-        self.expected_names = [f"obstacle_{index}" for index in range(int(expected_count))]
+        self.expected_names = (list(expected_count) if isinstance(expected_count, (list, tuple))
+                               else [f"obstacle_{index}" for index in range(int(expected_count))])
         self.seen_models = set()
         self.samples_checked = 0
         self.incomplete_samples = 0
@@ -70,6 +71,7 @@ class _ModelStatesCollision:
         self.max_sample_interval = None
         self.clearance_samples = []
         self.first_hit_ids = []
+        self.first_hit_names = []
         self.first_hit_time = None
         self.first_hit_receipt_time = None
         self.first_hit_position = None
@@ -90,6 +92,9 @@ class _ModelStatesCollision:
         return values
 
     def record(self, names, poses, receipt_time, sim_time=None):
+        if not self.expected_names:
+            self.incomplete_samples += 1
+            return
         try:
             receipt_time = float(receipt_time)
             names = list(names)
@@ -149,7 +154,8 @@ class _ModelStatesCollision:
             })
         if frame_hits and not self.first_hit_ids:
             self.collision = True
-            self.first_hit_ids = [int(name.split("_", 1)[1]) + 4000 for name in frame_hits]
+            self.first_hit_ids = [self.expected_names.index(name) + 4000 for name in frame_hits]
+            self.first_hit_names = list(frame_hits)
             self.first_hit_time = sim_time if sim_time is not None and math.isfinite(sim_time) else receipt_time
             self.first_hit_receipt_time = receipt_time
             self.first_hit_position = list(robot)
@@ -159,13 +165,13 @@ class _ModelStatesCollision:
         definition = {
             "name": "sampled_AABB_overlap",
             "robot_bbox_full_size_m": list(self.robot_bbox),
-            "obstacle_bbox_full_size_source": "/tmp/sando_obstacles.json size_x/size_y/size_z",
+            "obstacle_bbox_full_size_source": "recorded obstacle geometry size_x/size_y/size_z; forest cylinders use enclosing AABBs",
             "overlap_rule": "abs(robot_center - obstacle_center) <= (robot_bbox + obstacle_bbox) / 2 per axis",
             "sample_source": f"co-sampled {MODEL_STATES_TOPIC} model poses after goal",
             "continuous_collision_proof": False,
             "sample_interval_max_sec": self.max_sample_interval,
         }
-        available = self.samples_checked > 0 and not missing
+        available = self.samples_checked > 0 and not missing and bool(self.expected_names)
         return {
             "available": available,
             "collision": bool(self.collision) if available else None,
@@ -173,6 +179,7 @@ class _ModelStatesCollision:
             "incomplete_samples": self.incomplete_samples,
             "missing_models": missing,
             "first_hit_ids": self.first_hit_ids,
+            "first_hit_names": self.first_hit_names,
             "first_hit_time": self.first_hit_time if available else None,
             "first_hit_receipt_time": self.first_hit_receipt_time if available else None,
             "first_hit_position": self.first_hit_position if available else None,
@@ -350,9 +357,11 @@ def _capture_logs(output_dir):
     return str(log_path.name)
 
 
-def _copy_generated_files(output_dir):
+def _copy_generated_files(output_dir, family="unknown_dynamic"):
     """Copy run_sim's fixed temporary files before the tmux session is torn down."""
     copied = {}
+    if family != "unknown_dynamic":
+        return copied
     for source_name, output_name in (
         ("/tmp/sando_obstacles.json", "obstacles.json"),
         ("/tmp/sando_world.world", "generated_world.world"),
@@ -534,7 +543,10 @@ def _verified_goal(monitor, now):
 def _wait_until_ready(rclpy, node, monitor, goal_publisher, deadline):
     while time.monotonic() < deadline:
         _spin_once(rclpy, node)
-        if monitor.odom_samples and goal_publisher.get_subscription_count() > 0:
+        subscribers = goal_publisher.get_subscription_count()
+        if subscribers > 1:
+            return False, "ROS isolation failed: multiple planner goal subscribers"
+        if monitor.odom_samples and subscribers == 1:
             return True, None
     details = {
         "odom_samples": monitor.odom_samples,
@@ -554,7 +566,7 @@ def _obstacle_snapshot(family, seed, num_obstacles, dynamic_ratio):
     return []
 
 
-def _launch_yaml(setup_bash, spec, start_pos, seed, ros_domain_id):
+def _launch_yaml(setup_bash, spec, start_pos, seed, ros_domain_id, world_file=None):
     from run_sim import (
         generate_gazebo_dynamic_yaml,
         generate_gazebo_yaml,
@@ -602,6 +614,7 @@ def _launch_yaml(setup_bash, spec, start_pos, seed, ros_domain_id):
             send_goal=False,
             environment_assumption="static",
             depth_topic="d435/depth/color/points",
+            world_file=world_file,
         )
     return generate_rviz_only_yaml(
         setup_bash,
@@ -620,7 +633,27 @@ def _launch_yaml(setup_bash, spec, start_pos, seed, ros_domain_id):
     )
 
 
+def _simulation_health(result, log):
+    if result.get("runner_exception"):
+        return {"valid": False, "reason": result["runner_exception"]}
+    if not (result.get("readiness") or {}).get("ready"):
+        return {"valid": False, "reason": "ROS readiness failed"}
+    if (result.get("readiness") or {}).get("goal_subscribers") != 1:
+        return {"valid": False, "reason": "ROS planner isolation failed"}
+    fatal = ("Cannot execute AMPL interpreter", "SANDO_INSTRUMENTATION_ERROR",
+             "Cannot locate material called", "Assertion `px != 0' failed")
+    for marker in fatal:
+        if marker in log:
+            return {"valid": False, "reason": marker}
+    if not (result.get("ground_truth") or {}).get("available"):
+        return {"valid": False, "reason": "ground-truth simulation poses unavailable"}
+    return {"valid": True, "reason": None}
+
+
 def _run(args):
+    # Each benchmark owns a local simulation. Docker bridge multicast otherwise
+    # lets concurrent containers exchange goals, odometry and trajectories.
+    os.environ["ROS_LOCALHOST_ONLY"] = "1"
     import rclpy
     from geometry_msgs.msg import PoseStamped
 
@@ -638,6 +671,9 @@ def _run(args):
     if args.policy is not None:
         policy_path = args.policy.resolve()
         policy_identity = {"path": str(policy_path), **_file_identity(policy_path)}
+    timing_path = getattr(args, "timing_policy", None)
+    timing_identity = ({"path": str(timing_path.resolve()), **_file_identity(timing_path)}
+                       if timing_path is not None else None)
     policy_hash = (policy_identity or {}).get("sha256")
     model_version = args.method if args.method in ("original", "previous") \
         else f"{args.method}:{policy_hash}"
@@ -655,6 +691,8 @@ def _run(args):
             "method": args.method,
             "policy": str(args.policy.resolve()) if args.policy is not None else None,
             "model_version": model_version,
+            "timing_policy_identity": timing_identity,
+            "timing_nfe": getattr(args, "timing_nfe", None),
             "metrics": str(args.metrics.resolve()) if args.metrics is not None else None,
             "start": list(START),
             "scene_family": getattr(args, "scene_family", "unknown_dynamic"),
@@ -664,6 +702,7 @@ def _run(args):
             "backend": "AMPL->AMPLS->Gurobi",
             "publish_trajs": False,
             "ros_domain_id": ros_domain_id,
+            "ros_localhost_only": True,
             "observation_timeout_sec": OBSERVATION_TIMEOUT,
         },
         "success": False,
@@ -714,7 +753,15 @@ def _run(args):
         start_record = resolve_start(scene, family, obstacles, randomization)
         start_pos = tuple(start_record["accepted"])
         assumption = spec["environment_assumption"]
-        launch_yaml = _launch_yaml(setup_bash, spec, start_pos, args.seed, ros_domain_id)
+        forest_world = None
+        if family == "static_forest":
+            from ament_index_python.packages import get_package_share_directory
+            world = Path(get_package_share_directory("sando")) / "worlds" / f"{spec['env']}.world"
+            if not world.is_file():
+                raise RuntimeError(f"forest world missing: {world}")
+            forest_world = output_dir / "static_world.world"
+            shutil.copy2(world, forest_world)
+        launch_yaml = _launch_yaml(setup_bash, spec, start_pos, args.seed, ros_domain_id, forest_world)
         result["case"] = family
         result["parameters"]["start"] = list(start_pos)
         result["parameters"]["start_yaw"] = 0.0
@@ -725,7 +772,7 @@ def _run(args):
         result["parameters"]["information_boundary"] = spec["information_boundary"]
         result["start"] = start_record
         (output_dir / "launch.yaml").write_text(launch_yaml, encoding="utf-8")
-        copied = _copy_generated_files(output_dir)
+        copied = _copy_generated_files(output_dir, family)
         result["artifacts"] = copied
         result["artifacts"]["launch_yaml"] = "launch.yaml"
 
@@ -740,6 +787,11 @@ def _run(args):
             "policy_identity": policy_identity,
             "model_version": model_version,
         })
+        if family == "static_forest":
+            config["world_file"] = str(forest_world.resolve())
+            config["world_identity"] = _file_identity(forest_world)
+        elif family == "known_dynamic":
+            _write_json(output_dir / "obstacles.json", obstacles)
         _write_json(output_dir / "config.json", config)
         identity = _source_identity(repo, setup_bash)
         _write_json(output_dir / "source_identity.json", identity)
@@ -791,8 +843,13 @@ def _run(args):
             parameter_overrides=[Parameter("use_sim_time", value=True)],
         )
         if family == "static_forest":
-            obstacle_json = []
-            expected_count = 0
+            from integer_forest_geometry import world_collision_geometry
+            obstacle_json = world_collision_geometry(output_dir / "static_world.world")
+            expected_count = [item["name"] for item in obstacle_json]
+            _write_json(output_dir / "forest_collision_geometry.json", obstacle_json)
+        elif family == "known_dynamic":
+            obstacle_json = obstacles
+            expected_count = args.num_obstacles
         else:
             json_path = Path("/tmp/sando_obstacles.json")
             obstacle_json = json.loads(json_path.read_text(encoding="utf-8")) if json_path.is_file() else obstacles
@@ -803,7 +860,8 @@ def _run(args):
         launch_env["SETUP_BASH"] = str(setup_bash)
         launch_env["ROS_DOMAIN_ID"] = str(ros_domain_id)
         launch_env = _evaluation_environment(
-            launch_env, args.method, args.policy, args.metrics
+            launch_env, args.method, args.policy, args.metrics,
+            timing_path, getattr(args, "timing_nfe", None)
         )
         launch_env.pop("SANDO_CAPTURE_CONFIG", None)
         if capture_config_path is not None:
@@ -858,6 +916,8 @@ def _run(args):
         observation_deadline = observation_started + OBSERVATION_TIMEOUT
         while time.monotonic() < observation_deadline and not monitor.goal_reached:
             _spin_once(rclpy, node)
+            if goal_publisher.get_subscription_count() > 1:
+                raise RuntimeError("ROS isolation failed during observation: multiple planners")
         if monitor.goal_reached:
             # Allow one post-event odometry callback so the terminal metric is
             # based on a fresh state rather than a queued pre-event sample.
@@ -893,6 +953,7 @@ def _run(args):
             # existence check means a session found here belongs to this run.
             session_started = True
         result["error"] = f"{type(error).__name__}: {error}"
+        result["runner_exception"] = result["error"]
     finally:
         if result["goal_sent_wall_unix"] is not None and result["observation_end_wall_unix"] is None:
             result["observation_end_wall_unix"] = time.time()
@@ -947,10 +1008,13 @@ def _run(args):
                 output_dir / "tmux.log").read_text(encoding="utf-8", errors="replace")
             # The generated files were copied before launch and remain
             # available even when teardown is caused by a timeout.
-            _copy_generated_files(output_dir)
+            _copy_generated_files(output_dir, getattr(args, "scene_family", "unknown_dynamic"))
             _kill_own_session()
         else:
             result["logs"] = None
+        log_text = ((output_dir / "tmux.log").read_text(encoding="utf-8", errors="replace")
+                    if result["logs"] else "")
+        result["simulation_health"] = _simulation_health(result, log_text)
         if goal_publisher is not None:
             node.destroy_publisher(goal_publisher)
         if node is not None:
@@ -971,10 +1035,11 @@ def _scene_split(seed):
     raise ValueError("scene seed is outside the locked train/validation/test split")
 
 
-def _evaluation_environment(base, method, policy=None, metrics=None):
+def _evaluation_environment(base, method, policy=None, metrics=None, timing_policy=None, timing_nfe=None):
     """Build the child launch environment without inheriting policy controls."""
     environment = dict(base)
-    for name in ("SANDO_CORRIDOR_METHOD", "SANDO_CORRIDOR_POLICY", "SANDO_REPLAN_METRICS"):
+    for name in ("SANDO_CORRIDOR_METHOD", "SANDO_CORRIDOR_POLICY", "SANDO_REPLAN_METRICS",
+                 "SANDO_TIMING_POLICY", "SANDO_TIMING_NFE"):
         environment.pop(name, None)
     if method == "original":
         selected = "original"
@@ -988,6 +1053,10 @@ def _evaluation_environment(base, method, policy=None, metrics=None):
     environment["SANDO_CORRIDOR_METHOD"] = selected
     if metrics is not None:
         environment["SANDO_REPLAN_METRICS"] = str(Path(metrics).resolve())
+    if timing_policy is not None:
+        environment["SANDO_TIMING_POLICY"] = str(Path(timing_policy).resolve())
+        if timing_nfe is not None:
+            environment["SANDO_TIMING_NFE"] = str(timing_nfe)
     return environment
 
 
@@ -1003,8 +1072,10 @@ def main():
     parser.add_argument("--capture-capacity", type=int, default=None)
     parser.add_argument("--sampling-protocol", choices=("uniform_reservoir_v1", "uniform_plus_diverse_v1"),
                         default="uniform_reservoir_v1")
-    parser.add_argument("--method", choices=("original", "previous", "bc", "cost", "closed_loop"), default="original")
+    parser.add_argument("--method", choices=("original", "previous", "bc", "cost", "set", "objective", "closed_loop"), default="original")
     parser.add_argument("--policy", type=Path)
+    parser.add_argument("--timing-policy", type=Path)
+    parser.add_argument("--timing-nfe", type=int, choices=(1, 4, 8))
     parser.add_argument("--metrics", type=Path)
     parser.add_argument("--scene-family", dest="scene_family",
                         choices=("unknown_dynamic", "static_forest", "known_dynamic"),
@@ -1018,9 +1089,13 @@ def main():
         parser.error("--num-obstacles must be positive")
     if not args.setup_bash.exists():
         parser.error(f"setup bash not found: {args.setup_bash}")
-    if args.method in ("bc", "cost", "closed_loop"):
+    if args.method in ("bc", "cost", "set", "objective", "closed_loop"):
         if args.policy is None or not args.policy.is_file():
             parser.error("--policy must name a file for learned corridor methods")
+    if args.timing_policy is not None and not args.timing_policy.is_file():
+        parser.error("--timing-policy must name a file")
+    if args.timing_nfe is not None and args.timing_policy is None:
+        parser.error("--timing-nfe requires --timing-policy")
     try:
         return _run(args)
     except Exception as error:

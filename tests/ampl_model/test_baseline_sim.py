@@ -123,3 +123,37 @@ assert launch_spec("static_forest", 50)["env"] == "easy_forest"
 assert launch_spec("known_dynamic", 200)["information_boundary"] == "privileged_ground_truth_trajs"
 assert sim.randomization_for_split("train_box_v1", "test") == "none"
 print("PASS: aligned launch signatures and information boundaries")
+
+# Static flights must activate the goal timer even without a benchmark CSV file.
+import shlex
+import sys
+sys.path.insert(0, str(path.parent))
+import yaml
+launch = yaml.safe_load(sim._launch_yaml(Path('/tmp/setup.bash'),
+    {'family': 'static_forest', 'env': 'easy_forest'}, (0., 0., 2.), 0, 61,
+    '/tmp/recorded forest.world'))
+commands = [command for window in launch['windows'] for pane in window['panes']
+            for command in pane['shell_command']]
+base_command = next(command for command in commands if 'base_sando.launch.py' in command)
+onboard_command = next(command for command in commands if 'onboard_sando.launch.py' in command)
+assert 'world_file:=/tmp/recorded forest.world' in shlex.split(base_command)
+assert 'use_benchmark:=true' in shlex.split(onboard_command)
+assert 'global_planner:=astar_heat' in shlex.split(onboard_command)
+
+inherited_timing = {**base, 'SANDO_TIMING_POLICY': 'old', 'SANDO_TIMING_NFE': '8'}
+assert 'SANDO_TIMING_POLICY' not in sim._evaluation_environment(inherited_timing, 'original')
+environment = sim._evaluation_environment(inherited_timing, 'cost', '/tmp/policy.json',
+                                         timing_policy='/tmp/timing.json', timing_nfe=4)
+assert environment['SANDO_TIMING_POLICY'] == '/tmp/timing.json'
+assert environment['SANDO_TIMING_NFE'] == '4'
+
+forest_touching = sim._model_states_collision(
+    [{"receipt_time": 0.0, "names": ["NX01", "tree17"],
+      "poses": [[0., 0., 0.], [0., 0., 0.]]}],
+    [{"name": "tree17", "size": 1.}], ["tree17"])
+assert forest_touching["collision"] and forest_touching["first_hit_names"] == ["tree17"]
+assert forest_touching["first_hit_ids"] == [4000]
+assert not sim._simulation_health({"runner_exception": "IndexError: bad sample"}, "")["valid"]
+assert sim._simulation_health({"readiness": {"ready": True, "goal_subscribers": 1}, "ground_truth": {"available": True}, "success": False}, "")["valid"]
+
+assert not sim._simulation_health({"readiness": {"ready": True, "goal_subscribers": 2}, "ground_truth": {"available": True}}, "")["valid"]

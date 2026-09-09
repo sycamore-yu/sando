@@ -47,6 +47,9 @@ PlanningInstance instance(int choices) {
     }
   }
   for (auto& axis : value.coefficients) axis.resize(20);
+  value.coefficients[0][0].constant = 1.25;
+  value.coefficients[1][7].constant = -2.5;
+  value.coefficients[2][19].constant = 3.75;
   return value;
 }
 
@@ -62,6 +65,13 @@ int main() {
   auto candidate = evaluateCandidate(two, {0, 0, 0, 0, 0}, feasible);
   assert(candidate.classification == "feasible");
   assert(candidate.raw_objective == 25.);
+  assert(candidate.trajectory_coefficients.has_value());
+  assert(candidate.trajectory_coefficients->size() == 3);
+  assert(candidate.trajectory_coefficients->at(0).size() == 20);
+  assert(candidate.trajectory_coefficients->at(0).at(0) == 1.25);
+  assert(candidate.trajectory_coefficients->at(1).at(7) == -2.5);
+  assert(candidate.trajectory_coefficients->at(2).at(19) == 3.75);
+  assert(candidate.segment_dt == two.segment_dt);
   assert(candidate.attempts.size() == 1);
   assert(feasible.limits.size() == 1 && feasible.limits.front() == two.runtime.time_limit);
 
@@ -75,6 +85,7 @@ int main() {
   proven.queue = {status(GRB_INFEASIBLE)};
   candidate = evaluateCandidate(two, {1, 1, 1, 1, 1}, proven);
   assert(candidate.classification == "infeasible" && candidate.attempts.size() == 1);
+  assert(!candidate.trajectory_coefficients.has_value() && !candidate.segment_dt.has_value());
 
   QueueRuntime all_infeasible;
   all_infeasible.queue = {status(GRB_INFEASIBLE)};
@@ -89,6 +100,8 @@ int main() {
   const auto unknown_result = evaluateInstanceJson(instance(1), unknown);
   assert(unknown_result.at("failurestats").at("all_infeasible") == false);
   assert(unknown_result.at("excluded_reason") == "unknown_or_infeasible_results");
+  assert(unknown_result.at("candidates").at(0).at("trajectory_coefficients").is_null());
+  assert(unknown_result.at("candidates").at(0).at("segment_dt").is_null());
 
   QueueRuntime negatives;
   negatives.queue.assign(32, status(GRB_OPTIMAL));

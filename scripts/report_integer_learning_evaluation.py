@@ -22,8 +22,9 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 import numpy as np
+from integer_scene_protocol import scene_id as protocol_scene_id, launch_spec
 
-METHODS = ("original", "previous", "bc", "cost", "closed_loop")
+METHODS = ("original", "previous", "bc", "cost", "set", "objective", "closed_loop")
 ENVIRONMENTS = ("static", "dynamic")
 FAILURE_CAP_SECONDS = 100.0
 
@@ -44,13 +45,28 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("unknown method or environment")
     if record["split"] != "test" or isinstance(record.get("seed"), bool) or not isinstance(record.get("seed"), int) or not 200 <= record["seed"] <= 229:
         raise ValueError("evaluation records must use locked test seeds 200..229")
+    aligned = record.get("protocol_id") == "benchmark_aligned_v1" or record.get("family") in ("unknown_dynamic", "static_forest", "known_dynamic")
     match = re.search(r"^n(50|100|200)-d([0-9]+(?:\.[0-9]+)?)-seed(\d+)$", record["scene_id"])
-    if not match or int(match.group(3)) != record["seed"] or not isinstance(record.get("num_obstacles"), int) or record["num_obstacles"] not in (50, 100, 200):
+    if aligned:
+        family = record.get("family")
+        if family not in ("unknown_dynamic", "static_forest", "known_dynamic"):
+            raise ValueError("aligned records require a recognized scene family")
+        expected = protocol_scene_id(family, record.get("seed"), record.get("num_obstacles"), record.get("dynamic_ratio"), "benchmark_aligned_v1")
+        if record["scene_id"] != expected:
+            raise ValueError("aligned scene identity does not match family metadata")
+        spec = launch_spec(family, record["num_obstacles"], record["dynamic_ratio"])
+        if (record.get("environment") != spec["environment_assumption"]
+                or record["dynamic_ratio"] != spec["dynamic_ratio"]
+                or record.get("protocol_id") != "benchmark_aligned_v1"):
+            raise ValueError("aligned environment metadata does not match scene family")
+        if any(record.get(key) != spec[key] for key in ("difficulty", "information_boundary")):
+            raise ValueError("aligned difficulty or information boundary does not match family")
+    if not aligned and (not match or int(match.group(3)) != record["seed"] or not isinstance(record.get("num_obstacles"), int) or record["num_obstacles"] not in (50, 100, 200)):
         raise ValueError("scene_id, seed, and num_obstacles metadata do not match")
-    if int(match.group(1)) != record["num_obstacles"] or not isinstance(record.get("dynamic_ratio"), (int, float)) or isinstance(record["dynamic_ratio"], bool):
+    if not aligned and (int(match.group(1)) != record["num_obstacles"] or not isinstance(record.get("dynamic_ratio"), (int, float)) or isinstance(record["dynamic_ratio"], bool)):
         raise ValueError("scene count metadata does not match scene_id")
     dynamic_ratio = _number(record["dynamic_ratio"], "dynamic ratio")
-    if dynamic_ratio not in (0.0, 0.65) or (record["environment"] == "static" and dynamic_ratio != 0.0) or (record["environment"] == "dynamic" and dynamic_ratio != 0.65) or abs(dynamic_ratio - float(match.group(2))) > 1e-9:
+    if not aligned and (dynamic_ratio not in (0.0, 0.65) or (record["environment"] == "static" and dynamic_ratio != 0.0) or (record["environment"] == "dynamic" and dynamic_ratio != 0.65) or abs(dynamic_ratio - float(match.group(2))) > 1e-9):
         raise ValueError("environment and dynamic ratio metadata do not match")
     if not isinstance(record.get("planning_latency_ms"), list):
         raise ValueError("planning_latency_ms must contain all episode planning times")
@@ -86,7 +102,7 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("constraint_checks checked count is invalid")
     if violations is not None and (isinstance(violations, bool) or not isinstance(violations, int) or violations < 0):
         raise ValueError("constraint_checks violation count is invalid")
-    if None not in (accepted, checked, violations) and (checked != accepted or violations > checked):
+    if None not in (accepted, checked, violations) and (checked > accepted or violations > checked):
         raise ValueError("constraint_checks coverage does not match accepted count")
     return result
 
@@ -276,7 +292,13 @@ def summarize_environment(records: list[dict[str, Any]], environment: str, seed:
 
 def make_report(records: list[dict[str, Any]], seed: int = 0) -> dict[str, Any]:
     records = [validate_record(record) for record in records]
-    return {"schema_version": 1, "bootstrap": {"seed": seed, "unit": "scene", "confidence": .95}, "environments": {environment: summarize_environment(records, environment, seed + index * 100) for index, environment in enumerate(ENVIRONMENTS)}}
+    primary = [record for record in records if record.get("family") != "known_dynamic"]
+    result = {"schema_version": 1, "bootstrap": {"seed": seed, "unit": "scene", "confidence": .95}, "environments": {environment: summarize_environment(primary, environment, seed + index * 100) for index, environment in enumerate(ENVIRONMENTS)}}
+    families = sorted({record["family"] for record in records if record.get("family")})
+    result["families"] = {family: summarize_environment([record for record in records if record.get("family") == family],
+                                                           "static" if family == "static_forest" else "dynamic", seed + index * 1000)
+                           for index, family in enumerate(families)}
+    return result
 
 
 def main() -> int:

@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[2] / "scripts"))
 from report_integer_learning_evaluation import make_report, paired_bootstrap, summarize_environment
+from integer_scene_protocol import launch_spec, scene_id as protocol_scene_id
 
 
 def record(scene, method, environment="static", success=True, latency=(10., 20.), duration=10., seed=200, num_obstacles=50):
@@ -67,6 +68,21 @@ def main():
 
     samples = paired_bootstrap([1., 3.], [0., 0.], seed=3, samples=100)
     assert samples["n"] == 2  # the two scenes are the only bootstrap units, not latency frames.
+    aligned = []
+    for family in ("static_forest", "unknown_dynamic", "known_dynamic"):
+        ratio = 0.0 if family == "static_forest" else 0.65
+        spec = launch_spec(family, 50, ratio)
+        aligned.append({"scene_id": protocol_scene_id(family, 200, 50, ratio, "benchmark_aligned_v1"),
+                        "method": "original", "environment": spec["environment_assumption"],
+                        "split": "test", "seed": 200, "num_obstacles": 50,
+                        "dynamic_ratio": spec["dynamic_ratio"], "family": family,
+                        "protocol_id": "benchmark_aligned_v1", "difficulty": spec["difficulty"],
+                        "information_boundary": spec["information_boundary"],
+                        "planning_latency_ms": [1.], "success": True, "task_duration_s": 1.})
+    aligned_report = make_report(aligned)
+    assert "known_dynamic" not in aligned_report["environments"]["dynamic"]["n_scenes_by_method"]
+    assert aligned_report["families"]["known_dynamic"]["n_scenes_by_method"]["original"] == 1
+    assert aligned_report["families"]["static_forest"]["n_scenes_by_method"]["original"] == 1
     print("integer evaluation report tests passed")
 
 

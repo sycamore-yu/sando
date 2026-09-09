@@ -106,6 +106,46 @@ def test_expert_union_not_segment_mix():
     assert counter["mixed_in_segment_product"] is True
 
 
+def test_objective_only_gradient_and_mixed_eligibility():
+    try:
+        import torch
+        from train_integer_corridor_policy import eligible_expected_cost, objective_only_loss
+    except ImportError:
+        print("skip objective-only torch test")
+        return
+    scores = torch.tensor([0.2, -0.4, 1.1], dtype=torch.float64, requires_grad=True)
+    costs = torch.tensor([0.0, 1.0, 2.0], dtype=torch.float64)
+    loss = objective_only_loss(scores, costs)
+    loss.backward()
+    probabilities = torch.softmax(scores.detach(), dim=0)
+    expected = probabilities * (costs - probabilities.dot(costs))
+    assert torch.allclose(scores.grad, expected, atol=1e-12)
+    complete = {"costs_complete": True, "candidates": [
+        {"classification": "feasible", "cost": 0.0},
+        {"classification": "feasible", "cost": 1.0},
+        {"classification": "feasible", "cost": 2.0}]}
+    expert = {"costs_complete": False, "candidates": [
+        {"classification": "not_solved", "cost": None}] * 3}
+    eligible = eligible_expected_cost([scores.detach(), scores.detach()], [complete, expert])
+    assert eligible is not None and abs(float(eligible) - float(loss.detach())) < 1e-12
+
+
+def test_objective_only_is_permutation_invariant_and_has_cost_gradient():
+    try:
+        import torch
+        from train_integer_corridor_policy import objective_only_loss
+    except ImportError:
+        print("skip objective-only behavioral test")
+        return
+    scores = torch.tensor([0.2, -0.4, 1.1], dtype=torch.float64, requires_grad=True)
+    costs = torch.tensor([0.0, 1.0, 2.0], dtype=torch.float64)
+    permutation = torch.tensor([2, 0, 1])
+    loss = objective_only_loss(scores, costs)
+    assert torch.allclose(loss, objective_only_loss(scores[permutation], costs[permutation]), atol=1e-12)
+    loss.backward()
+    assert torch.linalg.vector_norm(scores.grad) > 0
+
+
 def main():
     test_single_good_matches_cross_entropy()
     test_all_good_zero_loss()
@@ -115,6 +155,8 @@ def main():
     test_near_zero_and_extreme_objectives()
     test_torch_all_good_zero_grad()
     test_expert_union_not_segment_mix()
+    test_objective_only_gradient_and_mixed_eligibility()
+    test_objective_only_is_permutation_invariant_and_has_cost_gradient()
     print("integer set loss tests passed")
 
 

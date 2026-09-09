@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import math
+import platform
 import random
 import re
 from pathlib import Path
@@ -19,6 +20,7 @@ import torch.nn.functional as F
 from integer_corridor_policy import FEATURE_SPEC, CorridorPolicy, valid_assignments
 from integer_corridor_training_batch import batched_scores, prepare_records
 from integer_set_supervision import (
+    CONFIG,
     PURPOSE_COMPLETE,
     PURPOSE_EXPERT,
     SET_COST_WEIGHT,
@@ -72,6 +74,35 @@ def _assignment(value: Any) -> tuple[int, ...]:
     if not isinstance(value, list) or len(value) != 5 or any(not isinstance(x, int) or isinstance(x, bool) for x in value):
         raise ValueError("candidate assignment must contain five integers")
     return tuple(value)
+
+
+def _validated_solver_evidence(evidence: dict[str, Any], instance: dict[str, Any]) -> bool:
+    status = evidence.get("solver_status", evidence.get("status"))
+    if status not in (2, "optimal", "OPTIMAL", "Optimal"):
+        return False
+    residuals = evidence.get("residuals")
+    if not isinstance(residuals, dict) or residuals.get("valid") is not True:
+        return False
+    for name in ("bounds", "constraints", "integrality", "objective"):
+        value = residuals.get(name)
+        if (not isinstance(value, (int, float)) or isinstance(value, bool)
+                or not math.isfinite(float(value)) or not 0.0 <= float(value) <= 2e-6):
+            return False
+    raw_objective = evidence.get("raw_objective")
+    objective = evidence.get("objective", raw_objective)
+    if not isinstance(raw_objective, (int, float)) or not math.isfinite(float(raw_objective)):
+        return False
+    if not isinstance(objective, (int, float)) or not math.isfinite(float(objective)):
+        return False
+    if abs(float(raw_objective) - float(objective)) > 2e-6 * max(1.0, abs(float(objective))):
+        return False
+    provenance = evidence.get("objective_provenance")
+    identity = ("source_id", "config_id", "scene_id", "episode_id", "request_id", "factor_id")
+    if not isinstance(provenance, dict) or any(
+            not isinstance(provenance.get(key), str) or provenance[key] != instance.get(key)
+            for key in identity):
+        return False
+    return True
 
 
 def _validated_record(record: dict[str, Any]) -> dict[str, Any] | None:
@@ -135,6 +166,24 @@ def _validated_expert_record(record: dict[str, Any]) -> dict[str, Any] | None:
     demo_assignment = assignment_tuple(demonstration.get("assignment"))
     if demo_assignment not in good:
         raise ValueError("demonstration assignment is not in the good set")
+    # Geometry can suggest support, but only an accepted solver result may be
+    # used as an expert label.  Keep incomplete/ambiguous records out of the
+    # training set instead of silently turning them into costs.
+    if not _validated_solver_evidence(demonstration, instance):
+        return None
+    evidence = record.get("good_assignment_evidence")
+    if not isinstance(evidence, list):
+        return None
+    proven = {}
+    for item in evidence:
+        if not isinstance(item, dict):
+            return None
+        assignment = _assignment(item.get("assignment"))
+        if assignment not in good or assignment in proven or not _validated_solver_evidence(item, instance):
+            return None
+        proven[assignment] = item
+    if set(proven) != set(good):
+        return None
     return {
         "instance": instance,
         "assignments": expected,
@@ -200,6 +249,18 @@ def _costs(record: dict[str, Any]) -> torch.Tensor:
     return torch.tensor([2.0 if item.get("classification") == "infeasible" else float(item["cost"]) for item in record["candidates"]], dtype=torch.float64)
 
 
+def objective_only_loss(scores: torch.Tensor, costs: torch.Tensor) -> torch.Tensor:
+    """Expected fixed solver cost; its gradient is p_i(c_i - E_p[c])."""
+    return torch.softmax(scores, dim=0).dot(costs)
+
+
+def eligible_expected_cost(logits: Sequence[torch.Tensor], records: Sequence[dict[str, Any]]) -> torch.Tensor | None:
+    eligible = [(scores, record) for scores, record in zip(logits, records) if record.get("costs_complete")]
+    if not eligible:
+        return None
+    return torch.stack([objective_only_loss(scores, _costs(record).to(scores.device)) for scores, record in eligible]).mean()
+
+
 def _scores(policy: CorridorPolicy, record: dict[str, Any]) -> torch.Tensor:
     assignments, scores = policy.score_all(record["instance"])
     if assignments != record["assignments"]:
@@ -248,46 +309,73 @@ def validation_metric_batched(policy: CorridorPolicy, records: list[dict[str, An
 
 
 def _set_loss(scores: torch.Tensor, record: dict[str, Any]) -> torch.Tensor:
-    mask = torch.tensor(record["good_mask"], dtype=torch.bool)
+    mask = torch.tensor(record["good_mask"], dtype=torch.bool, device=scores.device)
     return set_supervision_loss_torch(scores, mask)
 
 
-def train(train_records: list[dict[str, Any]], validation_records: list[dict[str, Any]], method: str, seed: int, epochs: int = 100, batch_size: int = 32, callback: Callable[[CorridorPolicy, dict[str, torch.Tensor], dict[str, Any]], None] | None = None) -> tuple[CorridorPolicy, dict[str, Any], list[dict[str, Any]]]:
-    if method not in ("bc", "cost", "set"):
-        raise ValueError("method must be bc, cost, or set")
+def train(train_records: list[dict[str, Any]], validation_records: list[dict[str, Any]], method: str, seed: int, epochs: int = 100, batch_size: int = 32, callback: Callable[[CorridorPolicy, dict[str, torch.Tensor], dict[str, Any]], None] | None = None, device: str = "cpu", new_records: list[dict[str, Any]] | None = None) -> tuple[CorridorPolicy, dict[str, Any], list[dict[str, Any]]]:
+    if method == "objective_only":
+        method = "objective"
+    if method not in ("bc", "cost", "set", "objective"):
+        raise ValueError("method must be bc, cost, set, or objective")
     if seed not in (0, 1, 2):
         raise ValueError("seed must be 0, 1, or 2")
     if not train_records or not validation_records:
         raise ValueError("training and validation require at least one usable record")
-    if method == "cost" and any(not record.get("costs_complete") for record in train_records + validation_records):
+    if method == "cost" and any(not record.get("costs_complete") for record in train_records + (new_records or []) + validation_records):
         raise ValueError("cost training requires complete cost tables")
+    if method == "objective" and any(not record.get("costs_complete") for record in train_records + (new_records or []) + validation_records):
+        raise ValueError("objective training requires complete cost tables")
+    if new_records is not None and (not new_records or batch_size % 2):
+        raise ValueError("50/50 sampling requires nonempty new data and an even batch size")
     random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
-    policy = CorridorPolicy()
+    policy = CorridorPolicy().to(device)
     optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
-    prepared_train = prepare_records(train_records)
-    prepared_validation = prepare_records(validation_records)
+    prepared_train = prepare_records(train_records, device=device)
+    prepared_new = prepare_records(new_records, device=device) if new_records else []
+    prepared_validation = prepare_records(validation_records, device=device)
     best_metric, best_epoch, best_state = float("inf"), 0, None
     progress = []
     for epoch in range(1, epochs + 1):
         policy.train()
         order = list(range(len(train_records))); random.Random(seed + epoch).shuffle(order)
+        new_order = list(range(len(new_records or []))); random.Random(seed + 10000 + epoch).shuffle(new_order)
         losses = []
-        for offset in range(0, len(order), batch_size):
+        batch_count = 2 * max(len(order), len(new_order)) if new_order else len(order)
+        for offset in range(0, batch_count, batch_size):
             optimizer.zero_grad()
-            batch_indices = order[offset:offset + batch_size]
-            batch = [train_records[index] for index in batch_indices]
-            logits = batched_scores(policy, [prepared_train[index] for index in batch_indices])
-            ce_loss = torch.stack([F.cross_entropy(scores.reshape(1, -1), torch.tensor([record["best"]])) for scores, record in zip(logits, batch)]).mean()
-            set_loss = torch.stack([_set_loss(scores, record) for scores, record in zip(logits, batch)]).mean()
-            loss = ce_loss
+            if new_order:
+                half = batch_size // 2
+                batch_indices = [order[(offset // 2 + index) % len(order)] for index in range(half)]
+                new_indices = [new_order[(offset // 2 + index) % len(new_order)] for index in range(batch_size-half)]
+                batch = [train_records[index] for index in batch_indices] + [new_records[index] for index in new_indices]
+                prepared_batch = [prepared_train[index] for index in batch_indices] + [prepared_new[index] for index in new_indices]
+            else:
+                batch_indices = order[offset:offset + batch_size]
+                batch = [train_records[index] for index in batch_indices]
+                prepared_batch = [prepared_train[index] for index in batch_indices]
+            logits = batched_scores(policy, prepared_batch)
+            ce_loss = None
+            if method in ("bc", "cost"):
+                ce_loss = torch.stack([F.cross_entropy(scores.reshape(1, -1), torch.tensor([record["best"]], device=scores.device)) for scores, record in zip(logits, batch)]).mean()
+                loss = ce_loss
             if method == "set":
+                set_loss = torch.stack([_set_loss(scores, record) for scores, record in zip(logits, batch)]).mean()
                 loss = set_loss
             if method == "cost" and epoch > WARMUP_EPOCHS:
-                expected_cost = torch.stack([torch.softmax(scores, dim=0).dot(_costs(record)) for scores, record in zip(logits, batch)]).mean()
+                expected_cost = torch.stack([torch.softmax(scores, dim=0).dot(_costs(record).to(scores.device)) for scores, record in zip(logits, batch)]).mean()
                 loss = expected_cost + SET_COST_WEIGHT * ce_loss
-            if method == "set" and epoch > WARMUP_EPOCHS and all(record.get("costs_complete") for record in batch):
-                expected_cost = torch.stack([torch.softmax(scores, dim=0).dot(_costs(record)) for scores, record in zip(logits, batch)]).mean()
-                loss = expected_cost + SET_COST_WEIGHT * set_loss
+            if method == "set" and epoch > WARMUP_EPOCHS:
+                expected_cost = eligible_expected_cost(logits, batch)
+                if expected_cost is not None:
+                    loss = expected_cost + SET_COST_WEIGHT * set_loss
+            if method == "objective":
+                expected_cost = eligible_expected_cost(logits, batch)
+                if expected_cost is None:
+                    raise RuntimeError("objective training requires complete cost tables")
+                # Objective-only baseline: with fixed solver costs this has
+                # gradient p_i (c_i - E_p[c]), directly ranking assignments.
+                loss = expected_cost
             loss.backward(); optimizer.step(); losses.append(float(loss.detach()))
         policy.eval()
         metric = validation_metric_batched(policy, validation_records, prepared_validation)
@@ -303,7 +391,16 @@ def train(train_records: list[dict[str, Any]], validation_records: list[dict[str
         raise RuntimeError("training did not produce a checkpoint")
     policy.load_state_dict(best_state)
     metadata = {"best_epoch": best_epoch, "method": method, "seed": seed, "epochs": epochs, "batch_size": batch_size, "learning_rate": 1e-3,
-                "batch_backend": "ragged_plane_and_candidate_v1"}
+                "batch_backend": "ragged_plane_and_candidate_v2",
+                "loss_definition": {
+                    "bc": "cross_entropy_best_assignment",
+                    "set": "set_cross_entropy_then_expected_cost_plus_weighted_set_loss",
+                    "cost": "cross_entropy_warmup_then_expected_cost_plus_weighted_cross_entropy",
+                    "objective": "expected_fixed_solver_cost_without_cross_entropy_set_loss_or_warmup",
+                }[method],
+                "warmup_epochs": WARMUP_EPOCHS if method in ("cost", "set") else 0,
+                "set_cost_weight": SET_COST_WEIGHT if method in ("cost", "set") else 0.0,
+                "new_data_sampling": {"enabled": bool(new_records), "ratio": "50/50", "batch_size": batch_size} }
     return policy, metadata, progress
 
 
@@ -329,29 +426,47 @@ def main() -> int:
     parser.add_argument("--train", nargs="+", required=True)
     parser.add_argument("--validation", nargs="+", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--method", choices=("bc", "cost", "set"), default="bc")
+    parser.add_argument("--method", choices=("bc", "cost", "set", "objective", "objective_only"), default="bc")
     parser.add_argument("--seed", type=int, choices=(0, 1, 2), default=0)
     parser.add_argument("--threads", type=int, default=4)
+    parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    parser.add_argument("--new-data", nargs="+", default=None)
     args = parser.parse_args()
+    if args.method == "objective_only":
+        args.method = "objective"
     if args.threads <= 0:
         parser.error("--threads must be positive")
+    if args.device == "cuda" and not torch.cuda.is_available():
+        parser.error("--device cuda requires CUDA")
     torch.set_num_threads(args.threads)
     torch.set_num_interop_threads(1)
     torch.use_deterministic_algorithms(True)
     output = Path(args.output)
     output.mkdir(parents=False, exist_ok=False)
-    train_statistics, validation_statistics = {}, {}
+    input_hashes = {str(Path(path).resolve()): _file_hash(path) for path in args.train + args.validation + (args.new_data or [])}
+    train_statistics, validation_statistics, new_statistics = {}, {}, {}
     train_records = load_labelled(args.train, statistics=train_statistics)
+    new_records = load_labelled(args.new_data, statistics=new_statistics) if args.new_data else None
     validation_records = load_labelled(args.validation, validation=True, statistics=validation_statistics)
-    check_split_disjoint(train_records, validation_records)
-    base_metadata = {"method": args.method, "seed": args.seed, "epochs": 100, "batch_size": 32, "learning_rate": 1e-3, "data_hash": _data_hash(args.train + args.validation), "train_scenes": sorted({item["instance"]["scene_id"] for item in train_records}), "validation_scenes": sorted({item["instance"]["scene_id"] for item in validation_records}), "torch_version": torch.__version__, "feature_spec": FEATURE_SPEC,
-                     "batch_backend": "ragged_plane_and_candidate_v1", "batch_backend_version": 1,
-                     "training_script_sha256": _file_hash(Path(__file__)),
-                     "training_batch_sha256": _file_hash(Path(__file__).with_name("integer_corridor_training_batch.py")),
-                     "policy_source_sha256": _file_hash(Path(__file__).with_name("integer_corridor_policy.py"))}
-    base_metadata.update(threads=args.threads, interop_threads=1, device="cpu", dtype="float64",
+    check_split_disjoint(train_records + (new_records or []), validation_records)
+    trainer_hash = _file_hash(Path(__file__))
+    batch_helper_hash = _file_hash(Path(__file__).with_name("integer_corridor_training_batch.py"))
+    policy_helper_hash = _file_hash(Path(__file__).with_name("integer_corridor_policy.py"))
+    base_metadata = {"method": args.method, "seed": args.seed, "epochs": 100, "batch_size": 32, "learning_rate": 1e-3, "data_hash": _data_hash(args.train + args.validation + (args.new_data or [])), "input_hashes": input_hashes,
+                     "new_data_sha256": _data_hash(args.new_data) if args.new_data else None, "new_coverage": new_statistics,
+                     "train_data_sha256": _data_hash(args.train), "validation_data_sha256": _data_hash(args.validation), "train_scenes": sorted({item["instance"]["scene_id"] for item in train_records}), "validation_scenes": sorted({item["instance"]["scene_id"] for item in validation_records}), "torch_version": torch.__version__, "feature_spec": FEATURE_SPEC,
+                     "objective_gradient": "softmax(scores)_i * (cost_i - expected_cost)" if args.method == "objective" else None,
+                     "batch_backend": "ragged_plane_and_candidate_v2", "batch_backend_version": 2,
+                     "training_script_sha256": trainer_hash, "trainer_sha256": trainer_hash,
+                     "training_batch_sha256": batch_helper_hash, "policy_source_sha256": policy_helper_hash,
+                     "helper_sha256": {"training_batch": batch_helper_hash, "policy": policy_helper_hash}}
+    base_metadata.update(set_supervision_sha256=_file_hash(Path(__file__).with_name("integer_set_supervision.py")),
+                         supervision_config=CONFIG, threads=args.threads, interop_threads=1, device=args.device, dtype="float64",
+                         dependencies={"python": platform.python_version(), "numpy": np.__version__, "torch": str(torch.__version__)},
                          bc_tie_tolerance=2e-6, bc_tie_units="normalized_cost",
                          train_coverage=train_statistics, validation_coverage=validation_statistics)
+    if any(_file_hash(path) != digest for path, digest in input_hashes.items()):
+        raise RuntimeError("training inputs changed while loading")
     progress_stream = (output / "progress.jsonl").open("x")
     def checkpoint(policy, best_state, metrics):
         progress_stream.write(json.dumps(metrics, allow_nan=False) + "\n"); progress_stream.flush()
@@ -359,11 +474,22 @@ def main() -> int:
         if metrics["improved"]:
             policy.load_state_dict(best_state)
             (output / "model.json").write_text(json.dumps(policy.to_json({**base_metadata, "best_epoch": metrics["best_epoch"]}), allow_nan=False, separators=(",", ":")) + "\n")
-    policy, metadata, progress = train(train_records, validation_records, args.method, args.seed, callback=checkpoint)
+    policy, metadata, progress = train(train_records, validation_records, args.method, args.seed, callback=checkpoint, device=args.device, new_records=new_records)
     progress_stream.close()
-    (output / "completed.json").write_text(json.dumps({**base_metadata, **metadata,
+    if any(_file_hash(path) != digest for path, digest in input_hashes.items()):
+        raise RuntimeError("training inputs changed during training")
+    if _file_hash(Path(__file__)) != trainer_hash or _file_hash(Path(__file__).with_name("integer_corridor_training_batch.py")) != batch_helper_hash:
+        raise RuntimeError("training implementation changed during training")
+    completed_metadata = {**base_metadata, **metadata, "status": "complete",
+        "model_sha256": _file_hash(output / "model.json"),
+        "configuration": {"method": args.method, "seed": args.seed, "epochs": 100, "batch_size": 32,
+                           "learning_rate": 1e-3, "threads": args.threads, "interop_threads": 1,
+                           "device": args.device, "dtype": "float64", "batch_backend": "ragged_plane_and_candidate_v2",
+                           "warmup_epochs": WARMUP_EPOCHS if args.method in ("cost", "set") else 0,
+                           "set_cost_weight": SET_COST_WEIGHT if args.method in ("cost", "set") else 0.0},
         "completed_epochs": len(progress), "best_validation_metric": min(
-            item["validation_metric"] for item in progress)}, allow_nan=False, indent=2) + "\n")
+            item["validation_metric"] for item in progress)}
+    (output / "completed.json").write_text(json.dumps(completed_metadata, allow_nan=False, indent=2) + "\n")
     return 0
 
 

@@ -2,6 +2,7 @@
 
 #include <sando/planning_instance.hpp>
 
+#include <array>
 #include <memory>
 #include <optional>
 #include <string>
@@ -25,6 +26,8 @@ struct CandidateEvaluation {
   std::string classification{"unknown"};
   std::optional<double> raw_objective;
   std::optional<double> cost;
+  std::optional<std::array<std::vector<double>, 3>> trajectory_coefficients;
+  std::optional<double> segment_dt;
 };
 
 CandidateEvaluation evaluateCandidate(const PlanningInstance&, const Assignment&,
