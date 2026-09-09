@@ -352,6 +352,14 @@ if(SANDO_USE_AMPL)
   add_test(NAME null_class_live_map_decomp COMMAND null_class_decomp_probe)
   set_tests_properties(null_class_live_map_decomp PROPERTIES TIMEOUT 180)
 
+  add_executable(time_fixed_z_forward_probe tests/ampls/time_fixed_z_forward_probe.cpp)
+  target_link_libraries(time_fixed_z_forward_probe sando_planner)
+  target_compile_options(time_fixed_z_forward_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(time_fixed_z_forward_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME time_fixed_z_forward COMMAND time_fixed_z_forward_probe
+           "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampls/fixtures/translated_trajectory.json" "91659.8128")
+  set_tests_properties(time_fixed_z_forward PROPERTIES TIMEOUT 300)
+
 
   add_test(NAME baseline_capture_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_capture.py")
   add_test(NAME baseline_arrival_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_sim.py")
