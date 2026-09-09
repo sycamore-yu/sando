@@ -1085,6 +1085,12 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
     local_E.pos[2] = 1.0;
   }
 
+  // HGP waypoints are voxel centers; MIQP X0/Xf are continuous. Seed corridor
+  // decomp from continuous endpoints so segment-0 polytopes contain local_A
+  // (otherwise corridor indicators make every assignment infeasible).
+  global_path.front() = local_A.pos;
+  global_path.back() = local_E.pos;
+
   /*
    * Parallelized Local Trajectory Optimization
    */

@@ -160,7 +160,13 @@ PreparedProblem prepare(const FrozenPlanningObservation& observation, double fac
   hgp.setParameters(par);
   EllipsoidDecomp3D ellip;
 
-  const auto path = toPath(observation.global_path);
+  // Match online planLocalTrajectory: snap voxel-center path ends to continuous
+  // start/goal so reconstructed corridors remain start-feasible.
+  auto path = toPath(observation.global_path);
+  if (!path.empty()) {
+    path.front() = Eigen::Vector3d(observation.start[0], observation.start[1], observation.start[2]);
+    path.back() = Eigen::Vector3d(observation.goal[0], observation.goal[1], observation.goal[2]);
+  }
   const auto base = toCloud(observation.visible_map.points);
   const auto obst_pos = toPath(observation.obst_pos);
   const auto obst_bbox = toPath(observation.obst_bbox);

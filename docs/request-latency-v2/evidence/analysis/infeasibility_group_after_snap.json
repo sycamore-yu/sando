@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "observation": "docker/dev-workspace/results/joint-time-v2/stage-jia/static_forest-easy-seed0/request_observation/2.json",
+  "factor": 2.0,
+  "fix": "snap global_path endpoints to continuous start/goal before corridor decomp",
+  "reconstruct_status": "optimal",
+  "ablations": [
+    {
+      "name": "full",
+      "status": "optimal"
+    },
+    {
+      "name": "remove_dynamics",
+      "status": "optimal"
+    },
+    {
+      "name": "remove_corridor_indicator",
+      "status": "optimal"
+    },
+    {
+      "name": "remove_map_bounds",
+      "status": "optimal"
+    }
+  ],
+  "verdict": "endpoint snap restores MIQP feasibility on this frozen forest observation without relaxing constraints"
+}
