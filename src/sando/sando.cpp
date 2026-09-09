@@ -690,6 +690,7 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   last_cancel_drain_ms_ = 0.0;
   last_usable_ms_ = 0.0;
   last_reclaim_ms_ = 0.0;
+  last_classification_ms_ = nullptr;
   last_replan_factors_.clear();
   last_factor_policy_metrics_.clear();
   last_timing_policy_metrics_ = nlohmann::json::object();
@@ -716,6 +717,7 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
                            {"cancel_drain_ms", last_cancel_drain_ms_},
                            {"usable_ms", last_usable_ms_},
                            {"reclaim_ms", last_reclaim_ms_},
+                           {"classification_ms", last_classification_ms_},
                            {"publish_ms", nullptr},
                            {"timing_policy", last_timing_policy_metrics_},
                            {"actual_chosen_assignment", nlohmann::json::array()},
@@ -1105,16 +1107,6 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
                 << " floor voxels (z<=" << z_floor_thresh << ") from base_map" << std::endl;
   }
 
-#ifdef SANDO_USE_AMPL
-  std::vector<std::uint8_t> base_map_classes;
-  std::vector<Veci<3>> base_map_voxels;
-  Vec3f base_map_origin = Vec3f::Zero();
-  double base_map_res = par_.res;
-  Veci<3> base_map_dim = Veci<3>::Zero();
-  hgp_manager_.classifyCorridorPoints(
-      base_map, base_map_classes, base_map_voxels, base_map_origin, base_map_res, base_map_dim);
-#endif
-
   // Get obst_pos and obst_bbox
   vec_Vecf<3> obst_pos;
   vec_Vecf<3> obst_bbox;
@@ -1392,6 +1384,17 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
     nlohmann::json frozen_observation_json;
     nlohmann::json reconstructable;
     try {
+      std::vector<std::uint8_t> base_map_classes;
+      std::vector<Veci<3>> base_map_voxels;
+      Vec3f base_map_origin = Vec3f::Zero();
+      double base_map_res = par_.res;
+      Veci<3> base_map_dim = Veci<3>::Zero();
+      const auto classification_started = std::chrono::steady_clock::now();
+      hgp_manager_.classifyCorridorPoints(
+          base_map, base_map_classes, base_map_voxels, base_map_origin, base_map_res, base_map_dim);
+      last_classification_ms_ = std::chrono::duration<double, std::milli>(
+          std::chrono::steady_clock::now() - classification_started).count();
+
       sando_learning::FrozenPlanningObservation observation;
       observation.observation_id = std::to_string(capture_request_id_);
       observation.source_id = capture_metadata_.at("source_id").get<std::string>();
