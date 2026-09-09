@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "run": "docker/dev-workspace/results/request-latency-v3/online/smoke_seed200_orig_20260909_121839",
+  "n_attempted": 1793,
+  "append": {
+    "false": 1793
+  },
+  "failure_stage": {
+    "corridor_decomposition": 1,
+    "optimization": 1792
+  },
+  "result": {
+    "success": false,
+    "goal_reached": false,
+    "goal_distance_m": 105.0,
+    "error": "observation timeout: goal_reached was not received",
+    "odom_samples": 10002,
+    "last_position": [
+      0.0,
+      0.0,
+      2.0
+    ]
+  },
+  "pattern": "corridor ok / map=21699 / P=3 / all MIQP status=3; start outside corridors (see corridor_containment_forest2_f2.json)"
+}

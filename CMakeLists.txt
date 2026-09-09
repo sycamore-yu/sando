@@ -353,6 +353,15 @@ if(SANDO_USE_AMPL)
            "${CMAKE_CURRENT_SOURCE_DIR}/docker/dev-workspace/results/joint-time-v2/stage-jia/static_forest-easy-seed0/request_observation/2.json")
   set_tests_properties(infeasibility_group_probe PROPERTIES TIMEOUT 600)
 
+  add_executable(corridor_containment_probe tests/ampls/corridor_containment_probe.cpp)
+  target_link_libraries(corridor_containment_probe sando_planner)
+  target_compile_options(corridor_containment_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(corridor_containment_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+  add_test(NAME corridor_containment_probe COMMAND corridor_containment_probe
+           "${CMAKE_CURRENT_SOURCE_DIR}/docker/dev-workspace/results/joint-time-v2/stage-jia/static_forest-easy-seed0/request_observation/2.json"
+           "2.0")
+  set_tests_properties(corridor_containment_probe PROPERTIES TIMEOUT 300)
+
   add_executable(null_class_decomp_probe tests/ampls/null_class_decomp_probe.cpp)
   target_link_libraries(null_class_decomp_probe sando_planner)
   target_compile_options(null_class_decomp_probe PRIVATE -UNDEBUG -fno-fast-math)

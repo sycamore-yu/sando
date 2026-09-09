@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "finding": "HGP global_path[0] is voxel center; continuous start can lie outside all segment-0 polytopes (~0.15m slack). Corridor/indicator then makes MIQP infeasible.",
+  "evidence_before": "corridor_containment_forest2_f2.json start_in_layer0=false status=infeasible",
+  "evidence_after": "corridor_containment_forest2_f2_after_snap.json start_in_layer0=true status=optimal",
+  "fix": "snap path.front/back to local_A/local_E (online) and observation start/goal (reconstruct)"
+}

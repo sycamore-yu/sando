@@ -1,0 +1,475 @@
+{
+  "N": 5,
+  "P": 3,
+  "factor": 2.0,
+  "goal": [
+    2.8499996960163116,
+    -0.15000000596046448,
+    1.8499999940395355,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "goal_all_layers": [
+    {
+      "P": 3,
+      "inside_count": 3,
+      "label": "goal",
+      "point": [
+        2.8499996960163116,
+        -0.15000000596046448,
+        1.8499999940395355
+      ],
+      "polytopes": [
+        {
+          "inside": true,
+          "min_slack": 0.03570858662815146,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.04999221212784888,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.05272012469184273,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 0
+    },
+    {
+      "P": 3,
+      "inside_count": 3,
+      "label": "goal",
+      "point": [
+        2.8499996960163116,
+        -0.15000000596046448,
+        1.8499999940395355
+      ],
+      "polytopes": [
+        {
+          "inside": true,
+          "min_slack": 0.03570858662815146,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.04999221212784888,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.05272012469184273,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 1
+    },
+    {
+      "P": 3,
+      "inside_count": 3,
+      "label": "goal",
+      "point": [
+        2.8499996960163116,
+        -0.15000000596046448,
+        1.8499999940395355
+      ],
+      "polytopes": [
+        {
+          "inside": true,
+          "min_slack": 0.03570858662815146,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.04999221212784888,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.05272012469184273,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 2
+    },
+    {
+      "P": 3,
+      "inside_count": 3,
+      "label": "goal",
+      "point": [
+        2.8499996960163116,
+        -0.15000000596046448,
+        1.8499999940395355
+      ],
+      "polytopes": [
+        {
+          "inside": true,
+          "min_slack": 0.03570858662815146,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.04999221212784888,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.05272012469184273,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 3
+    },
+    {
+      "P": 3,
+      "inside_count": 3,
+      "label": "goal",
+      "point": [
+        2.8499996960163116,
+        -0.15000000596046448,
+        1.8499999940395355
+      ],
+      "polytopes": [
+        {
+          "inside": true,
+          "min_slack": 0.03570858662815146,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.04999221212784888,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": true,
+          "min_slack": 0.05272012469184273,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 4
+    }
+  ],
+  "goal_layerN": {
+    "P": 3,
+    "inside_count": 3,
+    "label": "goal",
+    "point": [
+      2.8499996960163116,
+      -0.15000000596046448,
+      1.8499999940395355
+    ],
+    "polytopes": [
+      {
+        "inside": true,
+        "min_slack": 0.03570858662815146,
+        "p": 0,
+        "plane_count": 16
+      },
+      {
+        "inside": true,
+        "min_slack": 0.04999221212784888,
+        "p": 1,
+        "plane_count": 16
+      },
+      {
+        "inside": true,
+        "min_slack": 0.05272012469184273,
+        "p": 2,
+        "plane_count": 16
+      }
+    ]
+  },
+  "map_bounds": [
+    -200.0,
+    200.0,
+    -200.0,
+    200.0,
+    0.5,
+    6.0
+  ],
+  "observation": "/root/sando_ws/src/sando/docker/dev-workspace/results/joint-time-v2/stage-jia/static_forest-easy-seed0/request_observation/2.json",
+  "segment_dt": 0.2279999703168869,
+  "solver_kind": "miqp",
+  "start": [
+    0.0,
+    0.0,
+    2.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "start_all_layers": [
+    {
+      "P": 3,
+      "inside_count": 0,
+      "label": "start",
+      "point": [
+        0.0,
+        0.0,
+        2.0
+      ],
+      "polytopes": [
+        {
+          "inside": false,
+          "min_slack": -0.14818636643446603,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.15997541058799203,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.1742587999625118,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 0
+    },
+    {
+      "P": 3,
+      "inside_count": 0,
+      "label": "start",
+      "point": [
+        0.0,
+        0.0,
+        2.0
+      ],
+      "polytopes": [
+        {
+          "inside": false,
+          "min_slack": -0.14818636643446603,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.15997541058799203,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.1742587999625118,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 1
+    },
+    {
+      "P": 3,
+      "inside_count": 0,
+      "label": "start",
+      "point": [
+        0.0,
+        0.0,
+        2.0
+      ],
+      "polytopes": [
+        {
+          "inside": false,
+          "min_slack": -0.14818636643446603,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.15997541058799203,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.1742587999625118,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 2
+    },
+    {
+      "P": 3,
+      "inside_count": 0,
+      "label": "start",
+      "point": [
+        0.0,
+        0.0,
+        2.0
+      ],
+      "polytopes": [
+        {
+          "inside": false,
+          "min_slack": -0.14818636643446603,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.15997541058799203,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.1742587999625118,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 3
+    },
+    {
+      "P": 3,
+      "inside_count": 0,
+      "label": "start",
+      "point": [
+        0.0,
+        0.0,
+        2.0
+      ],
+      "polytopes": [
+        {
+          "inside": false,
+          "min_slack": -0.14818636643446603,
+          "p": 0,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.15997541058799203,
+          "p": 1,
+          "plane_count": 16
+        },
+        {
+          "inside": false,
+          "min_slack": -0.1742587999625118,
+          "p": 2,
+          "plane_count": 16
+        }
+      ],
+      "t": 4
+    }
+  ],
+  "start_layer0": {
+    "P": 3,
+    "inside_count": 0,
+    "label": "start",
+    "point": [
+      0.0,
+      0.0,
+      2.0
+    ],
+    "polytopes": [
+      {
+        "inside": false,
+        "min_slack": -0.14818636643446603,
+        "p": 0,
+        "plane_count": 16
+      },
+      {
+        "inside": false,
+        "min_slack": -0.15997541058799203,
+        "p": 1,
+        "plane_count": 16
+      },
+      {
+        "inside": false,
+        "min_slack": -0.1742587999625118,
+        "p": 2,
+        "plane_count": 16
+      }
+    ]
+  },
+  "status": "infeasible",
+  "verdict": {
+    "goal_in_layerN": true,
+    "likely_containment_bug": true,
+    "start_in_layer0": false
+  },
+  "weak_path_cover": [
+    {
+      "alpha": 0.0,
+      "best_slack": -0.14818636643446603,
+      "inside_count": 0,
+      "point": [
+        0.0,
+        0.0,
+        2.0
+      ],
+      "t": 0
+    },
+    {
+      "alpha": 0.25,
+      "best_slack": -0.09284299070213353,
+      "inside_count": 0,
+      "point": [
+        0.7124999240040779,
+        -0.03750000149011612,
+        1.9624999985098839
+      ],
+      "t": 1
+    },
+    {
+      "alpha": 0.5,
+      "best_slack": -0.03570884977737676,
+      "inside_count": 0,
+      "point": [
+        1.4249998480081558,
+        -0.07500000298023224,
+        1.9249999970197678
+      ],
+      "t": 2
+    },
+    {
+      "alpha": 0.75,
+      "best_slack": 0.015354780572027549,
+      "inside_count": 2,
+      "point": [
+        2.1374997720122337,
+        -0.11250000447034836,
+        1.8874999955296516
+      ],
+      "t": 3
+    },
+    {
+      "alpha": 1.0,
+      "best_slack": 0.05272012469184273,
+      "inside_count": 3,
+      "point": [
+        2.8499996960163116,
+        -0.15000000596046448,
+        1.8499999940395355
+      ],
+      "t": 4
+    }
+  ]
+}
