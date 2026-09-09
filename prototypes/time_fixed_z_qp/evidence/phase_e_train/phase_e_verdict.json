@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "kind": "phase_e_verdict",
+  "pass": true,
+  "selected_lambda_T": 0.1,
+  "selected_primary_model": "timing_kkt_lam0.1_seed0.json",
+  "selected_jerk_only_model": "timing_kkt_lam0.0_seed0.json",
+  "findings": [
+    "True Diff-QP (KKT) and FD-proxy reach nearly identical offline oneshot metrics on pack16 (expected when FD matches KKT).",
+    "Relative to supervised_init: mean accepted jerk drops ~51k→19k, but main_qp_accept drops 15/16→14/16 and mean_T rises ~1.51→1.77–1.89.",
+    "lambda_T=0.1 shortens mean_T vs lambda_T=0 while keeping accept rate; larger lambdas (0.3, 1.0) raise normalized loss floor without better offline accept.",
+    "Failures retained in train denominators (typically 1–2/16 infeasible per step; no fake grads)."
+  ],
+  "evidence": {
+    "train_summary": "phase_e_train_summary.json",
+    "offline_oneshot": "offline_oneshot_compare.json",
+    "lambda_search_seed0": ["0.0", "0.1", "0.3", "1.0"],
+    "multi_seed": {"kkt_lam0": [0, 1, 2], "kkt_lam0.1": [0, 1, 2], "fd_lam0": [0, 1, 2], "fd_lam0.1": [0]}
+  },
+  "next_phase": "F"
+}

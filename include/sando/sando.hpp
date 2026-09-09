@@ -114,6 +114,8 @@ class SANDO {
 #ifdef SANDO_USE_AMPL
   /** @brief Records publish_ms for the last replan (second JSONL event; does not alter total_ms). */
   void notePublishComplete();
+  /** @brief Records first controller setpoint publish after a successful append. */
+  void noteControllerFirstUse();
 #endif
 
   /** @brief Enables adaptive k-value computation based on accumulated replanning computation times.
@@ -537,6 +539,13 @@ class SANDO {
   };
   LastReplanStage last_replan_stage_{};
   std::chrono::steady_clock::time_point last_replan_started_{};
+  // Trajectory identity for one-shot / publish / controller-first-use events.
+  bool last_append_awaiting_publish_{false};
+  bool last_append_published_{false};
+  bool last_append_controller_used_{false};
+  bool last_append_fallback_{false};
+  double last_append_predicted_T_{-1.0};
+  std::string last_append_trajectory_id_;
   std::vector<double> last_replan_factors_;
   std::vector<nlohmann::json> last_factor_policy_metrics_;
   std::vector<double> last_replan_decomp_times_;

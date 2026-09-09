@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "kind": "phase_j_instrumentation",
+  "status": "partial_pass_compile",
+  "note": "Identity chain wired in C++; online closed-loop proof deferred to Phase K pilots.",
+  "events": [
+    "replan_metrics (planning row): request_id, trajectory_id, predicted_T, fallback, actual_chosen_assignment",
+    "kind=publish: request_id, trajectory_id, predicted_T, fallback, publish_ms",
+    "kind=controller_first_use: first pub_goal_ after publish; controller_first_use_ms"
+  ],
+  "oneshot_success_requires": [
+    "fallback=false",
+    "append_success",
+    "publish event",
+    "controller_first_use event"
+  ],
+  "still_missing_for_full_phase_j": [
+    "planning_observation_hash on every event",
+    "corridor hash",
+    "QP solve id",
+    "online JSONL sample from a live episode"
+  ],
+  "build": {
+    "target": "sando",
+    "SANDO_USE_AMPL": true,
+    "symbols": ["SANDO::notePublishComplete", "SANDO::noteControllerFirstUse"],
+    "install": "/root/sando_ws/install-dev"
+  }
+}

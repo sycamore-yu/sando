@@ -1562,6 +1562,9 @@ void SANDO_NODE::publishGoal() {
     quadGoal.yaw = next_goal.yaw;
     quadGoal.dyaw = next_goal.dyaw;
     pub_goal_->publish(quadGoal);
+#ifdef SANDO_USE_AMPL
+    sando_ptr_->noteControllerFirstUse();
+#endif
 
     // Publish the goal (setpoint) for visualization
     if (par_.visual_level >= 1) publishState(next_goal, pub_setpoint_);

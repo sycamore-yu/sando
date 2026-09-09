@@ -105,9 +105,14 @@ def train(
             if grad_mode == "kkt":
                 _x, jerk, ok = DiffTimeQP.apply(f_clamped, [row["qp"]], [row["assignment"]])
                 if (not bool(torch.isfinite(jerk.detach()))) or float(ok.detach()) < 0.5:
-                    step_rows.append({"id": row["id"], "status": "infeasible", "f": float(f_clamped)})
+                    step_rows.append(
+                        {
+                            "id": row["id"],
+                            "status": "infeasible",
+                            "f": float(f_clamped.detach()),
+                        }
+                    )
                     continue
-                T = 5.0 * segment_dt(row["qp"]["initial_dt"], row["qp"]["dc"], float(f_clamped.detach()))
                 # T depends on f; attach analytic dT/df through tensor
                 d0 = max(row["qp"]["initial_dt"], 2.0 * row["qp"]["dc"])
                 T_t = 5.0 * d0 * f_clamped

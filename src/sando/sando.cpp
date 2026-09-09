@@ -734,6 +734,14 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
                            {"actual_chosen_assignment", nlohmann::json::array()},
                            {"proposed_chosen_assignment", nlohmann::json::array()},
                            {"factors", nlohmann::json::array()}};
+    // Extra identity fields assigned separately (nlohmann init-list size limit).
+    metrics["controller_first_use_seen"] = false;
+    metrics["trajectory_id"] =
+        append_success ? nlohmann::json(last_append_trajectory_id_) : nlohmann::json(nullptr);
+    metrics["predicted_T"] =
+        append_success ? nlohmann::json(last_append_predicted_T_) : nlohmann::json(nullptr);
+    metrics["fallback"] =
+        append_success ? nlohmann::json(last_append_fallback_) : nlohmann::json(nullptr);
     if (append_success && !last_appended_assignment_.empty())
       metrics["actual_chosen_assignment"] = last_appended_assignment_;
     if (!last_replan_chosen_assignment_.empty())
@@ -855,6 +863,18 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   if (pending_assignment_valid_) last_appended_assignment_ = pending_assignment_;
   pending_assignment_.clear();
   pending_assignment_valid_ = false;
+  // Trajectory identity for publish / controller-first-use chain.
+  last_append_awaiting_publish_ = true;
+  last_append_published_ = false;
+  last_append_controller_used_ = false;
+  const bool oneshot_T =
+      timing_policy_enabled_ && timing_policy_ && timing_policy_->proposalCount() == 1;
+  const bool oneshot_Z = corridor_method_ == SolverGurobi::CorridorMethod::Learned ||
+                         corridor_method_ == SolverGurobi::CorridorMethod::Previous;
+  last_append_fallback_ = !(oneshot_T && oneshot_Z);
+  last_append_predicted_T_ = successful_factor_;
+  last_append_trajectory_id_ =
+      std::to_string(capture_request_id_) + ":f" + std::to_string(successful_factor_);
 #endif
   if (par_.debug_verbose)
     std::cout << "Append to Plan: " << timer_append.getElapsedMicros() / 1000.0 << " ms"
@@ -882,16 +902,43 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
 #ifdef SANDO_USE_AMPL
 void SANDO::notePublishComplete() {
   if (replan_metrics_path_.empty() || !replan_metrics_stream_) return;
+  if (!last_append_awaiting_publish_ || last_append_published_) return;
   const double publish_ms = std::chrono::duration<double, std::milli>(
       std::chrono::steady_clock::now() - last_replan_started_).count();
+  last_append_published_ = true;
   nlohmann::json event{{"schema_version", 1},
                        {"kind", "publish"},
                        {"request_id", capture_request_id_},
+                       {"trajectory_id", last_append_trajectory_id_},
+                       {"predicted_T", last_append_predicted_T_},
+                       {"fallback", last_append_fallback_},
+                       {"actual_chosen_assignment", last_appended_assignment_},
                        {"publish_ms", publish_ms}};
   replan_metrics_stream_ << event.dump() << '\n';
   replan_metrics_stream_.flush();
   if (!replan_metrics_stream_)
     std::cerr << "SANDO_INSTRUMENTATION_ERROR replan_metrics publish write failed\n";
+}
+
+void SANDO::noteControllerFirstUse() {
+  if (replan_metrics_path_.empty() || !replan_metrics_stream_) return;
+  if (!last_append_published_ || last_append_controller_used_) return;
+  const double controller_first_use_ms = std::chrono::duration<double, std::milli>(
+      std::chrono::steady_clock::now() - last_replan_started_).count();
+  last_append_controller_used_ = true;
+  last_append_awaiting_publish_ = false;
+  nlohmann::json event{{"schema_version", 1},
+                       {"kind", "controller_first_use"},
+                       {"request_id", capture_request_id_},
+                       {"trajectory_id", last_append_trajectory_id_},
+                       {"predicted_T", last_append_predicted_T_},
+                       {"fallback", last_append_fallback_},
+                       {"actual_chosen_assignment", last_appended_assignment_},
+                       {"controller_first_use_ms", controller_first_use_ms}};
+  replan_metrics_stream_ << event.dump() << '\n';
+  replan_metrics_stream_.flush();
+  if (!replan_metrics_stream_)
+    std::cerr << "SANDO_INSTRUMENTATION_ERROR replan_metrics controller_first_use write failed\n";
 }
 #endif
 

@@ -19,7 +19,7 @@ Stop and report “All done” **only** when `docs/fromchat/plan.md` §3 is full
 
 ## Current Milestone
 
-**Phase E — Task-aligned timing objective（jerk + λT）+ fair supervised/FD/true-diff training**
+**Phase F — Expand timing training (100 updates, 3 seeds) then Phase G one-shot deploy**
 
 ---
 
@@ -40,32 +40,41 @@ Containment + forest MIQP regressions；`engineering_baseline_103faa1.json`。
 
 ### Phase D PASS（梯度验证）
 - pack16：15/16 同时通过 jerk + solution FD oracle（失败保留）  
-- `evidence/phase_d_grad_validation_pack16.json`  
-- `evidence/diff_time_qp_kkt_probe0.json`
+- `evidence/phase_d_grad_validation_pack16.json`
+
+### Phase E PASS
+- Loss：`L = J/J_scale + λ T/T_scale`；scales 仅来自 train pack  
+- λ search seed0：`{0, 0.1, 0.3, 1.0}` → 选定 **λ=0.1** 作为 jerk+time  
+- Fair arms：supervised / FD-proxy / true-diff KKT（jerk-only + jerk+time），3 seeds（FD λ0.1 seed0）  
+- Offline oneshot：`prototypes/time_fixed_z_qp/evidence/phase_e_train/offline_oneshot_compare.json`  
+- Verdict：`.../phase_e_verdict.json`  
+- Primary model：`timing_kkt_lam0.1_seed0.json`（vs supervised：jerk↓、accept 15→14/16、T↑）
+
+### Phase J partial（compile）
+- `notePublishComplete` + `noteControllerFirstUse` identity chain  
+- Evidence：`docs/request-latency-v2/evidence/analysis/phase_j_controller_first_use.json`  
+- Still missing：observation/corridor hashes on every event + live JSONL sample（fill in Phase K）
 
 ---
 
 ## Active Hypothesis
 
-True Diff-QP（KKT）+ λT time term 相对 supervised / FD-proxy 给出更干净梯度，并在 validation 上不劣于 supervised。
+True Diff-QP timing with λ=0.1 trades a small accept-rate drop for much lower accepted jerk; online one-shot with frozen Z and real C(T) will show whether latency/task metrics justify the trade-off vs supervised.
 
 ---
 
 ## Current Bottleneck
 
-尚未完成 λ 搜索与三路公平训练；未进入 200–205 pilot / controller-first-use。
+Need Phase F 100-step models + Phase G online one-shot harness with frozen `corridor-cost.json` Z and real C(T).
 
 ---
 
-### Phase E in progress
-- true-diff KKT train λ=0 seed0 (20 steps): mean loss 0.454→0.310; fails retained (2/16/step)
-- model: `prototypes/time_fixed_z_qp/evidence/phase_e_train/timing_kkt_lam0.0_seed0.json`
-
 ## Next Automatic Action
 
-1. 实现 `L = J/J_scale + λ T/T_scale`（scale 仅来自 train）。  
-2. 三路：supervised / FD-proxy / true-diff（jerk-only 与 jerk+time）。  
-3. 3 seeds small validation → 选模型进 one-shot（仍用 corridor-cost Z）。
+1. Phase F：100 updates × 3 seeds for kkt λ=0 and λ=0.1（failures retained）  
+2. Phase G：deploy selected timing model + frozen Z → 1T+1Z+1QP offline/online probe  
+3. Complete Phase J hashes when capture path is on during pilots  
+4. Phase K：seeds 200–205 fair A–E compare  
 
 ---
 
