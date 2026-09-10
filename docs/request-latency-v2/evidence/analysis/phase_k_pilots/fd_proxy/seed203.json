@@ -1,0 +1,21 @@
+{
+  "method": "fd_proxy",
+  "seed": 203,
+  "n_attempted": 9817,
+  "append_ok": 32,
+  "oneshot_append_no_fallback": 32,
+  "fallback_append": 0,
+  "controller_first_use_events": 32,
+  "failure_stage": {
+    "corridor_decomposition": 9771,
+    "None": 32,
+    "optimization": 14
+  },
+  "latency_p50_ms": 6.42162,
+  "latency_p95_ms": 10.533066,
+  "goal_reached": false,
+  "success": false,
+  "goal_distance_m": 95.6100231134662,
+  "error": "observation timeout: goal_reached was not received",
+  "wall_elapsed_sec": 117.58152185508516
+}

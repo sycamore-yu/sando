@@ -1,0 +1,21 @@
+{
+  "method": "fd_proxy",
+  "seed": 202,
+  "n_attempted": 1403,
+  "append_ok": 1201,
+  "oneshot_append_no_fallback": 1201,
+  "fallback_append": 0,
+  "controller_first_use_events": 1201,
+  "failure_stage": {
+    "corridor_decomposition": 199,
+    "None": 1201,
+    "optimization": 3
+  },
+  "latency_p50_ms": 24.444021,
+  "latency_p95_ms": 34.20406,
+  "goal_reached": true,
+  "success": true,
+  "goal_distance_m": 0.24989671552617937,
+  "error": null,
+  "wall_elapsed_sec": 52.868245778023265
+}

@@ -9,58 +9,50 @@ Engineering Baseline：`103faa1`
 
 ## Ultimate Goal
 
-Learning proposes structured T/Z; hard QP keeps feasibility and executable motion;
-optimizer-derived trajectory/task loss trains the learned decisions.
-Deployed path is exactly **1T → real C(T) → 1Z → 1 hard QP** (fallback counted separately).
+Learning proposes structured T/Z; hard QP keeps feasibility; optimizer-derived loss trains timing.
+Deployed path: **1T → real C(T) → 1Z → 1 hard QP**.
 
-Stop and report “All done” **only** when `docs/fromchat/plan.md` §3 is fully evidenced.
+“All done” **only** when `docs/fromchat/plan.md` §3 is fully evidenced.
 
 ---
 
 ## Current Milestone
 
-**Close §3 gaps: FD online arm + unknown/dynamic pilot + Case B mitigation evidence**
+**Case B follow-through: mitigate online T saturation OR deepen attribution; close remaining §3 items**
 
 ---
 
-## Completed Evidence
+## Completed Evidence (high level)
 
-### Phases A–G, J, K (partial), L Case B
-- True Diff-QP KKT + λ=0.1; Phase F 100-step models  
-- Online one-shot + controller_first_use verified  
-- Pilots 200–205: Original 6/6, Supervised 6/6, True-diff 5/6  
-- Case B: T saturation at 2.5 online for true-diff  
-- `docs/final-study/` draft package present  
+- True Diff-QP (KKT) + λ=0.1; FD ablation; Phase F 100-step  
+- Online one-shot + controller_first_use identity  
+- Fair static pilots 200–205: Original 6/6, Supervised 6/6, FD 5/6, True-diff 5/6  
+- Unknown/dynamic pilot 200–201: Supervised 2/2, True-diff 2/2  
+- Phase L **Case B** (T→F_MAX saturation)  
+- `docs/final-study/` package (draft→filled with current evidence)
 
-### Fair compare status (§3.3)
-| Arm | Online 200–205 |
+---
+
+## §3 checklist (honest)
+
+| Item | Status |
 |---|---|
-| A Original | PASS 6/6 |
-| B Supervised | PASS 6/6 |
-| C FD-proxy | in progress |
-| D True Diff-QP | PASS 5/6 (failure retained) |
-| E final structured | = D for now (Z frozen) |
-
----
-
-## Active Hypothesis
-
-True-diff lowers latency vs Original/supervised but online feature distribution drives T→F_MAX, hurting reliability vs supervised.
-
----
-
-## Current Bottleneck
-
-§3 still open: FD online results; unknown/dynamic scenes; observation/corridor hashes; optional Case B fix (feature/clamp) before claiming scientific closure.
+| 3.1 one-shot + true Diff-QP route | PASS |
+| 3.1 Z discrete learning | N/A (Z frozen; not failure-dominant) |
+| 3.2 QP/residual/grads/C(T)/containment | PASS (prior phases) |
+| 3.3 A–D fair compare | PASS (E=D with frozen Z) |
+| 3.4 multi-scene beyond seed200 | PARTIAL (static 200–205 + unknown_dyn 200–201; more difficulty configs thin) |
+| 3.5 identity chain | PARTIAL (publish/controller_first_use live; obs/corridor hashes still open) |
+| 3.6 paper package | PARTIAL (`docs/final-study/` present; not claiming All done) |
 
 ---
 
 ## Next Automatic Action
 
-1. Finish FD pilots; merge into RESULTS/compare  
-2. One unknown/dynamic pilot seed (true_diff + supervised)  
-3. Stamp observation/corridor hash on replan events if cheap  
-4. Re-audit plan §3 — only then All done  
+1. Case B mitigation probe: reduce online F_MAX saturation (e.g. feature check / soft prior) without deepening net  
+2. Stamp observation/corridor hash on replan events  
+3. Optional: more difficulty configs  
+4. Re-audit §3 — only then All done  
 
 ---
 
