@@ -46,6 +46,29 @@ aggregate() {
   python3 "$ROOT/scripts/write_paper_tables.py" \
     --aggregate "$ROOT/docs/paper-study-v2/FORMAL_AGGREGATE.json" \
     --out-dir "$ROOT/docs/paper-study-v2/final"
+  python3 "$ROOT/scripts/fill_paper_rq.py" --root "$ROOT/docs/paper-study-v2"
+  # Copy FAILURE_ANALYSIS into final/
+  if [[ -f "$ROOT/docs/paper-study-v2/FAILURE_ATTRIBUTION.json" ]]; then
+    python3 - <<PY
+import json
+from pathlib import Path
+root = Path("$ROOT/docs/paper-study-v2")
+attr = json.loads((root/"FAILURE_ATTRIBUTION.json").read_text())
+text = ["# FAILURE_ANALYSIS", "", "Source: FAILURE_ATTRIBUTION.json", "",
+        f"- wrong_Z_count_learned: {attr.get('wrong_Z_count_learned')}",
+        f"- non_success_count: {attr.get('non_success_count')}",
+        f"- restart_Z_learning: {attr.get('restart_Z_learning')}", "",
+        "Per-group counts:", ""]
+for g in attr.get("groups") or []:
+    text.append(f"## {g.get('group')}")
+    text.append("")
+    for k,v in sorted((g.get("counts") or {}).items()):
+        text.append(f"- {k}: {v}")
+    text.append("")
+(root/"final"/"FAILURE_ANALYSIS.md").write_text("\n".join(text)+"\n")
+print("wrote final/FAILURE_ANALYSIS.md")
+PY
+  fi
   python3 - <<PY
 import json, subprocess, time
 from pathlib import Path
