@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "kind": "phase_l_caseb_lam1_unknown_dynamic",
+  "dynamic_ratio": 0.65,
+  "model": "timing_kkt_lam1.0_seed0.json",
+  "task_success": 2,
+  "n": 2,
+  "runs": [
+    {
+      "method": "true_diff",
+      "seed": 200,
+      "n_attempted": 368,
+      "append_ok": 339,
+      "oneshot_append_no_fallback": 339,
+      "fallback_append": 0,
+      "controller_first_use_events": 339,
+      "failure_stage": {
+        "corridor_decomposition": 29,
+        "None": 339
+      },
+      "latency_p50_ms": 79.598021,
+      "latency_p95_ms": 110.2039,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.3751313344988727,
+      "error": null,
+      "wall_elapsed_sec": 49.71223684900906
+    },
+    {
+      "method": "true_diff",
+      "seed": 201,
+      "n_attempted": 374,
+      "append_ok": 345,
+      "oneshot_append_no_fallback": 345,
+      "fallback_append": 0,
+      "controller_first_use_events": 345,
+      "failure_stage": {
+        "corridor_decomposition": 28,
+        "None": 345,
+        "optimization": 1
+      },
+      "latency_p50_ms": 77.77737,
+      "latency_p95_ms": 107.980832,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.40864975876934034,
+      "error": null,
+      "wall_elapsed_sec": 48.1853563770419
+    }
+  ]
+}

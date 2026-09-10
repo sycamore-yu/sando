@@ -33,6 +33,8 @@ Evidence: `docs/request-latency-v2/evidence/analysis/phase_k_pilots_compare.json
 
 Evidence: `docs/request-latency-v2/evidence/analysis/phase_k_unknown_dynamic_pilots.json`.
 
+True-diff **λ=1.0** unknown_dynamic 200–201: **2/2** success (P50≈78–80 ms). Evidence: `phase_l_caseb_lam1_unknown_dynamic.json`.
+
 ## Phase L
 **Case B** initially (λ=0.1: 5/6 vs supervised 6/6, T saturates).
 
