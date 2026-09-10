@@ -377,6 +377,11 @@ if(SANDO_USE_AMPL)
            "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampls/fixtures/translated_trajectory.json" "91659.8128")
   set_tests_properties(time_fixed_z_forward PROPERTIES TIMEOUT 300)
 
+  add_executable(fixed_z_parity_probe tests/ampls/fixed_z_parity_probe.cpp)
+  target_link_libraries(fixed_z_parity_probe sando_planner)
+  target_compile_options(fixed_z_parity_probe PRIVATE -UNDEBUG -fno-fast-math)
+  ament_target_dependencies(fixed_z_parity_probe rclcpp Eigen3 decomp_ros_msgs decomp_rviz_plugins dynus_interfaces)
+
 
   add_test(NAME baseline_capture_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_capture.py")
   add_test(NAME baseline_arrival_checks COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ampl_model/test_baseline_sim.py")

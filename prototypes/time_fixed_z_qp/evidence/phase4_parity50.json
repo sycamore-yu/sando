@@ -1,0 +1,2912 @@
+{
+  "schema_version": 1,
+  "kind": "phase4_qp_forward_parity",
+  "n": 50,
+  "n_ok": 50,
+  "pass_rate": 1.0,
+  "objective_rel_err_max": 2.470977203489774e-06,
+  "objective_rel_err_median": 2.8251968171882977e-09,
+  "pack": "evidence/parity50_pack.json",
+  "rows": [
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed100",
+      "request_id": "40",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 6884.620810899425,
+          "py_jerk": 6884.620842054686,
+          "objective_close": true,
+          "objective_rel_err": 4.525341620832515e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 1.6000000000000028,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 4210.112692633971,
+          "py_jerk": 4210.112641462536,
+          "objective_close": true,
+          "objective_rel_err": 1.2154409999576316e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 1764.0353994035777,
+          "py_jerk": 1764.035382645986,
+          "objective_close": true,
+          "objective_rel_err": 9.499578030371278e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed100",
+      "request_id": "43",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.600000000000003,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 237395.6062386455,
+          "py_jerk": 237395.61048409887,
+          "objective_close": true,
+          "objective_rel_err": 1.788345353135306e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 48847.511416429305,
+          "py_jerk": 48847.510959063555,
+          "objective_close": true,
+          "objective_rel_err": 9.363133162227522e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed100",
+      "request_id": "47",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.9000000000000035,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 30163.840037466493,
+          "py_jerk": 30163.83956048243,
+          "objective_close": true,
+          "objective_rel_err": 1.5813108356743475e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 18674.592878577998,
+          "py_jerk": 18674.5955930682,
+          "objective_close": true,
+          "objective_rel_err": 1.4535737536813553e-07,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed105",
+      "request_id": "19",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.9000000000000008,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 261674.54290327872,
+          "py_jerk": 261674.5431735645,
+          "objective_close": true,
+          "objective_rel_err": 1.0329082297358073e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 176481.25918373337,
+          "py_jerk": 176481.25917868043,
+          "objective_close": true,
+          "objective_rel_err": 2.863164542089581e-11,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed106",
+      "request_id": "10",
+      "assignment": [
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 108165.491687309,
+          "py_jerk": 108165.49178563202,
+          "objective_close": true,
+          "objective_rel_err": 9.090055050253419e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 1.600000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 67072.21605197806,
+          "py_jerk": 67072.21607028089,
+          "objective_close": true,
+          "objective_rel_err": 2.728824619476938e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed107",
+      "request_id": "11",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 106614.57323666685,
+          "py_jerk": 106614.573537874,
+          "objective_close": true,
+          "objective_rel_err": 2.8251968171882977e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.100000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 76236.91783324204,
+          "py_jerk": 76236.91790156491,
+          "objective_close": true,
+          "objective_rel_err": 8.961914213256185e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed100",
+      "request_id": "24",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.7000000000000013,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 36529.45930335773,
+          "py_jerk": 36529.458525265196,
+          "objective_close": true,
+          "objective_rel_err": 2.130041255709066e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 9772.833378878562,
+          "py_jerk": 9772.833380638163,
+          "objective_close": true,
+          "objective_rel_err": 1.8005026280255547e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed101",
+      "request_id": "38",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.8000000000000032,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 23587.711472923023,
+          "py_jerk": 23587.711466781122,
+          "objective_close": true,
+          "objective_rel_err": 2.6038564204225013e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 10219.570550927661,
+          "py_jerk": 10219.570549794498,
+          "objective_close": true,
+          "objective_rel_err": 1.1088167455568119e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed109",
+      "request_id": "12",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 174680.4512315588,
+          "py_jerk": 174680.451166372,
+          "objective_close": true,
+          "objective_rel_err": 3.7317752060628e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.000000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 174680.45126478514,
+          "py_jerk": 174680.4511663718,
+          "objective_close": true,
+          "objective_rel_err": 5.633907547616937e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed100",
+      "request_id": "35",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 11608.421096692196,
+          "py_jerk": 11608.421187318687,
+          "objective_close": true,
+          "objective_rel_err": 7.80696090849992e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 3603.349222706498,
+          "py_jerk": 3603.349203098272,
+          "objective_close": true,
+          "objective_rel_err": 5.441666878944006e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2000000000000006,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 3630.0977853504737,
+          "py_jerk": 3630.0978102246863,
+          "objective_close": true,
+          "objective_rel_err": 6.852215536218093e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed100",
+      "request_id": "4",
+      "assignment": [
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 96396.50367475953,
+          "py_jerk": 96396.50363698638,
+          "objective_close": true,
+          "objective_rel_err": 3.9185185230572306e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 1.6,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 51970.650428625755,
+          "py_jerk": 51970.65058044828,
+          "objective_close": true,
+          "objective_rel_err": 2.921312773112044e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 16536.061362860957,
+          "py_jerk": 16536.06135722315,
+          "objective_close": true,
+          "objective_rel_err": 3.4094022617402963e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed100",
+      "request_id": "13",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.7000000000000004,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 179279.60128786054,
+          "py_jerk": 179279.60109702943,
+          "objective_close": true,
+          "objective_rel_err": 1.0644329219880912e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 47980.89813890983,
+          "py_jerk": 47980.89816001033,
+          "objective_close": true,
+          "objective_rel_err": 4.3976866146800405e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed103",
+      "request_id": "351",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.9,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 71420.6745626097,
+          "py_jerk": 71420.67456308194,
+          "objective_close": true,
+          "objective_rel_err": 6.6120735470491626e-12,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 48184.936400774895,
+          "py_jerk": 48184.936408396774,
+          "objective_close": true,
+          "objective_rel_err": 1.5817969338870705e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed106",
+      "request_id": "8",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 175093.10966172977,
+          "py_jerk": 175093.10967988285,
+          "objective_close": true,
+          "objective_rel_err": 1.0367671076902735e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.4000000000000004,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 55870.00416356861,
+          "py_jerk": 55870.00416363224,
+          "objective_close": true,
+          "objective_rel_err": 1.1389926714032867e-12,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed100",
+      "request_id": "30",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 140606.11827179696,
+          "py_jerk": 140606.1140597901,
+          "objective_close": true,
+          "objective_rel_err": 2.9956071942489093e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 16709.21173167863,
+          "py_jerk": 16709.213728209823,
+          "objective_close": true,
+          "objective_rel_err": 1.1948684263234768e-07,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 12294.674541860062,
+          "py_jerk": 12294.67554589786,
+          "objective_close": true,
+          "objective_rel_err": 8.166444039864762e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed104",
+      "request_id": "375",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 167174.69752185792,
+          "py_jerk": 167174.6958542489,
+          "objective_close": true,
+          "objective_rel_err": 9.975247882612628e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.1000000000000014,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 127827.32399521495,
+          "py_jerk": 127827.32298308935,
+          "objective_close": true,
+          "objective_rel_err": 7.91791275380501e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed105",
+      "request_id": "271",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 160137.75252354797,
+          "py_jerk": 160137.75255913654,
+          "objective_close": true,
+          "objective_rel_err": 2.2223723492671114e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2000000000000006,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 86118.41892846336,
+          "py_jerk": 86118.41894010382,
+          "objective_close": true,
+          "objective_rel_err": 1.351680103307822e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n200-d0.65-seed101",
+      "request_id": "18",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 157462.93035186338,
+          "py_jerk": 157462.9303152943,
+          "objective_close": true,
+          "objective_rel_err": 2.322392915652211e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 84654.49204611662,
+          "py_jerk": 84654.49204581222,
+          "objective_close": true,
+          "objective_rel_err": 3.5957567683738295e-12,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n200-d0.65-seed106",
+      "request_id": "630",
+      "assignment": [
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 175774.39387842873,
+          "py_jerk": 175774.39386686415,
+          "objective_close": true,
+          "objective_rel_err": 6.579218622551573e-11,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 94532.21271874825,
+          "py_jerk": 94532.2127237801,
+          "objective_close": true,
+          "objective_rel_err": 5.3228930268023556e-11,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n200-d0.65-seed107",
+      "request_id": "712",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.400000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 337439.18960474944,
+          "py_jerk": 337439.1890940481,
+          "objective_close": true,
+          "objective_rel_err": 1.5134618150186037e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n200-d0.65-seed100",
+      "request_id": "273",
+      "assignment": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 196379.7012192011,
+          "py_jerk": 196380.04655658713,
+          "objective_close": true,
+          "objective_rel_err": 1.758515654184903e-06,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.200000000000003,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 110851.68958294392,
+          "py_jerk": 110851.41567162282,
+          "objective_close": true,
+          "objective_rel_err": 2.470977203489774e-06,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n200-d0.65-seed102",
+      "request_id": "29",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 10006.049138017337,
+          "py_jerk": 10006.049118709461,
+          "objective_close": true,
+          "objective_rel_err": 1.92962033432312e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.000000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 10006.049125822126,
+          "py_jerk": 10006.04911870932,
+          "objective_close": true,
+          "objective_rel_err": 7.108506977355982e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n200-d0.65-seed104",
+      "request_id": "720",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 20478.9261538057,
+          "py_jerk": 20478.926135812224,
+          "objective_close": true,
+          "objective_rel_err": 8.786337624519797e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.3000000000000016,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 12547.183131587608,
+          "py_jerk": 12547.18312012564,
+          "objective_close": true,
+          "objective_rel_err": 9.135093283486148e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed100",
+      "request_id": "551",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 173313.96111972549,
+          "py_jerk": 173313.96097742888,
+          "objective_close": true,
+          "objective_rel_err": 8.210336937083093e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.1000000000000005,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 123728.88828189136,
+          "py_jerk": 123728.88835332352,
+          "objective_close": true,
+          "objective_rel_err": 5.773281077466264e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed100",
+      "request_id": "574",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.9000000000000008,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 238832.24830845138,
+          "py_jerk": 238832.24831193467,
+          "objective_close": true,
+          "objective_rel_err": 1.4584680137770615e-11,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 161072.89275346755,
+          "py_jerk": 161072.8929553915,
+          "objective_close": true,
+          "objective_rel_err": 1.2536184308279926e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed100",
+      "request_id": "584",
+      "assignment": [
+        0,
+        0,
+        1,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 9978.870502080325,
+          "py_jerk": 9978.87054086342,
+          "objective_close": true,
+          "objective_rel_err": 3.886521517613268e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.300000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 4109.222784802627,
+          "py_jerk": 4109.222785845432,
+          "objective_close": true,
+          "objective_rel_err": 2.537717839908868e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed108",
+      "request_id": "43",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.900000000000002,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 260649.10702385567,
+          "py_jerk": 260649.10886926908,
+          "objective_close": true,
+          "objective_rel_err": 7.080067986832745e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 177779.91546625644,
+          "py_jerk": 177779.9156310908,
+          "objective_close": true,
+          "objective_rel_err": 9.271820460629687e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed100",
+      "request_id": "746",
+      "assignment": [
+        0,
+        1,
+        1,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 162978.52454442251,
+          "py_jerk": 162978.54064030034,
+          "objective_close": true,
+          "objective_rel_err": 9.876071883782032e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 26123.82183247758,
+          "py_jerk": 26123.82696914412,
+          "objective_close": true,
+          "objective_rel_err": 1.9662764362189316e-07,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.400000000000004,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 19928.495842037955,
+          "py_jerk": 19928.496622042785,
+          "objective_close": true,
+          "objective_rel_err": 3.914017421959136e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed101",
+      "request_id": "549",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 16130.030796761625,
+          "py_jerk": 16130.027762228054,
+          "objective_close": true,
+          "objective_rel_err": 1.8812946980365317e-07,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.200000000000002,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 8596.887313763611,
+          "py_jerk": 8596.886353941909,
+          "objective_close": true,
+          "objective_rel_err": 1.1164759687834912e-07,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed106",
+      "request_id": "19",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 179315.4881388452,
+          "py_jerk": 179315.487402791,
+          "objective_close": true,
+          "objective_rel_err": 4.1047998096604795e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.3000000000000016,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 80094.17076278804,
+          "py_jerk": 80094.17063489427,
+          "objective_close": true,
+          "objective_rel_err": 1.596792496655744e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-medium-seed103",
+      "request_id": "66",
+      "assignment": [
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.8000000000000023,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 308663.1640847903,
+          "py_jerk": 308663.16260253347,
+          "objective_close": true,
+          "objective_rel_err": 4.802182392272103e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 135540.51931845,
+          "py_jerk": 135540.5192686518,
+          "objective_close": true,
+          "objective_rel_err": 3.674044978076385e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-medium-seed103",
+      "request_id": "71",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 150560.55406404682,
+          "py_jerk": 150560.55495720633,
+          "objective_close": true,
+          "objective_rel_err": 5.932227785656394e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.200000000000003,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 80951.97022322385,
+          "py_jerk": 80951.96776397493,
+          "objective_close": true,
+          "objective_rel_err": 3.0379112314557033e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-medium-seed105",
+      "request_id": "224",
+      "assignment": [
+        0,
+        1,
+        1,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.700000000000003,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 138534.61589446617,
+          "py_jerk": 138534.61864103522,
+          "objective_close": true,
+          "objective_rel_err": 1.9825867915790813e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 38914.48443291662,
+          "py_jerk": 38914.48633061701,
+          "objective_close": true,
+          "objective_rel_err": 4.876591122069968e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-medium-seed100",
+      "request_id": "637",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 27504.271425312152,
+          "py_jerk": 27504.270949745896,
+          "objective_close": true,
+          "objective_rel_err": 1.7290633030835263e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 3913.834705613888,
+          "py_jerk": 3913.834700296449,
+          "objective_close": true,
+          "objective_rel_err": 1.3586264756670395e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.100000000000004,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 2882.5017459206647,
+          "py_jerk": 2882.501691163236,
+          "objective_close": true,
+          "objective_rel_err": 1.8996494888722138e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-medium-seed105",
+      "request_id": "15",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 163794.2318949866,
+          "py_jerk": 163794.23199678832,
+          "objective_close": true,
+          "objective_rel_err": 6.21522103316961e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.3000000000000007,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 67441.9059984053,
+          "py_jerk": 67441.90594999478,
+          "objective_close": true,
+          "objective_rel_err": 7.178107601852593e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-medium-seed109",
+      "request_id": "591",
+      "assignment": [
+        0,
+        0,
+        2,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.8000000000000023,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 45552.68113215489,
+          "py_jerk": 45552.68721385573,
+          "objective_close": true,
+          "objective_rel_err": 1.3350915639846885e-07,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 21853.47712694027,
+          "py_jerk": 21853.476729430175,
+          "objective_close": true,
+          "objective_rel_err": 1.818978738603218e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-hard-seed100",
+      "request_id": "707",
+      "assignment": [
+        0,
+        0,
+        2,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.9000000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 274468.8897424564,
+          "py_jerk": 274468.8901517739,
+          "objective_close": true,
+          "objective_rel_err": 1.491307637400003e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 201759.85584525764,
+          "py_jerk": 201759.85551354545,
+          "objective_close": true,
+          "objective_rel_err": 1.6440941006566715e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-hard-seed101",
+      "request_id": "68",
+      "assignment": [
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 201422.23817941546,
+          "py_jerk": 201422.23805830738,
+          "objective_close": true,
+          "objective_rel_err": 6.012647005857481e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0000000000000027,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 201422.23699113727,
+          "py_jerk": 201422.23805830925,
+          "objective_close": true,
+          "objective_rel_err": 5.298183505045576e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-hard-seed109",
+      "request_id": "803",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 81027.33661124553,
+          "py_jerk": 81027.33672654547,
+          "objective_close": true,
+          "objective_rel_err": 1.4229758904409033e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2000000000000006,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 43563.2442767701,
+          "py_jerk": 43563.24427877754,
+          "objective_close": true,
+          "objective_rel_err": 4.6081140533621286e-11,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-hard-seed100",
+      "request_id": "717",
+      "assignment": [
+        0,
+        0,
+        0,
+        2,
+        2
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 237099.66661185026,
+          "py_jerk": 237099.6663457246,
+          "objective_close": true,
+          "objective_rel_err": 1.1224210587414663e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.300000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 98373.94935405627,
+          "py_jerk": 98373.94944079334,
+          "objective_close": true,
+          "objective_rel_err": 8.817077037318658e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-hard-seed104",
+      "request_id": "133",
+      "assignment": [
+        0,
+        0,
+        2,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 181354.78250535764,
+          "py_jerk": 181354.78178701634,
+          "objective_close": true,
+          "objective_rel_err": 3.960972460872316e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2000000000000037,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 97540.65804489376,
+          "py_jerk": 97540.65856185806,
+          "objective_close": true,
+          "objective_rel_err": 5.299987768158683e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-hard-seed106",
+      "request_id": "16",
+      "assignment": [
+        1,
+        0,
+        1,
+        1,
+        1
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 223906.41473722458,
+          "py_jerk": 223906.4488142096,
+          "objective_close": true,
+          "objective_rel_err": 1.5219295920433873e-07,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.1000000000000014,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 167082.4434595108,
+          "py_jerk": 167082.43924679956,
+          "objective_close": true,
+          "objective_rel_err": 2.521336926983071e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed32",
+      "request_id": "50",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 90131.26619570365,
+          "py_jerk": 90131.26625795841,
+          "objective_close": true,
+          "objective_rel_err": 6.907122178781959e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 7545.617109112514,
+          "py_jerk": 7545.617134959959,
+          "objective_close": true,
+          "objective_rel_err": 3.4254911482231216e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.200000000000004,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 3696.4298133429256,
+          "py_jerk": 3696.4298952007216,
+          "objective_close": true,
+          "objective_rel_err": 2.214509629481364e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-hard-seed32",
+      "request_id": "41",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 166545.28264648258,
+          "py_jerk": 166545.28259869246,
+          "objective_close": true,
+          "objective_rel_err": 2.86949703280503e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.1000000000000014,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 118900.62879323552,
+          "py_jerk": 118900.62884864323,
+          "objective_close": true,
+          "objective_rel_err": 4.66000162396066e-10,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n100-d0.65-seed32",
+      "request_id": "340",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.400000000000001,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 152295.6052663803,
+          "py_jerk": 152295.60527530455,
+          "objective_close": true,
+          "objective_rel_err": 5.859823095990315e-11,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed33",
+      "request_id": "41",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 37057.35496871895,
+          "py_jerk": 37057.35503928293,
+          "objective_close": true,
+          "objective_rel_err": 1.9041827410892866e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.000000000000003,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 37057.35526208044,
+          "py_jerk": 37057.35503928265,
+          "objective_close": true,
+          "objective_rel_err": 6.012242079438946e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-easy-seed33",
+      "request_id": "104",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 148314.10510059074,
+          "py_jerk": 148314.10447939544,
+          "objective_close": true,
+          "objective_rel_err": 4.1883764370401685e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 10004.565909338184,
+          "py_jerk": 10004.568122862796,
+          "objective_close": true,
+          "objective_rel_err": 2.212513909133624e-07,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.1000000000000054,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 6402.930643568747,
+          "py_jerk": 6402.931295612546,
+          "objective_close": true,
+          "objective_rel_err": 1.018352015756823e-07,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "static_forest-medium-seed33",
+      "request_id": "37",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 191719.61489600572,
+          "py_jerk": 191719.61635339385,
+          "objective_close": true,
+          "objective_rel_err": 7.601664149765592e-09,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 15069.412729134783,
+          "py_jerk": 15069.413162370009,
+          "objective_close": true,
+          "objective_rel_err": 2.8749309666707872e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.000000000000003,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 15069.414225352579,
+          "py_jerk": 15069.413162369881,
+          "objective_close": true,
+          "objective_rel_err": 7.053909040935943e-08,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n200-d0.65-seed34",
+      "request_id": "81",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 147914.1168350838,
+          "py_jerk": 147914.12985801187,
+          "objective_close": true,
+          "objective_rel_err": 8.804384053524219e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 1.800000000000003,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 28207.30588887958,
+          "py_jerk": 28207.303763953394,
+          "objective_close": true,
+          "objective_rel_err": 7.533248134102636e-08,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 11945.084265353857,
+          "py_jerk": 11945.084360427796,
+          "objective_close": true,
+          "objective_rel_err": 7.959252245577891e-09,
+          "residuals_valid": true
+        }
+      ]
+    },
+    {
+      "scene_id": "unknown_dynamic-n50-d0.65-seed34",
+      "request_id": "37",
+      "assignment": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ok": true,
+      "pairs": [
+        {
+          "factor": 1.0,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 1.5,
+          "cpp_ok": false,
+          "py_ok": false,
+          "status_match": true,
+          "cpp_objective": null,
+          "py_jerk": null,
+          "objective_close": null,
+          "objective_rel_err": null,
+          "residuals_valid": null
+        },
+        {
+          "factor": 2.0,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 161271.9105481346,
+          "py_jerk": 161271.910586742,
+          "objective_close": true,
+          "objective_rel_err": 2.3939317835085786e-10,
+          "residuals_valid": true
+        },
+        {
+          "factor": 2.2000000000000006,
+          "cpp_ok": true,
+          "py_ok": true,
+          "status_match": true,
+          "cpp_objective": 86710.77397396014,
+          "py_jerk": 86710.77408627159,
+          "objective_close": true,
+          "objective_rel_err": 1.295242143613539e-09,
+          "residuals_valid": true
+        }
+      ]
+    }
+  ]
+}

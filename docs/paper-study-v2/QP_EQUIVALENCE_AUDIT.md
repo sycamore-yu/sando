@@ -202,7 +202,7 @@ For a **basis** spot-check without the full 50-pack: dump one Gurobi solution’
 - [x] Show Python Diff-QP rows ≡ Bezier `getCP*` / `getVelCP` / …  
 - [x] Show Python Diff-QP ≢ MINVO / `BasisConverter`  
 - [x] Cite existing single-fixture forward numerical evidence  
-- [ ] 50-instance stratified C++ vs Python formal parity (plan2 §9.1)  
+- [x] 50-instance stratified C++ vs Python formal parity (plan2 §9.1) — **50/50 pass**, max obj rel err `2.47e-6` (`evidence/phase4_parity50.json`)  
 - [ ] Fix or replace `compare_control_points` so it does not compare CPs to raw coeffs  
 - [ ] Optionally align Python ridge / reporting so objective column matches Gurobi without manual jerk extraction  
 - [ ] Amend `docs/diff-time-qp-mapping.md` §2 “node sample” wording after Phase-4 closeout  
