@@ -59,19 +59,45 @@ def summarize_group(group_dir: Path):
         vals = [v for v in vals if v is not None]
         return None if not vals else sum(1 for v in vals if v) / len(vals)
 
+    def wilson(successes: int, n: int, z: float = 1.96):
+        if n <= 0:
+            return None
+        p = successes / n
+        den = 1 + z * z / n
+        center = (p + z * z / (2 * n)) / den
+        half = (z / den) * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+        return {"estimate": p, "ci95": [max(0.0, center - half), min(1.0, center + half)], "n": n, "k": successes}
+
     def med(vals):
         vals = [v for v in vals if v is not None and isinstance(v, (int, float)) and math.isfinite(v)]
         return None if not vals else statistics.median(vals)
 
     methods = {}
     for method, items in by_method.items():
+        goal = [bool(r["goal_reached"]) for r in items]
+        cfg = [bool(r["collision_free_goal_reached"]) for r in items]
+        col = [r["collision"] for r in items if r["collision"] is not None]
+        oneshot_eps = []
+        for r in items:
+            o = r.get("oneshot")
+            fb = None
+            # episode-level oneshot success: any oneshot append and no fallback preferred;
+            # report fraction of appends that were oneshot when counts present
+            if isinstance(o, (int, float)):
+                oneshot_eps.append(o > 0)
         methods[method] = {
             "n": len(items),
-            "goal_rate": rate([r["goal_reached"] for r in items]),
-            "collision_free_goal_rate": rate([r["collision_free_goal_reached"] for r in items]),
-            "collision_rate": rate([r["collision"] for r in items]),
+            "goal_rate": rate(goal),
+            "goal_wilson95": wilson(sum(goal), len(goal)),
+            "collision_free_goal_rate": rate(cfg),
+            "collision_free_goal_wilson95": wilson(sum(1 for v in cfg if v), len(cfg)),
+            "collision_rate": rate(col),
+            "episodes_with_oneshot_append": rate(oneshot_eps) if oneshot_eps else None,
+            "oneshot_append_wilson95": wilson(sum(1 for v in oneshot_eps if v), len(oneshot_eps)) if oneshot_eps else None,
             "latency_p50_median_ms": med([r["latency_p50_ms"] for r in items]),
+            "latency_p95_median_ms": med([r["latency_p95_ms"] for r in items]),
             "min_clearance_median": med([r["minimum_clearance"] for r in items]),
+            "median_oneshot_appends": med([r["oneshot"] for r in items if isinstance(r.get("oneshot"), (int, float))]),
         }
     return {"group_dir": str(group_dir), "n_rows": len(rows), "methods": methods, "rows": rows}
 
