@@ -742,6 +742,10 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
         append_success ? nlohmann::json(last_append_predicted_T_) : nlohmann::json(nullptr);
     metrics["fallback"] =
         append_success ? nlohmann::json(last_append_fallback_) : nlohmann::json(nullptr);
+    metrics["z_id"] =
+        append_success ? nlohmann::json(last_append_z_id_) : nlohmann::json(nullptr);
+    metrics["corridor_method"] =
+        append_success ? nlohmann::json(last_append_corridor_method_) : nlohmann::json(nullptr);
     if (append_success && !last_appended_assignment_.empty())
       metrics["actual_chosen_assignment"] = last_appended_assignment_;
     if (!last_replan_chosen_assignment_.empty())
@@ -875,6 +879,15 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
   last_append_predicted_T_ = successful_factor_;
   last_append_trajectory_id_ =
       std::to_string(capture_request_id_) + ":f" + std::to_string(successful_factor_);
+  last_append_z_id_.clear();
+  for (std::size_t zi = 0; zi < last_appended_assignment_.size(); ++zi) {
+    if (zi) last_append_z_id_ += ",";
+    last_append_z_id_ += std::to_string(last_appended_assignment_[zi]);
+  }
+  last_append_corridor_method_ =
+      (corridor_method_ == SolverGurobi::CorridorMethod::Learned)     ? "learned"
+      : (corridor_method_ == SolverGurobi::CorridorMethod::Previous) ? "previous"
+                                                                     : "original";
 #endif
   if (par_.debug_verbose)
     std::cout << "Append to Plan: " << timer_append.getElapsedMicros() / 1000.0 << " ms"
@@ -912,6 +925,8 @@ void SANDO::notePublishComplete() {
                        {"trajectory_id", last_append_trajectory_id_},
                        {"predicted_T", last_append_predicted_T_},
                        {"fallback", last_append_fallback_},
+                       {"z_id", last_append_z_id_},
+                       {"corridor_method", last_append_corridor_method_},
                        {"actual_chosen_assignment", last_appended_assignment_},
                        {"publish_ms", publish_ms}};
   replan_metrics_stream_ << event.dump() << '\n';
@@ -933,6 +948,8 @@ void SANDO::noteControllerFirstUse() {
                        {"trajectory_id", last_append_trajectory_id_},
                        {"predicted_T", last_append_predicted_T_},
                        {"fallback", last_append_fallback_},
+                       {"z_id", last_append_z_id_},
+                       {"corridor_method", last_append_corridor_method_},
                        {"actual_chosen_assignment", last_appended_assignment_},
                        {"controller_first_use_ms", controller_first_use_ms}};
   replan_metrics_stream_ << event.dump() << '\n';

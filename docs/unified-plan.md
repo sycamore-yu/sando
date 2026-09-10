@@ -18,18 +18,17 @@ Deployed path: **1T → real C(T) → 1Z → 1 hard QP**.
 
 ## Current Milestone
 
-**Case B follow-through: mitigate online T saturation OR deepen attribution; close remaining §3 items**
+**Promote λ=1.0 Case B fix → freeze → decide Phase M expand; stamp obs hashes**
 
 ---
 
-## Completed Evidence (high level)
+## Completed Evidence
 
-- True Diff-QP (KKT) + λ=0.1; FD ablation; Phase F 100-step  
-- Online one-shot + controller_first_use identity  
-- Fair static pilots 200–205: Original 6/6, Supervised 6/6, FD 5/6, True-diff 5/6  
-- Unknown/dynamic pilot 200–201: Supervised 2/2, True-diff 2/2  
-- Phase L **Case B** (T→F_MAX saturation)  
-- `docs/final-study/` package (draft→filled with current evidence)
+- True Diff-QP (KKT); Phase E/F; online one-shot + controller_first_use + `z_id`/`corridor_method`
+- Fair static 200–205: Original 6/6, Supervised 6/6, FD 5/6, True-diff λ0.1 5/6
+- Case B mitigation: **True-diff λ=1.0 → 6/6**, lower F_MAX saturation
+- Unknown/dynamic 200–201: Supervised 2/2, True-diff λ0.1 2/2
+- `docs/final-study/` package
 
 ---
 
@@ -37,22 +36,22 @@ Deployed path: **1T → real C(T) → 1Z → 1 hard QP**.
 
 | Item | Status |
 |---|---|
-| 3.1 one-shot + true Diff-QP route | PASS |
-| 3.1 Z discrete learning | N/A (Z frozen; not failure-dominant) |
-| 3.2 QP/residual/grads/C(T)/containment | PASS (prior phases) |
-| 3.3 A–D fair compare | PASS (E=D with frozen Z) |
-| 3.4 multi-scene beyond seed200 | PARTIAL (static 200–205 + unknown_dyn 200–201; more difficulty configs thin) |
-| 3.5 identity chain | PARTIAL (publish/controller_first_use live; obs/corridor hashes still open) |
-| 3.6 paper package | PARTIAL (`docs/final-study/` present; not claiming All done) |
+| 3.1 one-shot + Diff-QP | PASS |
+| 3.1 Z discrete learning | N/A (frozen Z) |
+| 3.2 correctness | PASS |
+| 3.3 A–D fair compare | PASS (+ λ1 mitigation) |
+| 3.4 generalization | PARTIAL (need more difficulty / freeze then optional 200–229) |
+| 3.5 identity | PARTIAL (`z_id`/corridor_method added; full obs/map sha still open) |
+| 3.6 paper package | PARTIAL |
 
 ---
 
 ## Next Automatic Action
 
-1. Case B mitigation probe: reduce online F_MAX saturation (e.g. feature check / soft prior) without deepening net  
-2. Stamp observation/corridor hash on replan events  
-3. Optional: more difficulty configs  
-4. Re-audit §3 — only then All done  
+1. Freeze λ=1.0 as primary; re-run unknown_dynamic smoke with λ1  
+2. Add observation/map sha to online events when cheap  
+3. Phase L Case A re-eval: if λ1 clearly ≥ supervised with no regressions → expand 200–229  
+4. Only All done when §3 fully evidenced  
 
 ---
 

@@ -546,6 +546,8 @@ class SANDO {
   bool last_append_fallback_{false};
   double last_append_predicted_T_{-1.0};
   std::string last_append_trajectory_id_;
+  std::string last_append_z_id_;
+  std::string last_append_corridor_method_;
   std::vector<double> last_replan_factors_;
   std::vector<nlohmann::json> last_factor_policy_metrics_;
   std::vector<double> last_replan_decomp_times_;

@@ -34,4 +34,7 @@ Evidence: `docs/request-latency-v2/evidence/analysis/phase_k_pilots_compare.json
 Evidence: `docs/request-latency-v2/evidence/analysis/phase_k_unknown_dynamic_pilots.json`.
 
 ## Phase L
-**Case B** — true-diff does not beat supervised on static task success (5/6 vs 6/6). Online T saturates at 2.5 for true-diff (61.7% on seed200). **Do not expand to 200–229 yet.**
+**Case B** initially (λ=0.1: 5/6 vs supervised 6/6, T saturates).
+
+**Mitigation:** λ_T=1.0 model → **6/6** on seeds 200–205; F_MAX fraction ~11–22%; P50≈24.2 ms.  
+Evidence: `phase_l_case_b_lam1_mitigation.json`. Candidate to promote as primary timing model (still freeze before any 200–229 expand).

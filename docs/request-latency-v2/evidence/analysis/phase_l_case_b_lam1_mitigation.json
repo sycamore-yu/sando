@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "kind": "phase_l_case_b_lam1_mitigation",
+  "model": "prototypes/time_fixed_z_qp/evidence/phase_e_train/timing_kkt_lam1.0_seed0.json",
+  "seeds": [
+    200,
+    201,
+    202,
+    203,
+    204,
+    205
+  ],
+  "task_success": 6,
+  "n": 6,
+  "mean_latency_p50_ms": 24.203874833333334,
+  "T_stats": {
+    "200": {
+      "n": 1088,
+      "frac_at_2_5": 0.20955882352941177,
+      "mean_T": 2.2205010788329314
+    },
+    "201": {
+      "n": 1115,
+      "frac_at_2_5": 0.20358744394618833,
+      "mean_T": 2.1967558960428923
+    },
+    "202": {
+      "n": 1057,
+      "frac_at_2_5": 0.1173131504257332,
+      "mean_T": 2.157432701375913
+    },
+    "203": {
+      "n": 998,
+      "frac_at_2_5": 0.11222444889779559,
+      "mean_T": 2.2183947568988427
+    },
+    "204": {
+      "n": 967,
+      "frac_at_2_5": 0.22440537745604963,
+      "mean_T": 2.2099502459414024
+    },
+    "205": {
+      "n": 1098,
+      "frac_at_2_5": 0.21129326047358835,
+      "mean_T": 2.215475440120146
+    }
+  },
+  "compare_to_lam0_1": {
+    "task_success": "5/6",
+    "frac_at_2_5_seed200": 0.6166
+  },
+  "finding": "lambda_T=1.0 yields 6/6 task success on seeds 200-205; F_MAX saturation ~12-21% vs 62% at lambda=0.1; P50~24ms \u2248 supervised.",
+  "promoted_candidate": true,
+  "runs": [
+    {
+      "method": "true_diff",
+      "seed": 200,
+      "n_attempted": 1194,
+      "append_ok": 1088,
+      "oneshot_append_no_fallback": 1088,
+      "fallback_append": 0,
+      "controller_first_use_events": 1088,
+      "failure_stage": {
+        "corridor_decomposition": 96,
+        "None": 1088,
+        "optimization": 10
+      },
+      "latency_p50_ms": 23.645187,
+      "latency_p95_ms": 30.983425,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.2583765875490309,
+      "error": null,
+      "wall_elapsed_sec": 48.97023558593355
+    },
+    {
+      "method": "true_diff",
+      "seed": 201,
+      "n_attempted": 1159,
+      "append_ok": 1115,
+      "oneshot_append_no_fallback": 1115,
+      "fallback_append": 0,
+      "controller_first_use_events": 1115,
+      "failure_stage": {
+        "corridor_decomposition": 43,
+        "None": 1115,
+        "optimization": 1
+      },
+      "latency_p50_ms": 23.950973,
+      "latency_p95_ms": 31.273799,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.2569063376427644,
+      "error": null,
+      "wall_elapsed_sec": 47.56689785805065
+    },
+    {
+      "method": "true_diff",
+      "seed": 202,
+      "n_attempted": 1123,
+      "append_ok": 1057,
+      "oneshot_append_no_fallback": 1057,
+      "fallback_append": 0,
+      "controller_first_use_events": 1057,
+      "failure_stage": {
+        "corridor_decomposition": 44,
+        "None": 1057,
+        "optimization": 22
+      },
+      "latency_p50_ms": 23.94741,
+      "latency_p95_ms": 31.594314,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.26059748086338197,
+      "error": null,
+      "wall_elapsed_sec": 46.944678551051766
+    },
+    {
+      "method": "true_diff",
+      "seed": 203,
+      "n_attempted": 1113,
+      "append_ok": 998,
+      "oneshot_append_no_fallback": 998,
+      "fallback_append": 0,
+      "controller_first_use_events": 999,
+      "failure_stage": {
+        "corridor_decomposition": 82,
+        "None": 998,
+        "optimization": 32,
+        "append": 1
+      },
+      "latency_p50_ms": 25.359914,
+      "latency_p95_ms": 36.06266,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.23804488741560334,
+      "error": null,
+      "wall_elapsed_sec": 49.712998370989226
+    },
+    {
+      "method": "true_diff",
+      "seed": 204,
+      "n_attempted": 1021,
+      "append_ok": 967,
+      "oneshot_append_no_fallback": 967,
+      "fallback_append": 0,
+      "controller_first_use_events": 968,
+      "failure_stage": {
+        "corridor_decomposition": 41,
+        "None": 967,
+        "optimization": 13
+      },
+      "latency_p50_ms": 24.252328,
+      "latency_p95_ms": 32.108689,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.23342119774017014,
+      "error": null,
+      "wall_elapsed_sec": 47.480313245090656
+    },
+    {
+      "method": "true_diff",
+      "seed": 205,
+      "n_attempted": 1183,
+      "append_ok": 1098,
+      "oneshot_append_no_fallback": 1098,
+      "fallback_append": 0,
+      "controller_first_use_events": 1099,
+      "failure_stage": {
+        "None": 1098,
+        "corridor_decomposition": 85
+      },
+      "latency_p50_ms": 24.067437,
+      "latency_p95_ms": 32.349168,
+      "goal_reached": true,
+      "success": true,
+      "goal_distance_m": 0.25143998547241153,
+      "error": null,
+      "wall_elapsed_sec": 48.03270706697367
+    }
+  ]
+}

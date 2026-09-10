@@ -19,7 +19,8 @@ Observation → predict 1 T → rebuild real C(T) → corridor-cost top-1 Z → 
 Fallback is counted separately (`fallback=true`); not counted as one-shot success.
 
 ## Primary models
-- Timing: `prototypes/time_fixed_z_qp/evidence/phase_f_train/timing_kkt_lam0.1_seed0.json`
+- Timing (Case B mitigated): `prototypes/time_fixed_z_qp/evidence/phase_e_train/timing_kkt_lam1.0_seed0.json`  
+  (λ=0.1 Phase F model kept for ablation; online saturation issue)
 - Z (frozen): `docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json`
 - Supervised baseline timing: `.../timing-schema2-regression.json`
 
