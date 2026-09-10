@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "completed_at": "2026-09-10T10:03:19+0000",
+  "commit": "43e701981a6765bfc74f91df752d4fe3f9382957",
+  "n_rows": 270,
+  "expected_rows": 270,
+  "aggregate": "docs/paper-study-v2/FORMAL_AGGREGATE.json",
+  "attribution": "docs/paper-study-v2/FAILURE_ATTRIBUTION.json",
+  "bootstrap": "docs/paper-study-v2/PAIRED_BOOTSTRAP.json",
+  "tables": "docs/paper-study-v2/final/"
+}

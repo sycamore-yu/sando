@@ -1,0 +1,55 @@
+{
+  "groups": {
+    "paper_procedural_static_easy": {
+      "original": {
+        "p50_median_ms": 74.774729,
+        "p95_median_ms": 96.6559755,
+        "n": 30
+      },
+      "supervised": {
+        "p50_median_ms": 58.0006765,
+        "p95_median_ms": 73.6040835,
+        "n": 30
+      },
+      "true_diff": {
+        "p50_median_ms": 56.8974185,
+        "p95_median_ms": 69.590622,
+        "n": 30
+      }
+    },
+    "paper_unknown_dynamic_easy": {
+      "original": {
+        "p50_median_ms": 197.3488605,
+        "p95_median_ms": 278.49878149999995,
+        "n": 30
+      },
+      "supervised": {
+        "p50_median_ms": 82.743345,
+        "p95_median_ms": 118.88176,
+        "n": 30
+      },
+      "true_diff": {
+        "p50_median_ms": 87.534002,
+        "p95_median_ms": 118.79441349999999,
+        "n": 30
+      }
+    },
+    "paper_procedural_static_medium": {
+      "original": {
+        "p50_median_ms": 80.501701,
+        "p95_median_ms": 105.6318435,
+        "n": 30
+      },
+      "supervised": {
+        "p50_median_ms": 61.509262,
+        "p95_median_ms": 77.884653,
+        "n": 30
+      },
+      "true_diff": {
+        "p50_median_ms": 61.158125999999996,
+        "p95_median_ms": 75.845997,
+        "n": 30
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "commit": "43e701981a6765bfc74f91df752d4fe3f9382957",
+  "artifacts": [
+    {
+      "path": "prototypes/time_fixed_z_qp/evidence/phase_e_train/timing_kkt_lam1.0_seed0.json",
+      "sha256": "c92792ff89e7dea989841bcfdb2b68b111147a3c7c8d1336d6d488d83ec5c8e3",
+      "bytes": 118158
+    },
+    {
+      "path": "docker/dev-workspace/results/joint-time-v2/models/timing-schema2-regression.json",
+      "sha256": "48df3344d738e83065b3ce6026a253ec0f04461e67f233d779c3e1b9a62eeea9",
+      "bytes": 165172
+    },
+    {
+      "path": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json",
+      "sha256": "1bc5e8876c492d9f83a718f860f08415b7caef655ec2e921a75ca20fca1d0351",
+      "bytes": 1161069
+    },
+    {
+      "path": "docs/paper-study-v2/FREEZE.json",
+      "sha256": "71903a57fc7642406b3b8091479e26b845aabd91eda5b8ca6adb562892485380",
+      "bytes": 5641
+    },
+    {
+      "path": "docs/paper-study-v2/environment_manifest.json",
+      "sha256": "3539f14dedd2851ccd7da9752ad5b837a4244af0a8ebae034eea0484b4553538",
+      "bytes": 204129
+    }
+  ],
+  "raw_evidence_roots": [
+    "docker/dev-workspace/results/request-latency-v3/online/paper_procedural_static_easy",
+    "docker/dev-workspace/results/request-latency-v3/online/paper_unknown_dynamic_easy",
+    "docker/dev-workspace/results/request-latency-v3/online/paper_procedural_static_medium"
+  ]
+}

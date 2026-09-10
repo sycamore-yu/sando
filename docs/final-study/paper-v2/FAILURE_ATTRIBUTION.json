@@ -1,0 +1,1944 @@
+{
+  "schema_version": 1,
+  "kind": "paper_failure_attribution",
+  "groups": [
+    {
+      "group": "paper_procedural_static_easy",
+      "n": 90,
+      "counts": {
+        "original|execution_tracking": 27,
+        "original|other": 1,
+        "original|success_collision_free": 2,
+        "supervised|execution_tracking": 27,
+        "supervised|other": 1,
+        "supervised|success_collision_free": 2,
+        "true_diff|execution_tracking": 24,
+        "true_diff|other": 3,
+        "true_diff|success_collision_free": 3
+      },
+      "rows": [
+        {
+          "method": "original",
+          "seed": 1000,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1001,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1002,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 1003,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1004,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1005,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1006,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1007,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1008,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1009,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1010,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1011,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1012,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1013,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1014,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1015,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1016,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1017,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1018,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 1019,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1020,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1021,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1022,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1023,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 1024,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1025,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1026,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1027,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1028,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1029,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1000,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1001,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1002,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1003,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1004,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1005,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1006,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1007,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1008,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1009,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1010,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1011,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 1012,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1013,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1014,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1015,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1016,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1017,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1018,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 1019,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1020,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1021,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1022,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1023,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 1024,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1025,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1026,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1027,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1028,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1029,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1000,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1001,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1002,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1003,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1004,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1005,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1006,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1007,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1008,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1009,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1010,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1011,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1012,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1013,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1014,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1015,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1016,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1017,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1018,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1019,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1020,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1021,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1022,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1023,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1024,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1025,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1026,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1027,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1028,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1029,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        }
+      ]
+    },
+    {
+      "group": "paper_unknown_dynamic_easy",
+      "n": 90,
+      "counts": {
+        "original|execution_tracking": 21,
+        "original|success_collision_free": 9,
+        "supervised|execution_tracking": 23,
+        "supervised|other": 1,
+        "supervised|success_collision_free": 6,
+        "true_diff|execution_tracking": 25,
+        "true_diff|success_collision_free": 5
+      },
+      "rows": [
+        {
+          "method": "original",
+          "seed": 2000,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2001,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2002,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2003,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2004,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2005,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2006,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2007,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2008,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2009,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2010,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2011,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2012,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2013,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2014,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2015,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2016,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2017,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2018,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2019,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2020,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2021,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2022,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2023,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2024,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2025,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 2026,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2027,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2028,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 2029,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2000,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2001,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2002,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2003,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2004,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 2005,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2006,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 2007,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 2008,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2009,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2010,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2011,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2012,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 2013,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2014,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2015,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2016,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 2017,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2018,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 2019,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2020,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "supervised",
+          "seed": 2021,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2022,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2023,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2024,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2025,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2026,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2027,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2028,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 2029,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2000,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2001,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2002,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2003,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2004,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2005,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2006,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 2007,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2008,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2009,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2010,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2011,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2012,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2013,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 2014,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2015,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2016,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2017,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2018,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 2019,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2020,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 2021,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2022,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2023,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2024,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2025,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2026,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2027,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2028,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 2029,
+          "bucket": "success_collision_free",
+          "goal_reached": true,
+          "collision": false
+        }
+      ]
+    },
+    {
+      "group": "paper_procedural_static_medium",
+      "n": 90,
+      "counts": {
+        "original|execution_tracking": 29,
+        "original|other": 1,
+        "supervised|execution_tracking": 30,
+        "true_diff|execution_tracking": 27,
+        "true_diff|other": 3
+      },
+      "rows": [
+        {
+          "method": "original",
+          "seed": 1100,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1101,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1102,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1103,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1104,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1105,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1106,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1107,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1108,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1109,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1110,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1111,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1112,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1113,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1114,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1115,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1116,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1117,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1118,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1119,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1120,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1121,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1122,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1123,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "original",
+          "seed": 1124,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1125,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1126,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1127,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1128,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "original",
+          "seed": 1129,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1100,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1101,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1102,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1103,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1104,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1105,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1106,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1107,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1108,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1109,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1110,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1111,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1112,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1113,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1114,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1115,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1116,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1117,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1118,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1119,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1120,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1121,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1122,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1123,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1124,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1125,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1126,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1127,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1128,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "supervised",
+          "seed": 1129,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1100,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1101,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1102,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1103,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1104,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1105,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1106,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1107,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1108,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1109,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1110,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1111,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1112,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1113,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1114,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1115,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1116,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1117,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1118,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1119,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1120,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1121,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1122,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1123,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1124,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1125,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1126,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1127,
+          "bucket": "execution_tracking",
+          "goal_reached": true,
+          "collision": true
+        },
+        {
+          "method": "true_diff",
+          "seed": 1128,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        },
+        {
+          "method": "true_diff",
+          "seed": 1129,
+          "bucket": "other",
+          "goal_reached": false,
+          "collision": false
+        }
+      ]
+    }
+  ],
+  "wrong_Z_count_learned": 0,
+  "non_success_count": 243,
+  "restart_Z_learning": false
+}

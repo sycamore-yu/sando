@@ -1,0 +1,55 @@
+{
+  "groups": {
+    "paper_procedural_static_easy": {
+      "original": {
+        "goal_rate": 0.9666666666666667,
+        "collision_free_goal_rate": 0.06666666666666667,
+        "n": 30
+      },
+      "supervised": {
+        "goal_rate": 0.9666666666666667,
+        "collision_free_goal_rate": 0.06666666666666667,
+        "n": 30
+      },
+      "true_diff": {
+        "goal_rate": 0.9,
+        "collision_free_goal_rate": 0.1,
+        "n": 30
+      }
+    },
+    "paper_unknown_dynamic_easy": {
+      "original": {
+        "goal_rate": 1.0,
+        "collision_free_goal_rate": 0.3,
+        "n": 30
+      },
+      "supervised": {
+        "goal_rate": 0.9666666666666667,
+        "collision_free_goal_rate": 0.2,
+        "n": 30
+      },
+      "true_diff": {
+        "goal_rate": 1.0,
+        "collision_free_goal_rate": 0.16666666666666666,
+        "n": 30
+      }
+    },
+    "paper_procedural_static_medium": {
+      "original": {
+        "goal_rate": 0.9666666666666667,
+        "collision_free_goal_rate": 0.0,
+        "n": 30
+      },
+      "supervised": {
+        "goal_rate": 1.0,
+        "collision_free_goal_rate": 0.0,
+        "n": 30
+      },
+      "true_diff": {
+        "goal_rate": 0.9,
+        "collision_free_goal_rate": 0.0,
+        "n": 30
+      }
+    }
+  }
+}

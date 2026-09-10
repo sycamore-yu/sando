@@ -18,12 +18,11 @@ Do **not** declare All done until plan2 **§20 PAPER-LEVEL DEFINITION OF DONE** 
 | 4 QP parity | **PASS** | 50/50 `phase4_parity50.json` |
 | 5 KKT freeze | **PASS** | 30/30 grad `GRADIENT_FREEZE.md` |
 | 6 Train freeze | **PASS** | `FREEZE.json` (λ=1.0 DiffOpt) |
-| 7–8 Formal A/B/C | **IN PROGRESS** | easy 90/90 done; dynamic original ~17/30; total ~107/270 |
-| 9 Stats protocol | **PASS (pre-reg)** | `STATISTICS.md` frozen before outcomes |
-| Partial easy analysis | **PASS (partial)** | `PARTIAL_EASY.md` — not DoD |
-| 10–14 RQ / package | PENDING | stubs ready; fill after `ALL_GROUPS_DONE` |
-| §20 Paper DoD | OPEN | living checklist in `FINAL_DOD_AUDIT.md` |
+| 7–8 Formal A/B/C | **PASS** | 270/270; `FORMAL_COMPLETE.json` |
+| 9 Stats / CI | **PASS** | `STATISTICS.md`, Wilson + `PAIRED_BOOTSTRAP.json` |
+| 10–14 RQ / package | **PASS** | `RQ_ANSWERS.md`, `00_EXECUTIVE_SUMMARY.md`, `final/` |
+| §20 Paper DoD | **PASS** | `FINAL_DOD_AUDIT.md` / `.json` |
 
-## Next
+## Headline (do not overclaim)
 
-Finish remaining formal matrix → full aggregate / attribution / RQ → sync `docs/final-study/paper-v2/` → close §20 only with evidence.
+Learned oneshot **faster** than Original; **no** collision-free safety win; DiffOpt **≠** Supervised online win; **Z stays frozen**.

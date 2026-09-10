@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "kind": "paper_level_dod_audit",
+  "authority": "docs/fromchat/plan2.md §20",
+  "verdict": "PASS",
+  "all_done": true,
+  "formal_n_rows": 270,
+  "restart_Z_learning": false,
+  "sections": {
+    "METHOD": "PASS",
+    "ENVIRONMENT": "PASS",
+    "FAIRNESS": "PASS",
+    "ONLINE": "PASS",
+    "SAFETY": "PASS",
+    "RESULTS": "PASS",
+    "SCIENTIFIC_ANSWER": "PASS",
+    "REPRODUCIBILITY": "PASS"
+  },
+  "evidence": {
+    "aggregate": "docs/paper-study-v2/FORMAL_AGGREGATE.json",
+    "bootstrap": "docs/paper-study-v2/PAIRED_BOOTSTRAP.json",
+    "attribution": "docs/paper-study-v2/FAILURE_ATTRIBUTION.json",
+    "rq": "docs/paper-study-v2/RQ_ANSWERS.md",
+    "executive": "docs/paper-study-v2/00_EXECUTIVE_SUMMARY.md",
+    "tables": "docs/paper-study-v2/final/",
+    "repro_hashes": "docs/paper-study-v2/REPRO_HASHES.json",
+    "formal_complete": "docs/paper-study-v2/FORMAL_COMPLETE.json",
+    "checklist_md": "docs/paper-study-v2/FINAL_DOD_AUDIT.md"
+  },
+  "headline": {
+    "learned_latency_win": true,
+    "learned_safety_win": false,
+    "diffopt_beats_supervised_online": false,
+    "z_restart": false
+  }
+}
