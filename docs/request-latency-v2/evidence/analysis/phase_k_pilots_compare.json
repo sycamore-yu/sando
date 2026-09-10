@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "kind": "phase_k_pilots_compare",
+  "run_root": "docker/dev-workspace/results/request-latency-v3/online/phase_k_pilots",
+  "methods": {
+    "supervised": {
+      "n_seeds": 6,
+      "task_success": 6,
+      "task_success_rate": 1.0,
+      "goal_reached": 6,
+      "goal_reached_rate": 1.0,
+      "mean_oneshot_appends": 976,
+      "mean_controller_first_use": 976.1666666666666,
+      "mean_latency_p50_ms": 24.038688166666667,
+      "mean_latency_p95_ms": 32.996191833333334,
+      "failures_kept": [],
+      "per_seed": [
+        {
+          "seed": 200,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 963,
+          "fallback_append": 0,
+          "controller_first_use_events": 963,
+          "latency_p50_ms": 23.62344,
+          "latency_p95_ms": 32.966947,
+          "wall_elapsed_sec": 46.4892892310163,
+          "error": null
+        },
+        {
+          "seed": 201,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 983,
+          "fallback_append": 0,
+          "controller_first_use_events": 984,
+          "latency_p50_ms": 23.941172,
+          "latency_p95_ms": 32.78019,
+          "wall_elapsed_sec": 45.64196532696951,
+          "error": null
+        },
+        {
+          "seed": 202,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 967,
+          "fallback_append": 0,
+          "controller_first_use_events": 967,
+          "latency_p50_ms": 24.268151,
+          "latency_p95_ms": 33.273622,
+          "wall_elapsed_sec": 44.99825981503818,
+          "error": null
+        },
+        {
+          "seed": 203,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 985,
+          "fallback_append": 0,
+          "controller_first_use_events": 985,
+          "latency_p50_ms": 24.034421,
+          "latency_p95_ms": 33.246981,
+          "wall_elapsed_sec": 44.91804240993224,
+          "error": null
+        },
+        {
+          "seed": 204,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 988,
+          "fallback_append": 0,
+          "controller_first_use_events": 988,
+          "latency_p50_ms": 24.169672,
+          "latency_p95_ms": 32.389406,
+          "wall_elapsed_sec": 44.79460157104768,
+          "error": null
+        },
+        {
+          "seed": 205,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 970,
+          "fallback_append": 0,
+          "controller_first_use_events": 970,
+          "latency_p50_ms": 24.195273,
+          "latency_p95_ms": 33.320005,
+          "wall_elapsed_sec": 45.03018917294685,
+          "error": null
+        }
+      ]
+    },
+    "true_diff": {
+      "n_seeds": 6,
+      "task_success": 5,
+      "task_success_rate": 0.8333333333333334,
+      "goal_reached": 5,
+      "goal_reached_rate": 0.8333333333333334,
+      "mean_oneshot_appends": 947.3333333333334,
+      "mean_controller_first_use": 947.8333333333334,
+      "mean_latency_p50_ms": 21.701321666666665,
+      "mean_latency_p95_ms": 29.730404666666665,
+      "failures_kept": [
+        {
+          "seed": 201,
+          "success": false,
+          "error": "observation timeout: goal_reached was not received",
+          "oneshot": 20
+        }
+      ],
+      "per_seed": [
+        {
+          "seed": 200,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 1111,
+          "fallback_append": 0,
+          "controller_first_use_events": 1111,
+          "latency_p50_ms": 24.877763,
+          "latency_p95_ms": 33.595606,
+          "wall_elapsed_sec": 51.036746555007994,
+          "error": null
+        },
+        {
+          "seed": 201,
+          "success": false,
+          "goal_reached": false,
+          "oneshot_append_no_fallback": 20,
+          "fallback_append": 0,
+          "controller_first_use_events": 20,
+          "latency_p50_ms": 6.399722,
+          "latency_p95_ms": 10.552053,
+          "wall_elapsed_sec": 117.57818750897422,
+          "error": "observation timeout: goal_reached was not received"
+        },
+        {
+          "seed": 202,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 1140,
+          "fallback_append": 0,
+          "controller_first_use_events": 1140,
+          "latency_p50_ms": 24.406944,
+          "latency_p95_ms": 33.774555,
+          "wall_elapsed_sec": 50.385677309008315,
+          "error": null
+        },
+        {
+          "seed": 203,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 1111,
+          "fallback_append": 0,
+          "controller_first_use_events": 1111,
+          "latency_p50_ms": 24.748116,
+          "latency_p95_ms": 33.276101,
+          "wall_elapsed_sec": 49.85678710008506,
+          "error": null
+        },
+        {
+          "seed": 204,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 1150,
+          "fallback_append": 0,
+          "controller_first_use_events": 1150,
+          "latency_p50_ms": 24.859665,
+          "latency_p95_ms": 33.989506,
+          "wall_elapsed_sec": 51.13855097396299,
+          "error": null
+        },
+        {
+          "seed": 205,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 1152,
+          "fallback_append": 0,
+          "controller_first_use_events": 1155,
+          "latency_p50_ms": 24.91572,
+          "latency_p95_ms": 33.194607,
+          "wall_elapsed_sec": 49.909099924960174,
+          "error": null
+        }
+      ]
+    }
+  },
+  "timing_true_diff": "prototypes/time_fixed_z_qp/evidence/phase_f_train/timing_kkt_lam0.1_seed0.json",
+  "timing_supervised": "docker/dev-workspace/results/joint-time-v2/models/timing-schema2-regression.json",
+  "corridor_z": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json",
+  "phase_l_case": "B",
+  "phase_l_note": "true_diff task success 5/6 vs supervised 6/6; seed201 timeout retained. Not clearly better \u2192 Case B analysis, do not expand 200-229 yet. Z not dominant (fallback=0). Online T often saturates at 2.5."
+}

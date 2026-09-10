@@ -1,0 +1,21 @@
+{
+  "method": "true_diff",
+  "seed": 201,
+  "n_attempted": 9861,
+  "append_ok": 20,
+  "oneshot_append_no_fallback": 20,
+  "fallback_append": 0,
+  "controller_first_use_events": 20,
+  "failure_stage": {
+    "corridor_decomposition": 9833,
+    "None": 20,
+    "optimization": 8
+  },
+  "latency_p50_ms": 6.399722,
+  "latency_p95_ms": 10.552053,
+  "goal_reached": false,
+  "success": false,
+  "goal_distance_m": 96.11203760695938,
+  "error": "observation timeout: goal_reached was not received",
+  "wall_elapsed_sec": 117.57818750897422
+}

@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "kind": "phase_l_case_b_T_saturation",
+  "seed": 200,
+  "methods": {
+    "true_diff": {
+      "n_append_success": 1111,
+      "n_with_T": 1111,
+      "T_top": [
+        [
+          2.5,
+          685
+        ],
+        [
+          2.007,
+          8
+        ],
+        [
+          2.013,
+          7
+        ],
+        [
+          2.009,
+          7
+        ],
+        [
+          2.014,
+          6
+        ],
+        [
+          2.015,
+          6
+        ],
+        [
+          2.004,
+          5
+        ],
+        [
+          2.131,
+          4
+        ],
+        [
+          2.122,
+          4
+        ],
+        [
+          2.032,
+          4
+        ]
+      ],
+      "frac_at_2_5": 0.6165616561656165,
+      "mean_T": 2.332150000306909
+    },
+    "supervised": {
+      "n_append_success": 963,
+      "n_with_T": 963,
+      "T_top": [
+        [
+          2.02,
+          65
+        ],
+        [
+          2.019,
+          53
+        ],
+        [
+          2.018,
+          20
+        ],
+        [
+          2.021,
+          15
+        ],
+        [
+          2.015,
+          13
+        ],
+        [
+          2.016,
+          13
+        ],
+        [
+          1.9,
+          12
+        ],
+        [
+          1.997,
+          11
+        ],
+        [
+          2.017,
+          11
+        ],
+        [
+          2.013,
+          11
+        ]
+      ],
+      "frac_at_2_5": 0.0,
+      "mean_T": 1.9358517068676968
+    }
+  },
+  "note": "true_diff online T mass at F_MAX=2.5 vs supervised more interior; supports Case B train/online mismatch attribution"
+}

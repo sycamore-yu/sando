@@ -1,0 +1,21 @@
+{
+  "method": "true_diff",
+  "seed": 200,
+  "n_attempted": 1201,
+  "append_ok": 1111,
+  "oneshot_append_no_fallback": 1111,
+  "fallback_append": 0,
+  "controller_first_use_events": 1111,
+  "failure_stage": {
+    "corridor_decomposition": 44,
+    "None": 1111,
+    "optimization": 46
+  },
+  "latency_p50_ms": 24.877763,
+  "latency_p95_ms": 33.595606,
+  "goal_reached": true,
+  "success": true,
+  "goal_distance_m": 0.24140438783646742,
+  "error": null,
+  "wall_elapsed_sec": 51.036746555007994
+}
