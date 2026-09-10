@@ -27,3 +27,9 @@ METHODS="supervised true_diff" SEEDS="200 201 202 203 204 205" \
 - Phase E/F: `prototypes/time_fixed_z_qp/evidence/phase_{e,f}_train/`
 - Phase K: `docs/request-latency-v2/evidence/analysis/phase_k_pilots_compare.json`
 - Live runs (gitignored workspace): `docker/dev-workspace/results/request-latency-v3/online/phase_k_pilots/`
+
+## Phase M expand
+```bash
+bash scripts/run_phase_m_expand.sh
+```
+Freeze file: `docs/final-study/FREEZE.json`.

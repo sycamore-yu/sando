@@ -25,3 +25,8 @@ Seed200 T histogram (append successes):
 - Evidence: `phase_l_case_b_lam1_mitigation.json` (203–205 extension in progress)
 
 Next: finish 203–205; consider promoting λ=1.0 (or re-tune on train-only) as Case B resolution without deepening the net.
+
+## Phase M (200–229)
+- Supervised: seed226 timeout retained (29/30).
+- True-diff λ=1.0: seed201 timeout retained (29/30).
+- No correctness regressions observed vs pilot; tied with supervised on formal split.
