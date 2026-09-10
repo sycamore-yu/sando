@@ -40,6 +40,12 @@ aggregate() {
     "$ONLINE/paper_unknown_dynamic_easy" \
     "$ONLINE/paper_procedural_static_medium" \
     --out "$ROOT/docs/paper-study-v2/FAILURE_ATTRIBUTION.json"
+  python3 "$ROOT/scripts/paired_bootstrap_paper.py" \
+    --aggregate "$ROOT/docs/paper-study-v2/FORMAL_AGGREGATE.json" \
+    --out "$ROOT/docs/paper-study-v2/PAIRED_BOOTSTRAP.json"
+  python3 "$ROOT/scripts/write_paper_tables.py" \
+    --aggregate "$ROOT/docs/paper-study-v2/FORMAL_AGGREGATE.json" \
+    --out-dir "$ROOT/docs/paper-study-v2/final"
   python3 - <<PY
 import json, subprocess, time
 from pathlib import Path
@@ -55,6 +61,8 @@ payload = {
   "expected_rows": 270,
   "aggregate": "docs/paper-study-v2/FORMAL_AGGREGATE.json",
   "attribution": "docs/paper-study-v2/FAILURE_ATTRIBUTION.json",
+  "bootstrap": "docs/paper-study-v2/PAIRED_BOOTSTRAP.json",
+  "tables": "docs/paper-study-v2/final/",
 }
 (root/"docs/paper-study-v2/FORMAL_COMPLETE.json").write_text(json.dumps(payload, indent=2)+"\n")
 print(json.dumps(payload, indent=2))
