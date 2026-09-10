@@ -14,11 +14,11 @@ Milestone PASS = evidence + analyze + commit + push + continue.
 
 | Phase | Status | Evidence |
 |---|---|---|
-| 0 Environment audit | **PASS** | `docs/paper-study-v2/ENVIRONMENT_AUDIT.md`, `environment_manifest.json` |
-| 1 Formal independent env set | **PASS** (pre-registered) | 180 envs in `environment_manifest.json` |
-| 2 Paper identity chain | IN PROGRESS | Current obs/corridor hashes are summary-only; need content hashes |
-| 3 Geometry-aware safety | PENDING | Replace AABB forest proxy |
-| 4 QP equivalence audit | PENDING | `QP_EQUIVALENCE_AUDIT.md` |
+| 0 Environment audit | **PASS** | `ENVIRONMENT_AUDIT.md`, `environment_manifest.json` |
+| 1 Formal independent env set | **PASS** (pre-registered) | 180 envs; forest = same-map control |
+| 2 Paper identity chain | **PASS** (code) | `IDENTITY_CHAIN.md`; rebuild/sync binary in progress |
+| 3 Geometry-aware safety | **PASS** (code) | `SAFETY_METRIC.md`; forest cylinder vs AABB proxy |
+| 4 QP equivalence audit | **DRAFT** | `QP_EQUIVALENCE_AUDIT.md` — Bezier match; 50-instance pack still open |
 | 5 KKT gradient freeze | PENDING | Expand validation pack |
 | 6 Train protocol freeze | PENDING | |
 | 7 Method groups A/B/C | PENDING | Original / Supervised / DiffOpt |
@@ -30,7 +30,7 @@ Milestone PASS = evidence + analyze + commit + push + continue.
 
 ## Next actions
 
-1. Upgrade online `planning_observation_hash` / `corridor_hash` to real content hashes (map voxels / corridor A,b).
-2. Geometry-aware collision + clearance metric.
-3. QP equivalence + KKT expand.
-4. Freeze models; dry-run one env × A/B/C; launch formal matrix.
+1. Finish sando rebuild + sync install-dev binary.
+2. Run 50-instance Python↔C++ forward parity (Phase 4 close).
+3. Expand KKT gradient pack (Phase 5).
+4. Freeze models; dry-run one formal env × A/B/C; launch paired matrix.

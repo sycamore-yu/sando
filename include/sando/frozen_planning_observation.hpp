@@ -62,6 +62,7 @@ struct FrozenPlanningObservation {
 
 void validateFrozenObservation(const FrozenPlanningObservation& observation);
 std::string sha256Hex(const std::string& text);
+std::string sha256BytesHex(const std::vector<unsigned char>& payload);
 std::string mapContentSha256(const FrozenPlanningObservation& observation);
 std::string observationContentSha256(const FrozenPlanningObservation& observation);
 nlohmann::json frozenObservationToJson(const FrozenPlanningObservation& observation);

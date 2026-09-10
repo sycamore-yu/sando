@@ -235,6 +235,8 @@ std::string sha256Hex(const std::string& text) {
   return sha256(std::vector<unsigned char>(text.begin(), text.end()));
 }
 
+std::string sha256BytesHex(const std::vector<unsigned char>& payload) { return sha256(payload); }
+
 void validateFrozenObservation(const FrozenPlanningObservation& observation) {
   if (observation.schema_version != 1) fail("unsupported frozen observation schema");
   if (observation.kind != "sando_frozen_planning_observation") fail("unexpected frozen observation kind");

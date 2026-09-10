@@ -27,6 +27,7 @@ from integer_scene_protocol import (
     resolve_start,
     scene_id as protocol_scene_id,
 )
+from integer_forest_geometry import aabb_clearance, geometry_clearance
 
 
 
@@ -56,12 +57,17 @@ class _ModelStatesCollision:
         for item in obstacles if isinstance(obstacles, list) else []:
             if not isinstance(item, dict) or not item.get("name"):
                 continue
+            record = dict(item)
             size = [item.get(f"size_{axis}", item.get("size")) for axis in "xyz"]
             try:
                 size = tuple(float(value) for value in size)
             except (TypeError, ValueError):
                 size = ()
-            self.obstacles[str(item["name"])] = size
+            if len(size) == 3:
+                record["size_x"], record["size_y"], record["size_z"] = size
+            if "shape" not in record:
+                record["shape"] = "box"
+            self.obstacles[str(item["name"])] = record
         self.expected_names = (list(expected_count) if isinstance(expected_count, (list, tuple))
                                else [f"obstacle_{index}" for index in range(int(expected_count))])
         self.seen_models = set()
@@ -76,6 +82,11 @@ class _ModelStatesCollision:
         self.first_hit_receipt_time = None
         self.first_hit_position = None
         self.collision = False
+        self.min_clearance = None
+        self.min_clearance_time = None
+        self.min_clearance_obstacle = None
+        self.min_clearance_position = None
+        self.aabb_proxy_collision = False
 
     @staticmethod
     def _position(pose):
@@ -124,8 +135,16 @@ class _ModelStatesCollision:
             self.incomplete_samples += 1
             return
         for name in self.expected_names:
-            bbox = self.obstacles.get(name, ())
-            if len(bbox) != 3 or not all(math.isfinite(value) and value >= 0 for value in bbox):
+            obstacle = self.obstacles.get(name)
+            if not isinstance(obstacle, dict):
+                self.incomplete_samples += 1
+                return
+            try:
+                sizes = (float(obstacle["size_x"]), float(obstacle["size_y"]), float(obstacle["size_z"]))
+            except (KeyError, TypeError, ValueError):
+                self.incomplete_samples += 1
+                return
+            if not all(math.isfinite(value) and value >= 0 for value in sizes):
                 self.incomplete_samples += 1
                 return
         if self.last_receipt_time is not None and receipt_time >= self.last_receipt_time:
@@ -135,38 +154,57 @@ class _ModelStatesCollision:
         self.last_receipt_time = receipt_time
         robot = models[self.robot_name]
         frame_hits = []
+        aabb_hits = []
         frame_clearance = math.inf
+        frame_hit_name = None
         for name in self.expected_names:
-            obstacle = models[name]
-            bbox = self.obstacles[name]
-            half_sum = tuple((self.robot_bbox[axis] + bbox[axis]) / 2.0 for axis in range(3))
-            gaps = tuple(max(abs(robot[axis] - obstacle[axis]) - half_sum[axis], 0.0)
-                         for axis in range(3))
-            frame_clearance = min(frame_clearance, math.sqrt(sum(value * value for value in gaps)))
-            if all(abs(robot[axis] - obstacle[axis]) <= half_sum[axis] for axis in range(3)):
+            obstacle_pos = models[name]
+            obstacle = self.obstacles[name]
+            clearance = geometry_clearance(robot, self.robot_bbox, obstacle_pos, obstacle)
+            proxy = aabb_clearance(robot, self.robot_bbox, obstacle_pos, obstacle)
+            if clearance < frame_clearance:
+                frame_clearance = clearance
+                frame_hit_name = name
+            if clearance <= 0.0:
                 frame_hits.append(name)
+            if proxy <= 0.0:
+                aabb_hits.append(name)
         self.samples_checked += 1
+        stamp = sim_time if sim_time is not None and math.isfinite(sim_time) else receipt_time
+        if self.min_clearance is None or frame_clearance < self.min_clearance:
+            self.min_clearance = frame_clearance
+            self.min_clearance_time = stamp
+            self.min_clearance_obstacle = frame_hit_name
+            self.min_clearance_position = list(robot)
         if len(self.clearance_samples) < MODEL_STATE_EVIDENCE_LIMIT:
             self.clearance_samples.append({
                 "sim_time": sim_time if sim_time is not None and math.isfinite(sim_time) else None,
                 "receipt_time": receipt_time,
                 "min_clearance_m": frame_clearance,
+                "obstacle_id": frame_hit_name,
+                "vehicle_position": list(robot),
             })
+        if aabb_hits:
+            self.aabb_proxy_collision = True
         if frame_hits and not self.first_hit_ids:
             self.collision = True
             self.first_hit_ids = [self.expected_names.index(name) + 4000 for name in frame_hits]
             self.first_hit_names = list(frame_hits)
-            self.first_hit_time = sim_time if sim_time is not None and math.isfinite(sim_time) else receipt_time
+            self.first_hit_time = stamp
             self.first_hit_receipt_time = receipt_time
             self.first_hit_position = list(robot)
 
     def result(self):
         missing = sorted({self.robot_name, *self.expected_names} - self.seen_models)
         definition = {
-            "name": "sampled_AABB_overlap",
+            "name": "geometry_aware_sampled_clearance",
+            "robot_model": "enclosing_sphere_of_AABB",
             "robot_bbox_full_size_m": list(self.robot_bbox),
-            "obstacle_bbox_full_size_source": "recorded obstacle geometry size_x/size_y/size_z; forest cylinders use enclosing AABBs",
-            "overlap_rule": "abs(robot_center - obstacle_center) <= (robot_bbox + obstacle_bbox) / 2 per axis",
+            "obstacle_geometry_source": (
+                "recorded obstacle shape; cylinders use radius/height; boxes use size_x/y/z"
+            ),
+            "primary_rule": "sphere vs cylinder/box exterior clearance <= 0 => collision",
+            "aabb_proxy_rule": "legacy enclosing-AABB overlap (comparison only; not paper claim)",
             "sample_source": f"co-sampled {MODEL_STATES_TOPIC} model poses after goal",
             "continuous_collision_proof": False,
             "sample_interval_max_sec": self.max_sample_interval,
@@ -175,6 +213,11 @@ class _ModelStatesCollision:
         return {
             "available": available,
             "collision": bool(self.collision) if available else None,
+            "aabb_proxy_collision": bool(self.aabb_proxy_collision) if available else None,
+            "minimum_clearance": self.min_clearance if available else None,
+            "time_of_min_clearance": self.min_clearance_time if available else None,
+            "obstacle_id": self.min_clearance_obstacle if available else None,
+            "vehicle_position": self.min_clearance_position if available else None,
             "samples_checked": self.samples_checked,
             "incomplete_samples": self.incomplete_samples,
             "missing_models": missing,

@@ -536,6 +536,8 @@ class SANDO {
     int base_map_size{-1};
     int global_path_size{-1};
     int spatial_poly_count{-1};
+    std::string map_content_hash;
+    std::string global_path_hash;
   };
   LastReplanStage last_replan_stage_{};
   std::chrono::steady_clock::time_point last_replan_started_{};

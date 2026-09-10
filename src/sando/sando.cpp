@@ -893,11 +893,24 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
       (corridor_method_ == SolverGurobi::CorridorMethod::Learned)     ? "learned"
       : (corridor_method_ == SolverGurobi::CorridorMethod::Previous) ? "previous"
                                                                      : "original";
-  // Content hashes for online identity chain (canonical JSON → sha256).
+  // Content hashes for online identity chain (map points + path + corridor A/b).
   {
     RobotState local_A_hash, local_E_hash;
     getA(local_A_hash);
     getE(local_E_hash);
+    vec_Vecf<3> obst_pos_hash;
+    vec_Vecf<3> obst_bbox_hash;
+    {
+      std::lock_guard<std::mutex> lk(mtx_obst_pos_);
+      obst_pos_hash = obst_pos_;
+      obst_bbox_hash = obst_bbox_;
+    }
+    nlohmann::json obst_payload = nlohmann::json::array();
+    for (size_t oi = 0; oi < obst_pos_hash.size() && oi < obst_bbox_hash.size(); ++oi) {
+      obst_payload.push_back(
+          {{"pos", {obst_pos_hash[oi].x(), obst_pos_hash[oi].y(), obst_pos_hash[oi].z()}},
+           {"bbox", {obst_bbox_hash[oi].x(), obst_bbox_hash[oi].y(), obst_bbox_hash[oi].z()}}});
+    }
     nlohmann::json obs_payload{
         {"request_id", capture_request_id_},
         {"A",
@@ -909,20 +922,37 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
           local_E_hash.vel.y(), local_E_hash.vel.z(), local_E_hash.accel.x(), local_E_hash.accel.y(),
           local_E_hash.accel.z()}},
         {"predicted_T", last_append_predicted_T_},
+        {"map_content_hash", last_replan_stage_.map_content_hash},
+        {"global_path_hash", last_replan_stage_.global_path_hash},
         {"base_map_size", last_replan_stage_.base_map_size},
         {"global_path_size", last_replan_stage_.global_path_size},
         {"spatial_poly_count", last_replan_stage_.spatial_poly_count},
+        {"dynamic_obstacles", obst_payload},
+        {"environment_assumption", par_.environment_assumption},
+        {"v_max", par_.v_max},
+        {"a_max", par_.a_max},
+        {"j_max", par_.j_max},
         {"z_id", last_append_z_id_},
         {"corridor_method", last_append_corridor_method_},
     };
     last_append_planning_observation_hash_ =
         sando_learning::sha256Hex(obs_payload.dump());
+    nlohmann::json corridor_polys = nlohmann::json::array();
+    for (size_t pi = 0; pi < poly_out_safe_.size(); ++pi) {
+      nlohmann::json planes = nlohmann::json::array();
+      for (const auto& hp : poly_out_safe_[pi].hyperplanes()) {
+        planes.push_back({{"p", {hp.p_.x(), hp.p_.y(), hp.p_.z()}},
+                          {"n", {hp.n_.x(), hp.n_.y(), hp.n_.z()}}});
+      }
+      corridor_polys.push_back({{"layer_or_index", static_cast<int>(pi)}, {"hyperplanes", planes}});
+    }
     nlohmann::json corridor_payload{
         {"predicted_T", last_append_predicted_T_},
         {"z_id", last_append_z_id_},
         {"corridor_method", last_append_corridor_method_},
         {"spatial_poly_count", last_replan_stage_.spatial_poly_count},
-        {"base_map_size", last_replan_stage_.base_map_size},
+        {"map_content_hash", last_replan_stage_.map_content_hash},
+        {"polytopes", corridor_polys},
     };
     last_append_corridor_hash_ = sando_learning::sha256Hex(corridor_payload.dump());
   }
@@ -1244,6 +1274,39 @@ bool SANDO::planLocalTrajectory(vec_Vecf<3>& global_path, double last_replaning_
 #ifdef SANDO_USE_AMPL
   last_replan_stage_.base_map_size = static_cast<int>(base_map.size());
   last_replan_stage_.global_path_size = static_cast<int>(global_path.size());
+  {
+    std::vector<unsigned char> map_payload;
+    map_payload.reserve(16 + base_map.size() * 24);
+    const char tag[] = "SANDOMAPPTS1";
+    map_payload.insert(map_payload.end(), tag, tag + sizeof(tag) - 1);
+    const std::uint32_t npts = static_cast<std::uint32_t>(base_map.size());
+    map_payload.insert(map_payload.end(),
+                       reinterpret_cast<const unsigned char*>(&npts),
+                       reinterpret_cast<const unsigned char*>(&npts) + sizeof(npts));
+    for (const auto& pt : base_map) {
+      const double xyz[3] = {pt.x(), pt.y(), pt.z()};
+      map_payload.insert(map_payload.end(),
+                         reinterpret_cast<const unsigned char*>(xyz),
+                         reinterpret_cast<const unsigned char*>(xyz) + sizeof(xyz));
+    }
+    last_replan_stage_.map_content_hash = sando_learning::sha256BytesHex(map_payload);
+
+    std::vector<unsigned char> path_payload;
+    path_payload.reserve(16 + global_path.size() * 24);
+    const char ptag[] = "SANDOPATH1";
+    path_payload.insert(path_payload.end(), ptag, ptag + sizeof(ptag) - 1);
+    const std::uint32_t nv = static_cast<std::uint32_t>(global_path.size());
+    path_payload.insert(path_payload.end(),
+                        reinterpret_cast<const unsigned char*>(&nv),
+                        reinterpret_cast<const unsigned char*>(&nv) + sizeof(nv));
+    for (const auto& vertex : global_path) {
+      const double xyz[3] = {vertex.x(), vertex.y(), vertex.z()};
+      path_payload.insert(path_payload.end(),
+                          reinterpret_cast<const unsigned char*>(xyz),
+                          reinterpret_cast<const unsigned char*>(xyz) + sizeof(xyz));
+    }
+    last_replan_stage_.global_path_hash = sando_learning::sha256BytesHex(path_payload);
+  }
 #endif
 
   // Get obst_pos and obst_bbox
