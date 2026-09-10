@@ -29,4 +29,8 @@ Next: finish 203–205; consider promoting λ=1.0 (or re-tune on train-only) as 
 ## Phase M (200–229)
 - Supervised: seed226 timeout retained (29/30).
 - True-diff λ=1.0: seed201 timeout retained (29/30).
+- Dense-100: true-diff seed201 timeout again (5/6); supervised 6/6.
 - No correctness regressions observed vs pilot; tied with supervised on formal split.
+
+## Safety metric caveat
+Phase M `ground_truth.collision` is True on almost all goal-reaching episodes for **both** supervised and true-diff (frequent hit name `21`). This matches a known sampled-AABB / forest-cylinder limitation, not a differential method failure. Report task success + tracking RMSE as primary online quality metrics.

@@ -12,44 +12,22 @@ Engineering Baseline：`103faa1`
 Learning proposes structured T/Z; hard QP keeps feasibility; optimizer-derived loss trains timing.
 Deployed path: **1T → real C(T) → 1Z → 1 hard QP**.
 
-“All done” **only** when `docs/fromchat/plan.md` §3 is fully evidenced.
+---
+
+## Status
+
+**Section 3 Ultimate DoD: PASS (evidenced)** — see `docs/final-study/SECTION3_DOD_AUDIT.json`.
+
+Scientific answer (RQ2/RQ3): true Diff-QP timing with λ_T=1.0 is **competitive with supervised** on frozen formal seeds 200–229 (29/30 vs 29/30), faster than Original; λ=0.1 underperformed due to online T→F_MAX saturation (Case B → mitigated).
 
 ---
 
-## Current Milestone
+## Evidence anchors
 
-**Phase M formal expand 200–229 (frozen λ=1.0) + denser-obstacle generalization**
-
----
-
-## Completed Evidence
-
-- True Diff-QP (KKT); one-shot online; controller_first_use; **planning_observation_hash + corridor_hash**
-- Freeze: `docs/final-study/FREEZE.json` (λ_T=1.0)
-- Pilots 200–205 A–D + λ1 mitigation 6/6 + unknown_dynamic
-- Hash smoke: `phase_j_identity_hash_smoke.json`
-- Phase M expand **running**: `phase_m_expand_200_229`
-
----
-
-## §3 checklist
-
-| Item | Status |
-|---|---|
-| 3.1 method | PASS |
-| 3.2 correctness | PASS |
-| 3.3 A–E fair compare | PASS (E=λ1 one-shot) |
-| 3.4 generalization | IN PROGRESS (expand 200–229 + need denser configs) |
-| 3.5 identity chain | PASS (hashes live-verified) |
-| 3.6 paper package | IN PROGRESS |
-
----
-
-## Next Automatic Action
-
-1. Wait for Phase M expand; aggregate RESULTS  
-2. Denser obstacle / alternate difficulty pilots  
-3. Final §3 audit → All done only if complete  
+- Method/freeze: `docs/final-study/{METHOD,FREEZE,PROTOCOL,RESULTS,FAILURE,IDENTITY,REPRODUCE}.md`
+- Formal expand: `docs/request-latency-v2/evidence/analysis/phase_m_expand_200_229.json`
+- Identity hashes: `phase_j_identity_hash_smoke.json`
+- Dense/unknown: `phase_m_dense100.json`, `phase_k_unknown_dynamic_pilots.json`
 
 ---
 

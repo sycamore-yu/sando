@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "kind": "phase_m_dense100",
+  "num_obstacles": 100,
+  "methods": {
+    "supervised": {
+      "n": 6,
+      "task_success": 6,
+      "mean_latency_p50_ms": 23.8658235,
+      "failures_kept": [],
+      "per_seed": [
+        {
+          "method": "supervised",
+          "seed": 200,
+          "n_attempted": 1054,
+          "append_ok": 988,
+          "oneshot_append_no_fallback": 988,
+          "fallback_append": 0,
+          "controller_first_use_events": 989,
+          "failure_stage": {
+            "corridor_decomposition": 61,
+            "None": 988,
+            "optimization": 5
+          },
+          "latency_p50_ms": 24.098574,
+          "latency_p95_ms": 33.335654,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.2607654422341132,
+          "error": null,
+          "wall_elapsed_sec": 46.309698463999666
+        },
+        {
+          "method": "supervised",
+          "seed": 201,
+          "n_attempted": 1072,
+          "append_ok": 977,
+          "oneshot_append_no_fallback": 977,
+          "fallback_append": 0,
+          "controller_first_use_events": 977,
+          "failure_stage": {
+            "corridor_decomposition": 68,
+            "None": 977,
+            "optimization": 26,
+            "append": 1
+          },
+          "latency_p50_ms": 24.035941,
+          "latency_p95_ms": 33.6795,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.25525106724033025,
+          "error": null,
+          "wall_elapsed_sec": 45.47456173598766
+        },
+        {
+          "method": "supervised",
+          "seed": 202,
+          "n_attempted": 1052,
+          "append_ok": 968,
+          "oneshot_append_no_fallback": 968,
+          "fallback_append": 0,
+          "controller_first_use_events": 969,
+          "failure_stage": {
+            "corridor_decomposition": 70,
+            "None": 968,
+            "optimization": 14
+          },
+          "latency_p50_ms": 24.064512,
+          "latency_p95_ms": 32.918289,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.23806646263194176,
+          "error": null,
+          "wall_elapsed_sec": 44.73996196698863
+        },
+        {
+          "method": "supervised",
+          "seed": 203,
+          "n_attempted": 1056,
+          "append_ok": 975,
+          "oneshot_append_no_fallback": 975,
+          "fallback_append": 0,
+          "controller_first_use_events": 976,
+          "failure_stage": {
+            "corridor_decomposition": 75,
+            "None": 975,
+            "optimization": 5,
+            "append": 1
+          },
+          "latency_p50_ms": 23.860899,
+          "latency_p95_ms": 33.297199,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.2553370726330722,
+          "error": null,
+          "wall_elapsed_sec": 44.881128465989605
+        },
+        {
+          "method": "supervised",
+          "seed": 204,
+          "n_attempted": 1081,
+          "append_ok": 975,
+          "oneshot_append_no_fallback": 975,
+          "fallback_append": 0,
+          "controller_first_use_events": 975,
+          "failure_stage": {
+            "corridor_decomposition": 103,
+            "None": 975,
+            "optimization": 3
+          },
+          "latency_p50_ms": 23.795115,
+          "latency_p95_ms": 32.319826,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.22851592499277734,
+          "error": null,
+          "wall_elapsed_sec": 45.1440287620062
+        },
+        {
+          "method": "supervised",
+          "seed": 205,
+          "n_attempted": 1123,
+          "append_ok": 995,
+          "oneshot_append_no_fallback": 995,
+          "fallback_append": 0,
+          "controller_first_use_events": 995,
+          "failure_stage": {
+            "corridor_decomposition": 125,
+            "None": 995,
+            "optimization": 3
+          },
+          "latency_p50_ms": 23.3399,
+          "latency_p95_ms": 32.281913,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.250301751517344,
+          "error": null,
+          "wall_elapsed_sec": 46.35764954297338
+        }
+      ]
+    },
+    "true_diff": {
+      "n": 6,
+      "task_success": 5,
+      "mean_latency_p50_ms": 20.7863685,
+      "failures_kept": [
+        {
+          "seed": 201,
+          "error": "observation timeout: goal_reached was not received"
+        }
+      ],
+      "per_seed": [
+        {
+          "method": "true_diff",
+          "seed": 200,
+          "n_attempted": 1212,
+          "append_ok": 1074,
+          "oneshot_append_no_fallback": 1074,
+          "fallback_append": 0,
+          "controller_first_use_events": 1074,
+          "failure_stage": {
+            "corridor_decomposition": 129,
+            "None": 1074,
+            "optimization": 9
+          },
+          "latency_p50_ms": 23.616646,
+          "latency_p95_ms": 31.380513,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.24022720583007856,
+          "error": null,
+          "wall_elapsed_sec": 47.87643785390537
+        },
+        {
+          "method": "true_diff",
+          "seed": 201,
+          "n_attempted": 9816,
+          "append_ok": 22,
+          "oneshot_append_no_fallback": 22,
+          "fallback_append": 0,
+          "controller_first_use_events": 22,
+          "failure_stage": {
+            "corridor_decomposition": 9792,
+            "None": 22,
+            "optimization": 2
+          },
+          "latency_p50_ms": 6.404323,
+          "latency_p95_ms": 10.715492,
+          "goal_reached": false,
+          "success": false,
+          "goal_distance_m": 97.30155844586359,
+          "error": "observation timeout: goal_reached was not received",
+          "wall_elapsed_sec": 117.57946617505513
+        },
+        {
+          "method": "true_diff",
+          "seed": 202,
+          "n_attempted": 1195,
+          "append_ok": 1106,
+          "oneshot_append_no_fallback": 1106,
+          "fallback_append": 0,
+          "controller_first_use_events": 1106,
+          "failure_stage": {
+            "corridor_decomposition": 88,
+            "None": 1106,
+            "optimization": 1
+          },
+          "latency_p50_ms": 23.880315,
+          "latency_p95_ms": 32.067164,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.23720144360182557,
+          "error": null,
+          "wall_elapsed_sec": 48.22220218507573
+        },
+        {
+          "method": "true_diff",
+          "seed": 203,
+          "n_attempted": 1161,
+          "append_ok": 1097,
+          "oneshot_append_no_fallback": 1097,
+          "fallback_append": 0,
+          "controller_first_use_events": 1097,
+          "failure_stage": {
+            "corridor_decomposition": 53,
+            "None": 1097,
+            "optimization": 11
+          },
+          "latency_p50_ms": 23.982113,
+          "latency_p95_ms": 32.054098,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.24757603270775153,
+          "error": null,
+          "wall_elapsed_sec": 49.035068559926
+        },
+        {
+          "method": "true_diff",
+          "seed": 204,
+          "n_attempted": 1260,
+          "append_ok": 1071,
+          "oneshot_append_no_fallback": 1071,
+          "fallback_append": 0,
+          "controller_first_use_events": 1071,
+          "failure_stage": {
+            "corridor_decomposition": 183,
+            "None": 1071,
+            "optimization": 5,
+            "append": 1
+          },
+          "latency_p50_ms": 23.309448,
+          "latency_p95_ms": 30.458969,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.2317522057494566,
+          "error": null,
+          "wall_elapsed_sec": 48.143167477915995
+        },
+        {
+          "method": "true_diff",
+          "seed": 205,
+          "n_attempted": 1245,
+          "append_ok": 1078,
+          "oneshot_append_no_fallback": 1078,
+          "fallback_append": 0,
+          "controller_first_use_events": 1078,
+          "failure_stage": {
+            "corridor_decomposition": 139,
+            "None": 1078,
+            "optimization": 28
+          },
+          "latency_p50_ms": 23.525366,
+          "latency_p95_ms": 31.869024,
+          "goal_reached": true,
+          "success": true,
+          "goal_distance_m": 0.23878273873234176,
+          "error": null,
+          "wall_elapsed_sec": 48.575453619938344
+        }
+      ]
+    }
+  }
+}

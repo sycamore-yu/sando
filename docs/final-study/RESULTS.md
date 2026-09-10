@@ -11,7 +11,7 @@
 
 Evidence: `prototypes/time_fixed_z_qp/evidence/phase_{e,f}_train/offline_oneshot_compare.json`.
 
-## Online pilots seeds 200–205 — static_forest
+## Online pilots seeds 200–205 — static_forest (50 obstacles)
 
 | Method | Task success | Mean P50 ms | Failures kept |
 |---|---:|---:|---|
@@ -19,27 +19,52 @@ Evidence: `prototypes/time_fixed_z_qp/evidence/phase_{e,f}_train/offline_oneshot
 | B Supervised one-shot | 6/6 | 24.0 | none |
 | C FD-proxy one-shot | 5/6 | 21.8* | seed203 timeout |
 | D True Diff-QP λ=0.1 | 5/6 | 21.7 | seed201 timeout |
+| E True Diff-QP λ=1.0 (frozen) | 6/6 | 24.2 | none |
 
-\*includes failed seed’s low P50 in mean; successes ≈24.4–25.0 ms.
+\*includes failed seed’s low P50 in mean.
 
-Evidence: `docs/request-latency-v2/evidence/analysis/phase_k_pilots_compare.json`.
+Evidence: `phase_k_pilots_compare.json`, `phase_l_case_b_lam1_mitigation.json`.
 
-## Online pilot — unknown_dynamic (ratio 0.65), seeds 200–201
+## Phase M formal expand — static_forest seeds 200–229 (frozen λ=1.0)
 
-| Method | Task success | Approx P50 ms |
-|---|---:|---:|
-| Supervised | 2/2 | ~69 |
-| True Diff-QP | 2/2 | ~75 |
+| Method | Task success | Mean P50 ms | Failures kept |
+|---|---:|---:|---|
+| Supervised one-shot | 29/30 | 23.5 | seed226 timeout |
+| True Diff-QP λ=1.0 | 29/30 | 23.5 | seed201 timeout |
 
-Evidence: `docs/request-latency-v2/evidence/analysis/phase_k_unknown_dynamic_pilots.json`.
+Evidence: `docs/request-latency-v2/evidence/analysis/phase_m_expand_200_229.json`.
 
-True-diff **λ=1.0** unknown_dynamic 200–201: **2/2** success (P50≈78–80 ms). Evidence: `phase_l_caseb_lam1_unknown_dynamic.json`.
+**Read:** after Case B mitigation, true-diff **matches** supervised on the frozen formal split (tied latency and success). Failures retained.
+
+## Online — unknown_dynamic (ratio 0.65)
+
+| Method | Seeds | Task success | Approx P50 ms |
+|---|---|---:|---:|
+| Supervised | 200–201 | 2/2 | ~69 |
+| True Diff-QP λ=0.1 | 200–201 | 2/2 | ~75 |
+| True Diff-QP λ=1.0 | 200–201 | 2/2 | ~78–80 |
+
+Evidence: `phase_k_unknown_dynamic_pilots.json`, `phase_l_caseb_lam1_unknown_dynamic.json`.
+
+## Dense obstacle (100 trees) — seeds 200–205
+
+| Method | Task success | Mean P50 ms | Failures kept |
+|---|---:|---:|---|
+| Supervised | 6/6 | 23.9 | none |
+| True Diff-QP λ=1.0 | 5/6 | 20.8 | seed201 timeout |
+
+Evidence: `docs/request-latency-v2/evidence/analysis/phase_m_dense100.json`.
+
+## Episode quality (Phase M expand, successful episodes)
+
+| Method | Mean wall s | Mean goal dist m | Mean tracking RMSE m |
+|---|---:|---:|---:|
+| Supervised | 45.3 | 0.238 | 0.0032 |
+| True Diff-QP λ=1.0 | 48.1 | 0.242 | 0.0027 |
+
+Evidence: `phase_m_episode_quality.json`.  
+Note: co-sampled AABB “collision” flags fire on nearly all successful episodes for **both** methods (often obstacle id `21`) — known forest cylinder/AABB metric limitation; not treated as method-specific safety regression.
 
 ## Phase L
-**Case B** initially (λ=0.1: 5/6 vs supervised 6/6, T saturates).
-
-**Mitigation:** λ_T=1.0 model → **6/6** on seeds 200–205; F_MAX fraction ~11–22%; P50≈24.2 ms.  
-Evidence: `phase_l_case_b_lam1_mitigation.json`. Candidate to promote as primary timing model (still freeze before any 200–229 expand).
-
-## Freeze / Phase M
-Primary timing frozen at λ=1.0 (`FREEZE.json`). Formal expand 200–229 in progress (`phase_m_expand_200_229`).
+Initial Case B (λ=0.1 saturation) → mitigated by λ=1.0 → freeze → Phase M expand.  
+**Conclusion:** optimizer-trained timing with λ_T=1.0 is **competitive with supervised** on the frozen formal split (29/30 vs 29/30); Original remains slower (~39 ms P50). Not a clear win over supervised on task success; attribution documented.

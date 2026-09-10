@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "kind": "phase_m_episode_quality",
+  "methods": {
+    "supervised": {
+      "n": 30,
+      "success": 29,
+      "mean_wall_elapsed_sec": 45.2979592803127,
+      "mean_goal_distance_m": 0.23798468901227768,
+      "mean_tracking_rmse_m": 0.0031616770470203003,
+      "any_collision_true": true
+    },
+    "true_diff": {
+      "n": 30,
+      "success": 29,
+      "mean_wall_elapsed_sec": 48.11563921823359,
+      "mean_goal_distance_m": 0.24230369614074165,
+      "mean_tracking_rmse_m": 0.0027161405113209094,
+      "any_collision_true": true
+    }
+  }
+}

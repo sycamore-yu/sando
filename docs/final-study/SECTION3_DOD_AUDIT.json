@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "kind": "ultimate_dod_section3_audit",
+  "audited_utc": "2026-09-10",
+  "commit": "see git HEAD after this commit",
+  "engineering_baseline": "103faa1",
+  "all_done": true,
+  "all_done_note": "Section 3 requirements evidenced with fair A–E compares, frozen λ=1.0 formal expand 200–229, unknown/dynamic + dense configs, online identity hashes, and final-study package. Scientific conclusion is competitive-with-supervised (not clear superiority). AABB collision metric caveat documented.",
+  "items": [
+    {
+      "id": "3.1.oneshot",
+      "status": "PASS",
+      "evidence": [
+        "scripts/run_phase_g_oneshot.sh",
+        "docs/request-latency-v2/evidence/analysis/phase_g_oneshot_probe_seed200.json",
+        "docs/final-study/FREEZE.json"
+      ]
+    },
+    {
+      "id": "3.1.optimizer_trained_T",
+      "status": "PASS",
+      "evidence": [
+        "prototypes/time_fixed_z_qp/diff_time_qp_kkt.py",
+        "prototypes/time_fixed_z_qp/train_true_diff_timing.py",
+        "prototypes/time_fixed_z_qp/evidence/phase_f_train/"
+      ]
+    },
+    {
+      "id": "3.1.true_diff_not_fd_final",
+      "status": "PASS",
+      "evidence": [
+        "prototypes/time_fixed_z_qp/evidence/diff_time_qp_kkt_probe0.json",
+        "docs/final-study/METHOD.md"
+      ]
+    },
+    {
+      "id": "3.1.Z_discrete_if_needed",
+      "status": "N/A",
+      "note": "Z frozen; online fallback~0; Phase H not triggered",
+      "evidence": ["docs/final-study/METHOD.md", "docs/request-latency-v2/evidence/analysis/phase_k_pilots_compare.json"]
+    },
+    {
+      "id": "3.1.deploy_one_Z_one_QP",
+      "status": "PASS",
+      "evidence": ["docs/final-study/FREEZE.json", "docs/final-study/PROTOCOL.md"]
+    },
+    {
+      "id": "3.2.correctness_bundle",
+      "status": "PASS",
+      "evidence": [
+        "docs/diff-time-qp-mapping.md",
+        "prototypes/time_fixed_z_qp/evidence/phase_d_grad_validation_pack16.json",
+        "docs/request-latency-v2/evidence/analysis/engineering_baseline_103faa1.json"
+      ]
+    },
+    {
+      "id": "3.3.fair_compare_A_to_E",
+      "status": "PASS",
+      "evidence": [
+        "docs/request-latency-v2/evidence/analysis/phase_k_pilots_compare.json",
+        "docs/request-latency-v2/evidence/analysis/phase_m_expand_200_229.json",
+        "docs/final-study/RESULTS.md"
+      ],
+      "scientific_answer": "After λ=1.0 mitigation, true-diff matches supervised on frozen formal split (29/30 vs 29/30). Not clearly superior; Original slower. Attribution for λ=0.1 underperformance: online T→F_MAX saturation."
+    },
+    {
+      "id": "3.4.generalization",
+      "status": "PASS",
+      "evidence": [
+        "docs/request-latency-v2/evidence/analysis/phase_m_expand_200_229.json",
+        "docs/request-latency-v2/evidence/analysis/phase_k_unknown_dynamic_pilots.json",
+        "docs/request-latency-v2/evidence/analysis/phase_m_dense100.json",
+        "docs/final-study/FREEZE.json"
+      ]
+    },
+    {
+      "id": "3.5.online_identity_chain",
+      "status": "PASS",
+      "evidence": [
+        "docs/request-latency-v2/evidence/analysis/phase_j_identity_hash_smoke.json",
+        "docs/final-study/IDENTITY.md"
+      ]
+    },
+    {
+      "id": "3.6.final_study_package",
+      "status": "PASS",
+      "evidence": [
+        "docs/final-study/METHOD.md",
+        "docs/final-study/PROTOCOL.md",
+        "docs/final-study/RESULTS.md",
+        "docs/final-study/FAILURE.md",
+        "docs/final-study/IDENTITY.md",
+        "docs/final-study/REPRODUCE.md",
+        "docs/final-study/FREEZE.json"
+      ]
+    }
+  ]
+}
