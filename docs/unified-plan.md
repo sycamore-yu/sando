@@ -18,11 +18,12 @@ Do **not** declare All done until plan2 **§20 PAPER-LEVEL DEFINITION OF DONE** 
 | 4 QP parity | **PASS** | 50/50 `phase4_parity50.json` |
 | 5 KKT freeze | **PASS** | 30/30 grad `GRADIENT_FREEZE.md` |
 | 6 Train freeze | **PASS** | `FREEZE.json` (λ=1.0 DiffOpt) |
-| 7–8 Formal A/B/C | **IN PROGRESS** | `paper_*` matrices; skip-complete resume; ~270 paired runs |
+| 7–8 Formal A/B/C | **IN PROGRESS** | easy 90/90 done; dynamic original ~17/30; total ~107/270 |
 | 9 Stats protocol | **PASS (pre-reg)** | `STATISTICS.md` frozen before outcomes |
-| 10–14 RQ / package | PENDING | `RQ_ANSWERS.md`, `REPRO.md`, `FINAL_DOD_AUDIT.md` stubs |
+| Partial easy analysis | **PASS (partial)** | `PARTIAL_EASY.md` — not DoD |
+| 10–14 RQ / package | PENDING | stubs ready; fill after `ALL_GROUPS_DONE` |
 | §20 Paper DoD | OPEN | living checklist in `FINAL_DOD_AUDIT.md` |
 
 ## Next
 
-Finish formal matrices → `FORMAL_AGGREGATE.json` + attribution → fill RQ1–RQ3 → close §20 only with evidence.
+Finish remaining formal matrix → full aggregate / attribution / RQ → sync `docs/final-study/paper-v2/` → close §20 only with evidence.
