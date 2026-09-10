@@ -35,7 +35,11 @@ run_one() {
   local out="$OUT_ROOT/${method}/seed${seed}"
   mkdir -p "$out"
   tmux has-session -t sando_sim 2>/dev/null && tmux kill-session -t sando_sim || true
-  sleep 1
+  # Orphan gzserver blocks odom readiness on later seeds.
+  for pid in $(ps -eo pid,cmd | grep '[g]zserver' | grep -v defunct | awk '{print $1}'); do
+    kill -9 "$pid" 2>/dev/null || true
+  done
+  sleep 2
   local args=(
     --setup-bash "$SETUP_BASH"
     --output "$out/run"

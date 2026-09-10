@@ -181,11 +181,100 @@
           "error": null
         }
       ]
+    },
+    "original": {
+      "n_seeds": 6,
+      "task_success": 6,
+      "task_success_rate": 1.0,
+      "goal_reached": 6,
+      "goal_reached_rate": 1.0,
+      "mean_latency_p50_ms": 38.618924166666666,
+      "mean_latency_p95_ms": 51.983291333333334,
+      "mean_oneshot_appends": 0,
+      "mean_fallback_append": 499.8333333333333,
+      "mean_controller_first_use": 499.8333333333333,
+      "failures_kept": [],
+      "per_seed": [
+        {
+          "seed": 200,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 0,
+          "fallback_append": 507,
+          "controller_first_use_events": 507,
+          "latency_p50_ms": 38.374423,
+          "latency_p95_ms": 49.903879,
+          "wall_elapsed_sec": 41.845734957954846,
+          "error": null
+        },
+        {
+          "seed": 201,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 0,
+          "fallback_append": 505,
+          "controller_first_use_events": 505,
+          "latency_p50_ms": 38.803034,
+          "latency_p95_ms": 51.556857,
+          "wall_elapsed_sec": 42.17940457200166,
+          "error": null
+        },
+        {
+          "seed": 202,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 0,
+          "fallback_append": 495,
+          "controller_first_use_events": 495,
+          "latency_p50_ms": 38.159615,
+          "latency_p95_ms": 52.089826,
+          "wall_elapsed_sec": 43.050510988919996,
+          "error": null
+        },
+        {
+          "seed": 203,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 0,
+          "fallback_append": 496,
+          "controller_first_use_events": 496,
+          "latency_p50_ms": 38.19795,
+          "latency_p95_ms": 52.09857,
+          "wall_elapsed_sec": 41.861030405038036,
+          "error": null
+        },
+        {
+          "seed": 204,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 0,
+          "fallback_append": 504,
+          "controller_first_use_events": 503,
+          "latency_p50_ms": 39.384503,
+          "latency_p95_ms": 54.29391,
+          "wall_elapsed_sec": 41.38536599196959,
+          "error": null
+        },
+        {
+          "seed": 205,
+          "success": true,
+          "goal_reached": true,
+          "oneshot_append_no_fallback": 0,
+          "fallback_append": 492,
+          "controller_first_use_events": 493,
+          "latency_p50_ms": 38.79402,
+          "latency_p95_ms": 51.956706,
+          "wall_elapsed_sec": 41.55549864692148,
+          "error": null
+        }
+      ],
+      "note": "Original is multi-factor search; fallback_append counts non-oneshot appends"
     }
   },
   "timing_true_diff": "prototypes/time_fixed_z_qp/evidence/phase_f_train/timing_kkt_lam0.1_seed0.json",
   "timing_supervised": "docker/dev-workspace/results/joint-time-v2/models/timing-schema2-regression.json",
   "corridor_z": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json",
   "phase_l_case": "B",
-  "phase_l_note": "true_diff task success 5/6 vs supervised 6/6; seed201 timeout retained. Not clearly better \u2192 Case B analysis, do not expand 200-229 yet. Z not dominant (fallback=0). Online T often saturates at 2.5."
+  "phase_l_note": "true_diff 5/6 vs supervised 6/6 vs original 6/6; true_diff lower P50 (~22 vs ~24 supervised vs ~38 original) but one timeout. T saturation Case B. Do not expand 200-229 yet.",
+  "original_run_root": "docker/dev-workspace/results/request-latency-v3/online/phase_k_original_v2"
 }
