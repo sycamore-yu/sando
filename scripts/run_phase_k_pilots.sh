@@ -34,6 +34,11 @@ run_one() {
   local method="$1" seed="$2"
   local out="$OUT_ROOT/${method}/seed${seed}"
   mkdir -p "$out"
+  # Resume-safe: skip completed paired runs (paper formal matrices).
+  if [[ -f "$out/run/result.json" && -f "$out/summary.json" ]]; then
+    echo "SKIP_COMPLETE METHOD=${method} SEED=${seed}" | tee -a "$OUT_ROOT/out_path.txt"
+    return 0
+  fi
   tmux has-session -t sando_sim 2>/dev/null && tmux kill-session -t sando_sim || true
   # Orphan gzserver blocks odom readiness on later seeds.
   for pid in $(ps -eo pid,cmd | grep '[g]zserver' | grep -v defunct | awk '{print $1}'); do
