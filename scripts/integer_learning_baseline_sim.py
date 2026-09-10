@@ -1075,6 +1075,9 @@ def _scene_split(seed):
         return "validation"
     if 200 <= seed <= 229:
         return "test"
+    # plan2 paper-study-v2 formal independent environments (not λ-selection 200–205)
+    if 1000 <= seed <= 1299 or 2000 <= seed <= 2199:
+        return "test"
     raise ValueError("scene seed is outside the locked train/validation/test split")
 
 
