@@ -70,12 +70,18 @@ PY
 }
 
 count_done() {
-  find "$ONLINE"/paper_procedural_static_easy "$ONLINE"/paper_unknown_dynamic_easy "$ONLINE"/paper_procedural_static_medium \
-    -path '*/seed*/run/result.json' 2>/dev/null | wc -l
+  local n=0
+  for d in "$ONLINE"/paper_procedural_static_easy "$ONLINE"/paper_unknown_dynamic_easy "$ONLINE"/paper_procedural_static_medium; do
+    [[ -d "$d" ]] || continue
+    n=$((n + $(find "$d" -path '*/seed*/run/result.json' 2>/dev/null | wc -l)))
+  done
+  echo "$n"
+  return 0
 }
 
 runner_alive() {
-  docker exec sando-dev bash -lc 'ps -eo cmd | grep -E "run_paper_formal|run_phase_k_pilots|integer_learning_baseline_sim" | grep -v grep' >/dev/null 2>&1
+  docker exec sando-dev bash -lc 'ps -eo cmd | grep -E "run_paper_formal|run_phase_k_pilots|integer_learning_baseline_sim" | grep -v grep' >/dev/null 2>&1 || return 1
+  return 0
 }
 
 echo "watch start $(date -Is) done=$(count_done)/270"
