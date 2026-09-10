@@ -18,40 +18,38 @@ Deployed path: **1T → real C(T) → 1Z → 1 hard QP**.
 
 ## Current Milestone
 
-**Promote λ=1.0 Case B fix → freeze → decide Phase M expand; stamp obs hashes**
+**Phase M formal expand 200–229 (frozen λ=1.0) + denser-obstacle generalization**
 
 ---
 
 ## Completed Evidence
 
-- True Diff-QP (KKT); Phase E/F; online one-shot + controller_first_use + `z_id`/`corridor_method`
-- Fair static 200–205: Original 6/6, Supervised 6/6, FD 5/6, True-diff λ0.1 5/6
-- Case B mitigation: **True-diff λ=1.0 → 6/6**, lower F_MAX saturation
-- Unknown/dynamic 200–201: Supervised 2/2, True-diff λ0.1 2/2
-- `docs/final-study/` package
+- True Diff-QP (KKT); one-shot online; controller_first_use; **planning_observation_hash + corridor_hash**
+- Freeze: `docs/final-study/FREEZE.json` (λ_T=1.0)
+- Pilots 200–205 A–D + λ1 mitigation 6/6 + unknown_dynamic
+- Hash smoke: `phase_j_identity_hash_smoke.json`
+- Phase M expand **running**: `phase_m_expand_200_229`
 
 ---
 
-## §3 checklist (honest)
+## §3 checklist
 
 | Item | Status |
 |---|---|
-| 3.1 one-shot + Diff-QP | PASS |
-| 3.1 Z discrete learning | N/A (frozen Z) |
+| 3.1 method | PASS |
 | 3.2 correctness | PASS |
-| 3.3 A–D fair compare | PASS (+ λ1 mitigation) |
-| 3.4 generalization | PARTIAL (need more difficulty / freeze then optional 200–229) |
-| 3.5 identity | PARTIAL (`z_id`/corridor_method added; full obs/map sha still open) |
-| 3.6 paper package | PARTIAL |
+| 3.3 A–E fair compare | PASS (E=λ1 one-shot) |
+| 3.4 generalization | IN PROGRESS (expand 200–229 + need denser configs) |
+| 3.5 identity chain | PASS (hashes live-verified) |
+| 3.6 paper package | IN PROGRESS |
 
 ---
 
 ## Next Automatic Action
 
-1. Freeze λ=1.0 as primary; re-run unknown_dynamic smoke with λ1  
-2. Add observation/map sha to online events when cheap  
-3. Phase L Case A re-eval: if λ1 clearly ≥ supervised with no regressions → expand 200–229  
-4. Only All done when §3 fully evidenced  
+1. Wait for Phase M expand; aggregate RESULTS  
+2. Denser obstacle / alternate difficulty pilots  
+3. Final §3 audit → All done only if complete  
 
 ---
 
