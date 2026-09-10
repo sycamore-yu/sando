@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "kind": "phase_j_identity_hash_smoke",
+  "run": "docker/dev-workspace/results/request-latency-v3/online/phase_j_hash_smoke",
+  "seed": 200,
+  "success": true,
+  "sample": {
+    "planning_observation_hash": "4c21f3472db2e1736f504a80855313569f07dac07a603005d99bc323af99ae27",
+    "corridor_hash": "68d32ebee813ef4cc14dd410a2ab2f88dab4d83e367427cc408329d2daa5e1c7",
+    "z_id": "0,0,2,1,1",
+    "corridor_method": "learned",
+    "fallback": false,
+    "controller_first_use_events": 1093
+  },
+  "note": "Canonical JSON sha256 of planning state + corridor identity stamped on planning/publish/controller events."
+}

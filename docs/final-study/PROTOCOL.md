@@ -19,3 +19,6 @@ Exactly: `fallback=false` AND append AND publish AND `controller_first_use`.
 
 ## Freezes before wider test
 Do not expand to 200–229 until Phase L Case A. Current decision: **Case B**.
+
+## Freeze
+See `docs/final-study/FREEZE.json` (λ_T=1.0 primary). Phase M expand: `scripts/run_phase_m_expand.sh` seeds 200–229.

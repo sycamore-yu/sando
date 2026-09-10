@@ -746,6 +746,11 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
         append_success ? nlohmann::json(last_append_z_id_) : nlohmann::json(nullptr);
     metrics["corridor_method"] =
         append_success ? nlohmann::json(last_append_corridor_method_) : nlohmann::json(nullptr);
+    metrics["planning_observation_hash"] =
+        append_success ? nlohmann::json(last_append_planning_observation_hash_)
+                       : nlohmann::json(nullptr);
+    metrics["corridor_hash"] =
+        append_success ? nlohmann::json(last_append_corridor_hash_) : nlohmann::json(nullptr);
     if (append_success && !last_appended_assignment_.empty())
       metrics["actual_chosen_assignment"] = last_appended_assignment_;
     if (!last_replan_chosen_assignment_.empty())
@@ -888,6 +893,39 @@ std::tuple<bool, bool> SANDO::replan(double last_replaning_computation_time, dou
       (corridor_method_ == SolverGurobi::CorridorMethod::Learned)     ? "learned"
       : (corridor_method_ == SolverGurobi::CorridorMethod::Previous) ? "previous"
                                                                      : "original";
+  // Content hashes for online identity chain (canonical JSON → sha256).
+  {
+    RobotState local_A_hash, local_E_hash;
+    getA(local_A_hash);
+    getE(local_E_hash);
+    nlohmann::json obs_payload{
+        {"request_id", capture_request_id_},
+        {"A",
+         {local_A_hash.pos.x(), local_A_hash.pos.y(), local_A_hash.pos.z(), local_A_hash.vel.x(),
+          local_A_hash.vel.y(), local_A_hash.vel.z(), local_A_hash.accel.x(), local_A_hash.accel.y(),
+          local_A_hash.accel.z()}},
+        {"E",
+         {local_E_hash.pos.x(), local_E_hash.pos.y(), local_E_hash.pos.z(), local_E_hash.vel.x(),
+          local_E_hash.vel.y(), local_E_hash.vel.z(), local_E_hash.accel.x(), local_E_hash.accel.y(),
+          local_E_hash.accel.z()}},
+        {"predicted_T", last_append_predicted_T_},
+        {"base_map_size", last_replan_stage_.base_map_size},
+        {"global_path_size", last_replan_stage_.global_path_size},
+        {"spatial_poly_count", last_replan_stage_.spatial_poly_count},
+        {"z_id", last_append_z_id_},
+        {"corridor_method", last_append_corridor_method_},
+    };
+    last_append_planning_observation_hash_ =
+        sando_learning::sha256Hex(obs_payload.dump());
+    nlohmann::json corridor_payload{
+        {"predicted_T", last_append_predicted_T_},
+        {"z_id", last_append_z_id_},
+        {"corridor_method", last_append_corridor_method_},
+        {"spatial_poly_count", last_replan_stage_.spatial_poly_count},
+        {"base_map_size", last_replan_stage_.base_map_size},
+    };
+    last_append_corridor_hash_ = sando_learning::sha256Hex(corridor_payload.dump());
+  }
 #endif
   if (par_.debug_verbose)
     std::cout << "Append to Plan: " << timer_append.getElapsedMicros() / 1000.0 << " ms"
@@ -927,6 +965,8 @@ void SANDO::notePublishComplete() {
                        {"fallback", last_append_fallback_},
                        {"z_id", last_append_z_id_},
                        {"corridor_method", last_append_corridor_method_},
+                       {"planning_observation_hash", last_append_planning_observation_hash_},
+                       {"corridor_hash", last_append_corridor_hash_},
                        {"actual_chosen_assignment", last_appended_assignment_},
                        {"publish_ms", publish_ms}};
   replan_metrics_stream_ << event.dump() << '\n';
@@ -950,6 +990,8 @@ void SANDO::noteControllerFirstUse() {
                        {"fallback", last_append_fallback_},
                        {"z_id", last_append_z_id_},
                        {"corridor_method", last_append_corridor_method_},
+                       {"planning_observation_hash", last_append_planning_observation_hash_},
+                       {"corridor_hash", last_append_corridor_hash_},
                        {"actual_chosen_assignment", last_appended_assignment_},
                        {"controller_first_use_ms", controller_first_use_ms}};
   replan_metrics_stream_ << event.dump() << '\n';

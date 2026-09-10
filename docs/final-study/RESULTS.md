@@ -40,3 +40,6 @@ True-diff **λ=1.0** unknown_dynamic 200–201: **2/2** success (P50≈78–80 m
 
 **Mitigation:** λ_T=1.0 model → **6/6** on seeds 200–205; F_MAX fraction ~11–22%; P50≈24.2 ms.  
 Evidence: `phase_l_case_b_lam1_mitigation.json`. Candidate to promote as primary timing model (still freeze before any 200–229 expand).
+
+## Freeze / Phase M
+Primary timing frozen at λ=1.0 (`FREEZE.json`). Formal expand 200–229 in progress (`phase_m_expand_200_229`).

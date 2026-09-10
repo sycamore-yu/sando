@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "kind": "method_freeze",
+  "frozen_utc": "2026-09-10",
+  "commit_at_freeze_note": "see git HEAD at expand start",
+  "engineering_baseline": "103faa1",
+  "phase_l_decision": "Case_A_after_lam1_mitigation",
+  "phase_l_rationale": "lambda_T=1.0 recovers 6/6 task success vs supervised 6/6 on seeds 200-205, cuts F_MAX saturation, unknown_dynamic 2/2; freeze before expand 200-229.",
+  "timing_model": {
+    "path": "prototypes/time_fixed_z_qp/evidence/phase_e_train/timing_kkt_lam1.0_seed0.json",
+    "training": "true_diff_kkt",
+    "lambda_T": 1.0,
+    "ablation_lambda_0_1_path": "prototypes/time_fixed_z_qp/evidence/phase_f_train/timing_kkt_lam0.1_seed0.json"
+  },
+  "corridor_z_model": {
+    "path": "docker/dev-workspace/results/joint-time-v2/models/corridor-cost.json",
+    "frozen": true
+  },
+  "supervised_baseline_timing": "docker/dev-workspace/results/joint-time-v2/models/timing-schema2-regression.json",
+  "constraints": {
+    "v_max": 5.0,
+    "a_max": 20.0,
+    "j_max": 100.0,
+    "jerk_smooth_weight": 10.0,
+    "one_shot": "1T+1Z+1QP",
+    "candidate_limit": "auto_1_when_timing_proposal_count_1"
+  },
+  "evaluation_protocol": {
+    "pilot_seeds": [200, 201, 202, 203, 204, 205],
+    "formal_test_seeds": "200-229 inclusive",
+    "scenes": ["static_forest", "unknown_dynamic@0.65"],
+    "script": "scripts/run_phase_k_pilots.sh",
+    "no_test_tuning": true
+  }
+}

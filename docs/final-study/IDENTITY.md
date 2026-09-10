@@ -3,16 +3,22 @@
 ## Commit / branch
 - Branch: `feat/ampl-gurobi` → `personal/feat/ampl-gurobi`
 - Engineering baseline: `103faa1`
-- See `git log` / `docs/unified-plan.md` for study commits.
+- Freeze: `docs/final-study/FREEZE.json` (λ_T=1.0 primary timing)
 
 ## Trajectory identity (live JSONL)
 Planning row + follow-on events:
-- `request_id`, `trajectory_id`, `predicted_T`, `fallback`, `actual_chosen_assignment`
-- `z_id` (comma-joined assignment), `corridor_method` (`learned`/`previous`/`original`)
+- `request_id`, `trajectory_id`, `predicted_T`, `fallback`
+- `z_id`, `corridor_method`
+- `planning_observation_hash` (sha256 of canonical planning JSON)
+- `corridor_hash` (sha256 of T/Z/corridor identity JSON)
 - `kind=publish` → `publish_ms`
 - `kind=controller_first_use` → `controller_first_use_ms`
 
-Verified on Phase G seed200 and Phase K pilots (controller_first_use counts ≈ oneshot appends).
+Smoke evidence: `docs/request-latency-v2/evidence/analysis/phase_j_identity_hash_smoke.json`  
+(seed200: 1093 appends with hashes + controller_first_use).
 
-## Still open for full §3.5
-- Full `planning_observation_hash` / map corridor content hash (capture path has sha256 helpers; not yet stamped on every online replan).
+## Distinguishes
+- main one-shot: `fallback=false` + append + publish + controller_first_use
+- fallback success: `fallback=true` + append …
+- planning failure: `append_success=false` / `failure_stage`
+- execution failure: episode `goal_reached=false` / timeout
